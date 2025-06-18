@@ -35,17 +35,17 @@ export default function Header() {
 
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
+      {/* Top Header - Container */}
       <div className="container mx-auto px-4">
-        {/* Top Header */}
         <div className="flex items-center justify-between py-3 lg:py-4 border-b border-gray-200">
           {/* Logo */}
           <Link href="/" className="flex items-center flex-shrink-0">
             <Image
-              src="/logo.png"
+              src="/images/logo.png"
               alt="Pet Palace - The Kingdom of Royal Pets"
-              width={160}
-              height={50}
-              className="h-8 sm:h-10 lg:h-12 w-auto"
+              width={220}
+              height={70}
+              className="h-14 w-auto sm:h-16 lg:h-20"
               priority
             />
           </Link>
@@ -56,11 +56,11 @@ export default function Header() {
               <Input
                 type="text"
                 placeholder="Search for pet supplies..."
-                className="w-full pl-4 pr-12 py-3 rounded-full border-2 border-gray-200 focus:border-orange-500 focus:ring-0"
+                className="w-full pl-4 pr-12 py-3 rounded-full border-2 border-gray-200 focus:border-primary-orange-500 focus:ring-0"
               />
               <Button
                 size="sm"
-                className="absolute right-1 top-1 bottom-1 px-4 bg-orange-500 hover:bg-orange-600 rounded-full"
+                className="absolute right-1 top-1 bottom-1 px-4 bg-primary-orange-500 hover:bg-primary-orange-600 rounded-full"
               >
                 <Search className="w-4 h-4" />
               </Button>
@@ -71,25 +71,25 @@ export default function Header() {
           <div className="flex items-center space-x-2 sm:space-x-4">
             {/* Location - Hidden on mobile */}
             <div className="hidden xl:flex items-center space-x-2 text-sm text-gray-600">
-              <MapPin className="w-4 h-4 text-orange-500" />
+              <MapPin className="w-4 h-4 text-primary-orange-500" />
               <span className="whitespace-nowrap">Enter pincode</span>
             </div>
 
             {/* Contact - Hidden on small screens */}
             <div className="hidden sm:block">
-              <Phone className="w-5 h-5 text-gray-600 hover:text-orange-500 cursor-pointer transition-colors" />
+              <Phone className="w-5 h-5 text-gray-600 hover:text-primary-orange-500 cursor-pointer transition-colors" />
             </div>
 
             {/* User Account */}
             <Link href="/account" className="hidden sm:block">
-              <User className="w-5 h-5 text-gray-600 hover:text-orange-500 transition-colors" />
+              <User className="w-5 h-5 text-gray-600 hover:text-primary-orange-500 transition-colors" />
             </Link>
 
             {/* Wishlist */}
             <Link href="/wishlist" className="relative">
-              <Heart className="w-5 h-5 text-gray-600 hover:text-orange-500 transition-colors" />
+              <Heart className="w-5 h-5 text-gray-600 hover:text-primary-orange-500 transition-colors" />
               {wishlistCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center p-0">
+                <Badge className="absolute -top-2 -right-2 bg-primary-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center p-0">
                   {wishlistCount}
                 </Badge>
               )}
@@ -97,9 +97,9 @@ export default function Header() {
 
             {/* Shopping Cart */}
             <Link href="/cart" className="relative">
-              <ShoppingCart className="w-5 h-5 text-gray-600 hover:text-orange-500 transition-colors" />
+              <ShoppingCart className="w-5 h-5 text-gray-600 hover:text-primary-orange-500 transition-colors" />
               {cartCount > 0 && (
-                <Badge className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center p-0">
+                <Badge className="absolute -top-2 -right-2 bg-primary-orange-500 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center p-0">
                   {cartCount}
                 </Badge>
               )}
@@ -127,44 +127,46 @@ export default function Header() {
             <Input
               type="text"
               placeholder="Search for pet supplies..."
-              className="w-full pl-4 pr-12 py-3 rounded-full border-2 border-gray-200 focus:border-orange-500 focus:ring-0"
+              className="w-full pl-4 pr-12 py-3 rounded-full border-2 border-gray-200 focus:border-primary-orange-500 focus:ring-0"
             />
             <Button
               size="sm"
-              className="absolute right-1 top-1 bottom-1 px-4 bg-orange-500 hover:bg-orange-600 rounded-full"
+              className="absolute right-1 top-1 bottom-1 px-4 bg-primary-orange-500 hover:bg-primary-orange-600 rounded-full"
             >
               <Search className="w-4 h-4" />
             </Button>
           </div>
         </div>
+      </div>
 
-        {/* Navigation - Desktop */}
-        <nav className="hidden lg:block">
-          <div className="bg-black text-white -mx-4 px-4">
-            <div className="flex items-center space-x-8 py-4">
-              {categories.map((category) => (
-                <div key={category.name} className="relative group">
-                  <Link
-                    href={category.href}
-                    className="flex items-center space-x-1 hover:text-orange-500 transition-colors whitespace-nowrap"
-                  >
-                    <span>{category.name}</span>
-                    {category.hasSubmenu && <ChevronDown className="w-4 h-4" />}
-                    {category.badge && (
-                      <Badge className="bg-orange-500 text-white text-xs px-2 py-1 ml-2">
-                        {category.badge}
-                      </Badge>
-                    )}
-                  </Link>
-                </div>
-              ))}
-            </div>
+      {/* Navigation - Full Width White Background */}
+      <nav className="hidden lg:block bg-white text-gray-800 w-full shadow-sm">
+        <div className="container mx-auto px-4">
+          <div className="flex items-center justify-center space-x-8 py-4">
+            {categories.map((category) => (
+              <div key={category.name} className="relative group">
+                <Link
+                  href={category.href}
+                  className="flex items-center space-x-1 hover:text-primary-orange-500 transition-colors whitespace-nowrap"
+                >
+                  <span>{category.name}</span>
+                  {category.hasSubmenu && <ChevronDown className="w-4 h-4" />}
+                  {category.badge && (
+                    <Badge className="bg-primary-orange-500 text-white text-xs px-2 py-1 ml-2">
+                      {category.badge}
+                    </Badge>
+                  )}
+                </Link>
+              </div>
+            ))}
           </div>
-        </nav>
+        </div>
+      </nav>
 
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <nav className="lg:hidden border-t border-gray-200">
+      {/* Mobile Navigation - Full Width */}
+      {isMenuOpen && (
+        <nav className="lg:hidden bg-white border-t border-gray-200 w-full">
+          <div className="container mx-auto px-4">
             <div className="py-4 space-y-1">
               {categories.map((category) => (
                 <Link
@@ -176,7 +178,7 @@ export default function Header() {
                   <div className="flex items-center space-x-2">
                     <span className="font-medium">{category.name}</span>
                     {category.badge && (
-                      <Badge className="bg-orange-500 text-white text-xs px-2 py-1">
+                      <Badge className="bg-primary-orange-500 text-white text-xs px-2 py-1">
                         {category.badge}
                       </Badge>
                     )}
@@ -198,14 +200,14 @@ export default function Header() {
                   <span>My Account</span>
                 </Link>
                 <div className="flex items-center py-3 px-4 text-gray-600">
-                  <MapPin className="w-5 h-5 mr-3 text-orange-500" />
+                  <MapPin className="w-5 h-5 mr-3 text-primary-orange-500" />
                   <span>Enter pincode to check delivery</span>
                 </div>
               </div>
             </div>
-          </nav>
-        )}
-      </div>
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
