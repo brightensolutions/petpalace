@@ -15,10 +15,10 @@ export function PromotionalBanners() {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="text-3xl font-bold">🏦 HDFC Bank</div>
-            <div className="text-xl">
-              <span className="text-2xl font-bold">Extra 5% OFF</span>
-              <div className="text-sm opacity-90">
+            <div className="text-4xl font-bold">🏦 HDFC Bank</div>
+            <div className="text-2xl">
+              <span className="text-3xl font-bold">Extra 5% OFF</span>
+              <div className="text-base opacity-90">
                 On HDFC Bank Credit Cards On Orders Above ₹2000
               </div>
             </div>
@@ -35,16 +35,16 @@ export function PromotionalBanners() {
         <Card className="relative overflow-hidden bg-gradient-to-br from-yellow-200 to-yellow-400 p-8">
           <div className="relative z-10">
             <div className="text-center">
-              <div className="text-4xl font-bold text-orange-600 mb-2">
+              <div className="text-5xl font-bold text-orange-600 mb-2">
                 LOWEST PRICE
               </div>
-              <div className="text-3xl font-bold text-orange-700 mb-2">
+              <div className="text-4xl font-bold text-orange-700 mb-2">
                 ON CAT
               </div>
-              <div className="text-3xl font-bold text-orange-700 mb-4">
+              <div className="text-4xl font-bold text-orange-700 mb-4">
                 SUPPLIES
               </div>
-              <div className="bg-gray-800 text-white px-4 py-2 rounded-full inline-block text-lg font-bold">
+              <div className="bg-gray-800 text-white px-4 py-2 rounded-full inline-block text-xl font-bold">
                 upto 60% off
               </div>
             </div>
@@ -56,15 +56,15 @@ export function PromotionalBanners() {
         <Card className="relative overflow-hidden bg-gradient-to-br from-blue-200 to-blue-400 p-8">
           <div className="relative z-10">
             <div className="text-center">
-              <div className="text-4xl font-bold text-white mb-2">
+              <div className="text-5xl font-bold text-white mb-2">
                 BEST DEALS
               </div>
-              <div className="text-3xl font-bold text-white mb-2">ON DOG</div>
-              <div className="text-3xl font-bold text-white mb-4">
+              <div className="text-4xl font-bold text-white mb-2">ON DOG</div>
+              <div className="text-4xl font-bold text-white mb-4">
                 ESSENTIALS
               </div>
               <div
-                className="text-white px-4 py-2 rounded-full inline-block text-lg font-bold"
+                className="text-white px-4 py-2 rounded-full inline-block text-xl font-bold"
                 style={{ backgroundColor: "var(--color-secondary, #f97316)" }}
               >
                 upto 50% off
@@ -88,7 +88,9 @@ export function PromotionalBanners() {
             className={`${category.color} p-6 text-center hover:shadow-lg transition-shadow cursor-pointer`}
           >
             <div className="text-4xl mb-2">{category.icon}</div>
-            <div className="font-semibold text-gray-700">{category.name}</div>
+            <div className="font-semibold text-gray-700 text-base">
+              {category.name}
+            </div>
           </Card>
         ))}
       </div>
@@ -96,5 +98,4 @@ export function PromotionalBanners() {
   );
 }
 
-// Also export as default
 export default PromotionalBanners;

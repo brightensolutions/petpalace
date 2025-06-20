@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import Image from "next/image";
 
 import {
   Facebook,
@@ -9,7 +10,6 @@ import {
   Mail,
   Phone,
   MapPin,
-  Heart,
   Award,
   Shield,
   Truck,
@@ -35,49 +35,55 @@ function Input({
 
 export function Footer() {
   return (
-    <footer className="bg-gradient-to-br from-blue-50 via-white to-orange-50 border-t-4 border-blue-200">
+    <footer className="bg-white border-t border-gray-200">
       {/* Trust Indicators */}
-      <div className="bg-white border-b border-blue-100">
+      <div className="bg-gradient-to-r from-blue-50 to-orange-50 border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {[
               {
                 icon: Truck,
                 title: "Free Delivery",
-                desc: "On orders above ₹499",
+                desc: "On orders above Rs.499",
                 color: "text-blue-600",
+                bgColor: "bg-blue-100",
               },
               {
                 icon: Shield,
                 title: "100% Authentic",
                 desc: "Genuine products only",
-                color: "text-green-600",
+                color: "text-orange-600",
+                bgColor: "bg-orange-100",
               },
               {
                 icon: Clock,
                 title: "24/7 Support",
                 desc: "Always here to help",
-                color: "text-orange-600",
+                color: "text-blue-600",
+                bgColor: "bg-blue-100",
               },
               {
                 icon: Award,
                 title: "5M+ Happy Pets",
                 desc: "Trusted by pet parents",
-                color: "text-purple-600",
+                color: "text-orange-600",
+                bgColor: "bg-orange-100",
               },
             ].map((item, index) => (
               <div
                 key={index}
-                className="flex items-center gap-3 p-4 rounded-2xl hover:bg-blue-50 transition-all duration-200"
+                className="flex items-center gap-3 p-4 rounded-2xl bg-white hover:shadow-md transition-all duration-200"
               >
                 <div
-                  className={`w-12 h-12 rounded-xl ${item.color} bg-opacity-10 flex items-center justify-center`}
+                  className={`w-12 h-12 rounded-xl ${item.bgColor} flex items-center justify-center`}
                 >
                   <item.icon className={`w-6 h-6 ${item.color}`} />
                 </div>
                 <div>
-                  <div className="font-bold text-blue-800">{item.title}</div>
-                  <div className="text-sm text-blue-600">{item.desc}</div>
+                  <div className="font-bold text-gray-900 text-base">
+                    {item.title}
+                  </div>
+                  <div className="text-base text-gray-600">{item.desc}</div>
                 </div>
               </div>
             ))}
@@ -91,37 +97,26 @@ export function Footer() {
           {/* Company Info */}
           <div className="space-y-6 lg:col-span-1">
             <div className="flex items-center gap-3 group cursor-pointer">
-              <div
-                className="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl shadow-lg group-hover:scale-105 transition-transform duration-200"
-                style={{
-                  background:
-                    "linear-gradient(135deg, var(--color-secondary, #f97316) 0%, #ff8c42 100%)",
-                }}
-              >
-                🐾
-              </div>
-              <div>
-                <div
-                  className="text-3xl font-bold tracking-tight"
-                  style={{ color: "var(--color-primary, #3b82f6)" }}
-                >
-                  PetPalace
-                </div>
-                <div className="text-sm text-blue-500 font-medium">
-                  Your Pet's Best Friend
-                </div>
-              </div>
+              <Image
+                src="/images/logo.png"
+                alt="PetPalace Logo"
+                width={200}
+                height={80}
+                className="h-16 w-auto object-contain group-hover:scale-105 transition-transform duration-200"
+              />
             </div>
 
-            <p className="text-blue-700 leading-relaxed">
+            <p className="text-gray-600 leading-relaxed text-base">
               Your one-stop destination for premium pet supplies, nutritious
               food, and fun accessories. We treat your pets like family because
-              they deserve nothing but the best! 🐕❤️🐱
+              they deserve nothing but the best!
             </p>
 
             {/* Social Media */}
             <div className="space-y-3">
-              <h4 className="font-bold text-blue-800">Follow Our Journey</h4>
+              <h4 className="font-bold text-gray-900 text-lg">
+                Follow Our Journey
+              </h4>
               <div className="flex gap-3">
                 {[
                   {
@@ -131,12 +126,12 @@ export function Footer() {
                   },
                   {
                     icon: Twitter,
-                    color: "hover:bg-blue-400",
+                    color: "hover:bg-blue-500",
                     label: "Twitter",
                   },
                   {
                     icon: Instagram,
-                    color: "hover:bg-pink-500",
+                    color: "hover:bg-orange-500",
                     label: "Instagram",
                   },
                 ].map((social, index) => (
@@ -144,7 +139,7 @@ export function Footer() {
                     key={index}
                     variant="ghost"
                     size="icon"
-                    className={`w-12 h-12 rounded-xl bg-white border-2 border-blue-200 text-blue-600 ${social.color} hover:text-white transition-all duration-200 hover:scale-110 shadow-md hover:shadow-lg`}
+                    className={`w-12 h-12 rounded-xl bg-gray-100 border border-gray-200 text-gray-600 ${social.color} hover:text-white transition-all duration-200 hover:scale-110 shadow-sm hover:shadow-md`}
                     aria-label={social.label}
                   >
                     <social.icon className="w-5 h-5" />
@@ -156,26 +151,22 @@ export function Footer() {
 
           {/* Quick Links */}
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-blue-800 flex items-center gap-2">
-              <Star className="w-5 h-5 text-orange-500" />
-              Quick Links
-            </h3>
+            <h3 className="text-2xl font-bold text-gray-900">Quick Links</h3>
             <ul className="space-y-3">
               {[
-                { name: "About Us", emoji: "🏢" },
-                { name: "Contact", emoji: "📞" },
-                { name: "Privacy Policy", emoji: "🔒" },
-                { name: "Terms & Conditions", emoji: "📋" },
-                { name: "Return Policy", emoji: "↩️" },
-                { name: "Track Your Order", emoji: "📦" },
+                { name: "About Us" },
+                { name: "Contact" },
+                { name: "Privacy Policy" },
+                { name: "Terms & Conditions" },
+                { name: "Return Policy" },
+                { name: "Track Your Order" },
               ].map((link, index) => (
                 <li key={index}>
                   <a
                     href="#"
-                    className="flex items-center gap-2 text-blue-600 hover:text-orange-600 transition-colors duration-200 hover:translate-x-1 transform"
+                    className="text-base text-gray-600 hover:text-orange-600 transition-colors duration-200 hover:translate-x-1 transform font-medium"
                   >
-                    <span>{link.emoji}</span>
-                    <span className="font-medium">{link.name}</span>
+                    {link.name}
                   </a>
                 </li>
               ))}
@@ -184,25 +175,21 @@ export function Footer() {
 
           {/* Categories */}
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-blue-800 flex items-center gap-2">
-              <Heart className="w-5 h-5 text-red-500" />
-              Pet Categories
-            </h3>
+            <h3 className="text-2xl font-bold text-gray-900">Pet Categories</h3>
             <ul className="space-y-3">
               {[
-                { name: "Dog Supplies", emoji: "🐕", popular: true },
-                { name: "Cat Supplies", emoji: "🐱", popular: true },
-                { name: "Pet Food & Treats", emoji: "🍖" },
-                { name: "Toys & Games", emoji: "🎾" },
-                { name: "Health & Medicine", emoji: "💊" },
-                { name: "Grooming Essentials", emoji: "✂️" },
+                { name: "Dog Supplies", popular: true },
+                { name: "Cat Supplies", popular: true },
+                { name: "Pet Food & Treats" },
+                { name: "Toys & Games" },
+                { name: "Health & Medicine" },
+                { name: "Grooming Essentials" },
               ].map((category, index) => (
                 <li key={index}>
                   <a
                     href="#"
-                    className="flex items-center gap-2 text-blue-600 hover:text-orange-600 transition-colors duration-200 hover:translate-x-1 transform group"
+                    className="flex items-center gap-2 text-base text-gray-600 hover:text-orange-600 transition-colors duration-200 hover:translate-x-1 transform group"
                   >
-                    <span>{category.emoji}</span>
                     <span className="font-medium">{category.name}</span>
                     {category.popular && (
                       <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
@@ -217,10 +204,7 @@ export function Footer() {
 
           {/* Contact & Newsletter */}
           <div className="space-y-6">
-            <h3 className="text-xl font-bold text-blue-800 flex items-center gap-2">
-              <Mail className="w-5 h-5 text-green-500" />
-              Get In Touch
-            </h3>
+            <h3 className="text-2xl font-bold text-gray-900">Get In Touch</h3>
 
             {/* Contact Info */}
             <div className="space-y-4">
@@ -229,30 +213,38 @@ export function Footer() {
                   icon: Phone,
                   text: "1800-123-4567",
                   subtext: "Toll-free support",
+                  color: "text-blue-600",
+                  bgColor: "bg-blue-100",
                 },
                 {
                   icon: Mail,
                   text: "support@petpalace.com",
                   subtext: "24/7 email support",
+                  color: "text-orange-600",
+                  bgColor: "bg-orange-100",
                 },
                 {
                   icon: MapPin,
                   text: "Mumbai, India",
                   subtext: "Serving nationwide",
+                  color: "text-blue-600",
+                  bgColor: "bg-blue-100",
                 },
               ].map((contact, index) => (
                 <div
                   key={index}
-                  className="flex items-start gap-3 p-3 rounded-xl hover:bg-white transition-all duration-200"
+                  className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-white hover:shadow-sm transition-all duration-200"
                 >
-                  <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <contact.icon className="w-5 h-5 text-blue-600" />
+                  <div
+                    className={`w-10 h-10 rounded-lg ${contact.bgColor} flex items-center justify-center`}
+                  >
+                    <contact.icon className={`w-5 h-5 ${contact.color}`} />
                   </div>
                   <div>
-                    <div className="font-semibold text-blue-800">
+                    <div className="font-semibold text-gray-900 text-base">
                       {contact.text}
                     </div>
-                    <div className="text-sm text-blue-600">
+                    <div className="text-base text-gray-600">
                       {contact.subtext}
                     </div>
                   </div>
@@ -261,12 +253,13 @@ export function Footer() {
             </div>
 
             {/* Newsletter */}
-            <div className="space-y-4 p-6 rounded-2xl bg-gradient-to-br from-blue-100 to-orange-100 border border-blue-200">
+            <div className="space-y-4 p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-orange-50 border border-gray-200">
               <div>
-                <h4 className="font-bold text-blue-800 flex items-center gap-2">
-                  📧 Pet Care Newsletter
+                <h4 className="font-bold text-gray-900 flex items-center gap-2 text-lg">
+                  <Mail className="w-5 h-5 text-orange-600" />
+                  Pet Care Newsletter
                 </h4>
-                <p className="text-sm text-blue-600 mt-1">
+                <p className="text-base text-gray-600 mt-1">
                   Get tips, offers & pet care advice!
                 </p>
               </div>
@@ -274,17 +267,13 @@ export function Footer() {
                 <Input placeholder="Enter your email" className="flex-1" />
                 <Button
                   size="lg"
-                  className="text-white font-bold px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, var(--color-secondary, #f97316) 0%, #ff8c42 100%)",
-                  }}
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
                 >
                   Subscribe
                 </Button>
               </div>
-              <p className="text-xs text-blue-500">
-                🎁 Get 10% off on your first order!
+              <p className="text-sm text-gray-600">
+                Get 10% off on your first order!
               </p>
             </div>
           </div>
@@ -292,29 +281,23 @@ export function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div
-        className="border-t-2 border-blue-200 py-6"
-        style={{
-          background:
-            "linear-gradient(135deg, var(--color-primary, #3b82f6) 0%, var(--color-secondary, #f97316) 100%)",
-        }}
-      >
+      <div className="bg-gradient-to-r from-blue-600 to-orange-500 py-6">
         <div className="max-w-7xl mx-auto px-4">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4">
             <div className="text-white text-center md:text-left">
-              <p className="font-semibold">
-                © 2024 PetPalace - Made with ❤️ for Pet Parents
+              <p className="font-semibold text-lg">
+                © 2024 PetPalace - Made with care for Pet Parents
               </p>
-              <p className="text-sm opacity-90">
+              <p className="text-base opacity-90">
                 Bringing joy to pets and their families since 2020
               </p>
             </div>
             <div className="flex items-center gap-4 text-white">
-              <span className="text-sm opacity-90">Trusted by</span>
+              <span className="text-base opacity-90">Trusted by</span>
               <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
                 <Star className="w-4 h-4 text-yellow-300 fill-current" />
-                <span className="font-bold">4.8/5</span>
-                <span className="text-sm opacity-90">(50K+ reviews)</span>
+                <span className="font-bold text-base">4.8/5</span>
+                <span className="text-base opacity-90">(50K+ reviews)</span>
               </div>
             </div>
           </div>
@@ -324,5 +307,4 @@ export function Footer() {
   );
 }
 
-// Also export as default
 export default Footer;

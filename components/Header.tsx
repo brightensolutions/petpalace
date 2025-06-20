@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 
 export function Header() {
   const [placeholderText, setPlaceholderText] = useState("");
@@ -26,7 +27,7 @@ export function Header() {
     "Browse pet accessories...",
   ];
 
-  useEffect(() => {
+  const updatePlaceholder = useCallback(() => {
     const currentText = placeholders[currentIndex];
     const timeout = setTimeout(
       () => {
@@ -51,12 +52,16 @@ export function Header() {
     );
 
     return () => clearTimeout(timeout);
-  }, [placeholderText, currentIndex, isDeleting]);
+  }, [placeholderText, currentIndex, isDeleting, placeholders]);
+
+  useEffect(() => {
+    return updatePlaceholder();
+  }, [updatePlaceholder]);
 
   return (
     <header className="bg-white shadow-sm">
       {/* Top Banner with Orange Gradient */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 px-4 text-center text-sm font-medium">
+      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 px-4 text-center text-base font-medium">
         🎉 Special Offer: Free delivery + 20% OFF on your first order above ₹999
       </div>
 
@@ -65,9 +70,11 @@ export function Header() {
         <div className="flex items-center justify-between">
           {/* Logo - Left Side with Container */}
           <div className="flex items-center justify-start w-80">
-            <img
-              src="/images/logo.png"
+            <Image
+              src="/placeholder.svg?height=96&width=320&text=PetPalace+Logo"
               alt="PetPalace Logo"
+              width={320}
+              height={96}
               className="h-24 w-full max-w-sm object-contain"
             />
           </div>
@@ -78,7 +85,7 @@ export function Header() {
               <Input
                 type="text"
                 placeholder={placeholderText}
-                className="pl-6 pr-16 h-14 bg-gray-50 border-0 rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:shadow-lg transition-all duration-200 text-gray-700 placeholder:text-gray-700 text-lg"
+                className="pl-6 pr-16 h-14 bg-gray-50 border-0 rounded-2xl focus:bg-white focus:ring-2 focus:ring-blue-500/20 focus:shadow-lg transition-all duration-200 text-gray-700 placeholder:text-gray-700 text-xl"
               />
               <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
                 <Button
@@ -99,17 +106,17 @@ export function Header() {
                 <MapPin className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <div className="text-gray-500 text-xs font-medium">
+                <div className="text-gray-500 text-sm font-medium">
                   Deliver to
                 </div>
-                <div className="font-semibold text-gray-800 text-sm">
+                <div className="font-semibold text-gray-800 text-base">
                   110001
                 </div>
               </div>
             </div>
 
             {/* Sign In Button - Compact Style */}
-            <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-xl font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-12 flex items-center gap-2">
+            <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-2 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-200 h-12 flex items-center gap-2">
               <div className="w-7 h-7 bg-white/20 rounded-lg flex items-center justify-center">
                 <User className="w-4 h-4" />
               </div>
@@ -146,7 +153,7 @@ export function Header() {
                   <div className="relative">
                     <Input
                       placeholder="Search products..."
-                      className="pl-6 pr-16 rounded-xl h-12 text-sm"
+                      className="pl-6 pr-16 rounded-xl h-12 text-base"
                     />
                     <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
                       <Button size="sm" className="h-8 w-8 p-0 rounded-lg">
@@ -166,7 +173,7 @@ export function Header() {
                       <Button
                         key={item}
                         variant="ghost"
-                        className="w-full justify-start rounded-xl text-base font-medium py-4"
+                        className="w-full justify-start rounded-xl text-lg font-medium py-4"
                       >
                         {item}
                       </Button>
@@ -235,7 +242,7 @@ export function Header() {
               <div key={index} className="relative group">
                 <Button
                   variant="ghost"
-                  className="text-gray-700 hover:text-blue-600 hover:bg-transparent font-semibold text-base px-8 py-4 rounded-xl transition-colors duration-200 flex items-center gap-2"
+                  className="text-gray-700 hover:text-blue-600 hover:bg-transparent font-semibold text-lg px-8 py-4 rounded-xl transition-colors duration-200 flex items-center gap-2"
                 >
                   {item.name}
                   {item.hasDropdown && (
@@ -252,7 +259,7 @@ export function Header() {
                           <a
                             key={subIndex}
                             href="#"
-                            className="flex items-center px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium text-base"
+                            className="flex items-center px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium text-lg"
                           >
                             {subItem}
                           </a>
@@ -261,7 +268,7 @@ export function Header() {
                       <div className="mt-6 pt-4 border-t border-gray-100">
                         <a
                           href="#"
-                          className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold text-base"
+                          className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold text-lg"
                         >
                           View All {item.name}
                         </a>
@@ -273,7 +280,7 @@ export function Header() {
             ))}
 
             {/* Special Vet Consult Button */}
-            <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-4 rounded-xl font-semibold text-base shadow-lg hover:shadow-xl transition-all duration-300 ml-4 hover:scale-105">
+            <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 ml-4 hover:scale-105">
               🩺 Vet Consult
               <Badge className="ml-3 bg-white/20 text-white text-xs px-3 py-1 rounded-full animate-pulse font-semibold">
                 Live
