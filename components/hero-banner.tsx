@@ -11,22 +11,22 @@ export function HeroBanner() {
   const slides = [
     {
       id: 1,
-      image: "/placeholder.svg?height=500&width=1200&text=Pet+Sale+Banner",
+      image: "/sliders/slider.webp",
       alt: "Pet Sale Banner",
     },
     {
       id: 2,
-      image: "/placeholder.svg?height=500&width=1200&text=Premium+Pet+Food",
+      image: "/sliders/slider.webp",
       alt: "Premium Pet Food Banner",
     },
     {
       id: 3,
-      image: "/placeholder.svg?height=500&width=1200&text=Interactive+Pet+Toys",
+      image: "/sliders/slider.webp",
       alt: "Interactive Pet Toys Banner",
     },
     {
       id: 4,
-      image: "/placeholder.svg?height=500&width=1200&text=Pet+Wellness+Center",
+      image: "/sliders/slider.webp",
       alt: "Pet Wellness Center Banner",
     },
   ];

@@ -5,88 +5,22 @@ import Image from "next/image";
 
 export function CategoryShowcase() {
   const categories = [
-    {
-      id: 1,
-      name: "Dog Food",
-      image: "/placeholder.svg?height=200&width=300&text=Dog+Food+Products",
-    },
-    {
-      id: 2,
-      name: "Cat Food",
-      image: "/placeholder.svg?height=200&width=300&text=Cat+Food+Products",
-    },
-    {
-      id: 3,
-      name: "Dog Toys",
-      image: "/placeholder.svg?height=200&width=300&text=Dog+Toys+Products",
-    },
-    {
-      id: 4,
-      name: "Cat Toys",
-      image: "/placeholder.svg?height=200&width=300&text=Cat+Toys+Products",
-    },
-    {
-      id: 5,
-      name: "Health Care",
-      image: "/placeholder.svg?height=200&width=300&text=Pet+Health+Products",
-    },
-    {
-      id: 6,
-      name: "Grooming",
-      image: "/placeholder.svg?height=200&width=300&text=Pet+Grooming+Products",
-    },
-    {
-      id: 7,
-      name: "Accessories",
-      image:
-        "/placeholder.svg?height=200&width=300&text=Pet+Accessories+Products",
-    },
-    {
-      id: 8,
-      name: "Treats",
-      image: "/placeholder.svg?height=200&width=300&text=Pet+Treats+Products",
-    },
-    {
-      id: 9,
-      name: "Beds & Furniture",
-      image: "/placeholder.svg?height=200&width=300&text=Pet+Beds+Products",
-    },
-    {
-      id: 10,
-      name: "Training",
-      image: "/placeholder.svg?height=200&width=300&text=Pet+Training+Products",
-    },
-    {
-      id: 11,
-      name: "Carriers",
-      image: "/placeholder.svg?height=200&width=300&text=Pet+Carriers+Products",
-    },
-    {
-      id: 12,
-      name: "Bowls & Feeders",
-      image: "/placeholder.svg?height=200&width=300&text=Pet+Bowls+Products",
-    },
-    {
-      id: 13,
-      name: "Leashes",
-      image: "/placeholder.svg?height=200&width=300&text=Pet+Leashes+Products",
-    },
-    {
-      id: 14,
-      name: "Collars",
-      image: "/placeholder.svg?height=200&width=300&text=Pet+Collars+Products",
-    },
-    {
-      id: 15,
-      name: "Cleaning",
-      image: "/placeholder.svg?height=200&width=300&text=Pet+Cleaning+Products",
-    },
-    {
-      id: 16,
-      name: "Supplements",
-      image:
-        "/placeholder.svg?height=200&width=300&text=Pet+Supplements+Products",
-    },
+    { id: 1, name: "Dog Food", image: "/categories/category.webp" },
+    { id: 2, name: "Cat Food", image: "/categories/category.webp" },
+    { id: 3, name: "Dog Toys", image: "/categories/category.webp" },
+    { id: 4, name: "Cat Toys", image: "/categories/category.webp" },
+    { id: 5, name: "Health Care", image: "/categories/category.webp" },
+    { id: 6, name: "Grooming", image: "/categories/category.webp" },
+    { id: 7, name: "Accessories", image: "/categories/category.webp" },
+    { id: 8, name: "Treats", image: "/categories/category.webp" },
+    { id: 9, name: "Beds & Furniture", image: "/categories/category.webp" },
+    { id: 10, name: "Training", image: "/categories/category.webp" },
+    { id: 11, name: "Carriers", image: "/categories/category.webp" },
+    { id: 12, name: "Bowls & Feeders", image: "/categories/category.webp" },
+    { id: 13, name: "Leashes", image: "/categories/category.webp" },
+    { id: 14, name: "Collars", image: "/categories/category.webp" },
+    { id: 15, name: "Cleaning", image: "/categories/category.webp" },
+    { id: 16, name: "Supplements", image: "/categories/category.webp" },
   ];
 
   // Split categories into two rows of 8 each
