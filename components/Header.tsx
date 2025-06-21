@@ -1,23 +1,17 @@
-"use client";
-import {
-  Search,
-  ShoppingCart,
-  MapPin,
-  Menu,
-  ChevronDown,
-  User,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState, useEffect, useCallback } from "react";
-import Image from "next/image";
+"use client"
+import { Search, ShoppingCart, MapPin, Menu, ChevronDown, User } from "lucide-react"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { useState, useEffect, useCallback } from "react"
+import Image from "next/image"
+import Link from "next/link"
 
 export function Header() {
-  const [placeholderText, setPlaceholderText] = useState("");
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isDeleting, setIsDeleting] = useState(false);
+  const [placeholderText, setPlaceholderText] = useState("")
+  const [currentIndex, setCurrentIndex] = useState(0)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const placeholders = [
     "Search for premium pet products...",
@@ -25,58 +19,58 @@ export function Header() {
     "Discover healthy pet food...",
     "Shop grooming essentials...",
     "Browse pet accessories...",
-  ];
+  ]
 
   const updatePlaceholder = useCallback(() => {
-    const currentText = placeholders[currentIndex];
+    const currentText = placeholders[currentIndex]
     const timeout = setTimeout(
       () => {
         if (!isDeleting) {
           if (placeholderText.length < currentText.length) {
-            setPlaceholderText(
-              currentText.slice(0, placeholderText.length + 1)
-            );
+            setPlaceholderText(currentText.slice(0, placeholderText.length + 1))
           } else {
-            setTimeout(() => setIsDeleting(true), 2000);
+            setTimeout(() => setIsDeleting(true), 2000)
           }
         } else {
           if (placeholderText.length > 0) {
-            setPlaceholderText(placeholderText.slice(0, -1));
+            setPlaceholderText(placeholderText.slice(0, -1))
           } else {
-            setIsDeleting(false);
-            setCurrentIndex((prev) => (prev + 1) % placeholders.length);
+            setIsDeleting(false)
+            setCurrentIndex((prev) => (prev + 1) % placeholders.length)
           }
         }
       },
-      isDeleting ? 50 : 100
-    );
+      isDeleting ? 50 : 100,
+    )
 
-    return () => clearTimeout(timeout);
-  }, [placeholderText, currentIndex, isDeleting, placeholders]);
+    return () => clearTimeout(timeout)
+  }, [placeholderText, currentIndex, isDeleting, placeholders])
 
   useEffect(() => {
-    return updatePlaceholder();
-  }, [updatePlaceholder]);
+    return updatePlaceholder()
+  }, [updatePlaceholder])
 
   return (
     <header className="bg-white shadow-sm">
       {/* Top Banner with Orange Gradient */}
       <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-3 px-4 text-center text-base font-medium">
-        🎉 Special Offer: Free delivery + 20% OFF on your first order above ₹999
+        Special Offer: Free delivery + 20% OFF on your first order above ₹999
       </div>
 
       {/* Main Header */}
       <div className="container mx-auto px-6 py-2">
         <div className="flex items-center justify-between">
-          {/* Logo - Left Side with Container */}
+          {/* Logo - Left Side with Container and Homepage Link */}
           <div className="flex items-center justify-start w-80">
-            <Image
-              src="/placeholder.svg?height=96&width=320&text=PetPalace+Logo"
-              alt="PetPalace Logo"
-              width={320}
-              height={96}
-              className="h-24 w-full max-w-sm object-contain"
-            />
+            <Link href="/" className="block">
+              <Image
+                src="/images/logo.png"
+                alt="PetPalace Logo"
+                width={620}
+                height={206}
+                className="h-24 w-full max-w-sm object-contain hover:opacity-90 transition-opacity duration-200 cursor-pointer"
+              />
+            </Link>
           </div>
 
           {/* Enhanced Search Bar - Center */}
@@ -106,12 +100,8 @@ export function Header() {
                 <MapPin className="w-4 h-4 text-blue-600" />
               </div>
               <div>
-                <div className="text-gray-500 text-sm font-medium">
-                  Deliver to
-                </div>
-                <div className="font-semibold text-gray-800 text-base">
-                  110001
-                </div>
+                <div className="text-gray-500 text-sm font-medium">Deliver to</div>
+                <div className="font-semibold text-gray-800 text-base">110001</div>
               </div>
             </div>
 
@@ -151,10 +141,7 @@ export function Header() {
               <SheetContent side="right" className="w-80">
                 <div className="flex flex-col space-y-4 mt-6">
                   <div className="relative">
-                    <Input
-                      placeholder="Search products..."
-                      className="pl-6 pr-16 rounded-xl h-12 text-base"
-                    />
+                    <Input placeholder="Search products..." className="pl-6 pr-16 rounded-xl h-12 text-base" />
                     <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
                       <Button size="sm" className="h-8 w-8 p-0 rounded-lg">
                         <Search className="h-5 w-5" />
@@ -162,18 +149,11 @@ export function Header() {
                     </div>
                   </div>
                   <div className="space-y-2">
-                    {[
-                      "Dogs",
-                      "Cats",
-                      "Small Animals",
-                      "Pet Hub",
-                      "Store Locator",
-                      "Fresh Meals",
-                    ].map((item) => (
+                    {["Dogs", "Cats", "Small Animals", "Pet Hub", "Store Locator", "Fresh Meals"].map((item) => (
                       <Button
                         key={item}
                         variant="ghost"
-                        className="w-full justify-start rounded-xl text-lg font-medium py-4"
+                        className="w-full justify-start rounded-xl text-base font-medium py-4"
                       >
                         {item}
                       </Button>
@@ -194,47 +174,22 @@ export function Header() {
               {
                 name: "Dogs",
                 hasDropdown: true,
-                items: [
-                  "Dog Food",
-                  "Dog Toys",
-                  "Dog Treats",
-                  "Dog Accessories",
-                  "Dog Health",
-                  "Dog Grooming",
-                ],
+                items: ["Dog Food", "Dog Toys", "Dog Treats", "Dog Accessories", "Dog Health", "Dog Grooming"],
               },
               {
                 name: "Cats",
                 hasDropdown: true,
-                items: [
-                  "Cat Food",
-                  "Cat Toys",
-                  "Cat Treats",
-                  "Cat Accessories",
-                  "Cat Health",
-                  "Cat Grooming",
-                ],
+                items: ["Cat Food", "Cat Toys", "Cat Treats", "Cat Accessories", "Cat Health", "Cat Grooming"],
               },
               {
                 name: "Small Animals",
                 hasDropdown: true,
-                items: [
-                  "Bird Food",
-                  "Fish Food",
-                  "Rabbit Food",
-                  "Hamster Food",
-                  "Small Pet Toys",
-                ],
+                items: ["Bird Food", "Fish Food", "Rabbit Food", "Hamster Food", "Small Pet Toys"],
               },
               {
                 name: "Pet Hub",
                 hasDropdown: true,
-                items: [
-                  "Pet Care Tips",
-                  "Training Guides",
-                  "Health Articles",
-                  "Nutrition Advice",
-                ],
+                items: ["Pet Care Tips", "Training Guides", "Health Articles", "Nutrition Advice"],
               },
               { name: "Store Locator", hasDropdown: false },
               { name: "Fresh Meals", hasDropdown: false },
@@ -242,7 +197,7 @@ export function Header() {
               <div key={index} className="relative group">
                 <Button
                   variant="ghost"
-                  className="text-gray-700 hover:text-blue-600 hover:bg-transparent font-semibold text-lg px-8 py-4 rounded-xl transition-colors duration-200 flex items-center gap-2"
+                  className="text-gray-700 hover:text-blue-600 hover:bg-transparent font-semibold text-base px-8 py-4 rounded-xl transition-colors duration-200 flex items-center gap-2"
                 >
                   {item.name}
                   {item.hasDropdown && (
@@ -259,7 +214,7 @@ export function Header() {
                           <a
                             key={subIndex}
                             href="#"
-                            className="flex items-center px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium text-lg"
+                            className="flex items-center px-4 py-2 text-gray-700 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all duration-200 font-medium text-base"
                           >
                             {subItem}
                           </a>
@@ -268,7 +223,7 @@ export function Header() {
                       <div className="mt-6 pt-4 border-t border-gray-100">
                         <a
                           href="#"
-                          className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold text-lg"
+                          className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 transition-all duration-200 font-semibold text-base"
                         >
                           View All {item.name}
                         </a>
@@ -278,19 +233,11 @@ export function Header() {
                 )}
               </div>
             ))}
-
-            {/* Special Vet Consult Button */}
-            <Button className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white px-8 py-4 rounded-xl font-semibold text-lg shadow-lg hover:shadow-xl transition-all duration-300 ml-4 hover:scale-105">
-              🩺 Vet Consult
-              <Badge className="ml-3 bg-white/20 text-white text-xs px-3 py-1 rounded-full animate-pulse font-semibold">
-                Live
-              </Badge>
-            </Button>
           </nav>
         </div>
       </div>
     </header>
-  );
+  )
 }
 
-export default Header;
+export default Header

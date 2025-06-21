@@ -1,37 +1,8 @@
-"use client";
+"use client"
+import Image from "next/image"
 
-import type React from "react";
-import Image from "next/image";
-
-import {
-  Facebook,
-  Twitter,
-  Instagram,
-  Mail,
-  Phone,
-  MapPin,
-  Award,
-  Shield,
-  Truck,
-  Clock,
-  Star,
-} from "lucide-react";
-import { Button } from "./ui/button";
-
-// Modern Input component
-function Input({
-  className,
-  ...props
-}: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      className={`flex h-12 w-full rounded-xl border-2 border-blue-100 bg-white px-4 py-3 text-sm placeholder:text-blue-400 focus:outline-none focus:ring-4 focus:ring-blue-200 focus:border-blue-400 transition-all duration-200 shadow-sm hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50 ${
-        className || ""
-      }`}
-      {...props}
-    />
-  );
-}
+import { Facebook, Twitter, Instagram, Mail, Phone, MapPin, Award, Shield, Truck, Clock } from "lucide-react"
+import { Button } from "./ui/button"
 
 export function Footer() {
   return (
@@ -74,15 +45,11 @@ export function Footer() {
                 key={index}
                 className="flex items-center gap-3 p-4 rounded-2xl bg-white hover:shadow-md transition-all duration-200"
               >
-                <div
-                  className={`w-12 h-12 rounded-xl ${item.bgColor} flex items-center justify-center`}
-                >
+                <div className={`w-12 h-12 rounded-xl ${item.bgColor} flex items-center justify-center`}>
                   <item.icon className={`w-6 h-6 ${item.color}`} />
                 </div>
                 <div>
-                  <div className="font-bold text-gray-900 text-base">
-                    {item.title}
-                  </div>
+                  <div className="font-bold text-gray-900 text-base">{item.title}</div>
                   <div className="text-base text-gray-600">{item.desc}</div>
                 </div>
               </div>
@@ -107,16 +74,13 @@ export function Footer() {
             </div>
 
             <p className="text-gray-600 leading-relaxed text-base">
-              Your one-stop destination for premium pet supplies, nutritious
-              food, and fun accessories. We treat your pets like family because
-              they deserve nothing but the best!
+              Your one-stop destination for premium pet supplies, nutritious food, and fun accessories. We treat your
+              pets like family because they deserve nothing but the best!
             </p>
 
             {/* Social Media */}
             <div className="space-y-3">
-              <h4 className="font-bold text-gray-900 text-lg">
-                Follow Our Journey
-              </h4>
+              <h4 className="font-bold text-gray-900 text-lg">Follow Our Journey</h4>
               <div className="flex gap-3">
                 {[
                   {
@@ -192,9 +156,7 @@ export function Footer() {
                   >
                     <span className="font-medium">{category.name}</span>
                     {category.popular && (
-                      <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                        HOT
-                      </span>
+                      <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">HOT</span>
                     )}
                   </a>
                 </li>
@@ -202,7 +164,7 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Contact & Newsletter */}
+          {/* Contact Info Only */}
           <div className="space-y-6">
             <h3 className="text-2xl font-bold text-gray-900">Get In Touch</h3>
 
@@ -225,7 +187,7 @@ export function Footer() {
                 },
                 {
                   icon: MapPin,
-                  text: "Mumbai, India",
+                  text: "Surat, Gujarat",
                   subtext: "Serving nationwide",
                   color: "text-blue-600",
                   bgColor: "bg-blue-100",
@@ -235,76 +197,30 @@ export function Footer() {
                   key={index}
                   className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 hover:bg-white hover:shadow-sm transition-all duration-200"
                 >
-                  <div
-                    className={`w-10 h-10 rounded-lg ${contact.bgColor} flex items-center justify-center`}
-                  >
+                  <div className={`w-10 h-10 rounded-lg ${contact.bgColor} flex items-center justify-center`}>
                     <contact.icon className={`w-5 h-5 ${contact.color}`} />
                   </div>
                   <div>
-                    <div className="font-semibold text-gray-900 text-base">
-                      {contact.text}
-                    </div>
-                    <div className="text-base text-gray-600">
-                      {contact.subtext}
-                    </div>
+                    <div className="font-semibold text-gray-900 text-base">{contact.text}</div>
+                    <div className="text-base text-gray-600">{contact.subtext}</div>
                   </div>
                 </div>
               ))}
             </div>
-
-            {/* Newsletter */}
-            <div className="space-y-4 p-6 rounded-2xl bg-gradient-to-br from-blue-50 to-orange-50 border border-gray-200">
-              <div>
-                <h4 className="font-bold text-gray-900 flex items-center gap-2 text-lg">
-                  <Mail className="w-5 h-5 text-orange-600" />
-                  Pet Care Newsletter
-                </h4>
-                <p className="text-base text-gray-600 mt-1">
-                  Get tips, offers & pet care advice!
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Input placeholder="Enter your email" className="flex-1" />
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-bold px-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105"
-                >
-                  Subscribe
-                </Button>
-              </div>
-              <p className="text-sm text-gray-600">
-                Get 10% off on your first order!
-              </p>
-            </div>
           </div>
         </div>
       </div>
 
-      {/* Bottom Bar */}
-      <div className="bg-gradient-to-r from-blue-600 to-orange-500 py-6">
+      {/* Simple Copyright Section */}
+      <div className="bg-gray-100 py-4">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="text-white text-center md:text-left">
-              <p className="font-semibold text-lg">
-                © 2024 PetPalace - Made with care for Pet Parents
-              </p>
-              <p className="text-base opacity-90">
-                Bringing joy to pets and their families since 2020
-              </p>
-            </div>
-            <div className="flex items-center gap-4 text-white">
-              <span className="text-base opacity-90">Trusted by</span>
-              <div className="flex items-center gap-1 bg-white/20 px-3 py-1 rounded-full backdrop-blur-sm">
-                <Star className="w-4 h-4 text-yellow-300 fill-current" />
-                <span className="font-bold text-base">4.8/5</span>
-                <span className="text-base opacity-90">(50K+ reviews)</span>
-              </div>
-            </div>
+          <div className="text-center">
+            <p className="text-sm text-gray-600">© 2024 PetPalace. All rights reserved.</p>
           </div>
         </div>
       </div>
     </footer>
-  );
+  )
 }
 
-export default Footer;
+export default Footer
