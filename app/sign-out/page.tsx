@@ -10,12 +10,10 @@ export default function SignOutPage() {
   const [countdown, setCountdown] = useState(5);
 
   useEffect(() => {
-    // Simulate sign out process
     const timer = setInterval(() => {
       setCountdown((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
-          // Redirect to home page
           window.location.href = "/";
           return 0;
         }
@@ -48,9 +46,7 @@ export default function SignOutPage() {
       {/* Main Content */}
       <div className="flex items-center justify-center px-4 py-16">
         <div className="w-full max-w-lg text-center">
-          {/* Success Card */}
           <div className="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-            {/* Success Icon */}
             <div className="bg-gradient-to-r from-green-500 to-green-600 px-8 py-12">
               <div className="flex justify-center mb-4">
                 <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center">
@@ -65,7 +61,6 @@ export default function SignOutPage() {
               </p>
             </div>
 
-            {/* Content */}
             <div className="px-8 py-8">
               <div className="space-y-6">
                 <div className="text-gray-600 text-lg leading-relaxed">
@@ -78,7 +73,6 @@ export default function SignOutPage() {
                   </p>
                 </div>
 
-                {/* Countdown */}
                 <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-6 border border-blue-100">
                   <p className="text-gray-700 font-medium mb-2">
                     Redirecting to homepage in:
@@ -89,7 +83,6 @@ export default function SignOutPage() {
                   <p className="text-sm text-gray-500 mt-2">seconds</p>
                 </div>
 
-                {/* Action Buttons */}
                 <div className="space-y-4">
                   <Link href="/" className="block">
                     <Button className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold text-base rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
@@ -109,7 +102,6 @@ export default function SignOutPage() {
                   </Link>
                 </div>
 
-                {/* Quick Links */}
                 <div className="pt-6 border-t border-gray-100">
                   <p className="text-sm font-semibold text-gray-700 mb-4">
                     Quick Links:
@@ -135,15 +127,14 @@ export default function SignOutPage() {
             </div>
           </div>
 
-          {/* Footer Message */}
           <div className="mt-8 text-center">
             <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
               <h3 className="font-bold text-gray-900 mb-2">
                 Thank You for Choosing PetPalace!
               </h3>
               <p className="text-gray-600 text-sm">
-                We're committed to providing the best products for your beloved
-                pets. Come back soon!
+                We&apos;re committed to providing the best products for your
+                beloved pets. Come back soon!
               </p>
               <div className="flex items-center justify-center gap-4 mt-4 text-xs text-gray-500">
                 <span>🐕 5M+ Happy Pets</span>

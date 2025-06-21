@@ -1,27 +1,35 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
-import Header from "@/components/header"
-import Footer from "@/components/footer"
-import { Star, Grid3X3, List, ChevronDown, Heart, ShoppingCart, Search, SlidersHorizontal } from "lucide-react"
-import Image from "next/image"
-import Link from "next/link"
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import Header from "@/components/header";
+import Footer from "@/components/footer";
+import {
+  Star,
+  Grid3X3,
+  List,
+  ChevronDown,
+  Heart,
+  ShoppingCart,
+  Search,
+  SlidersHorizontal,
+} from "lucide-react";
+import Image from "next/image";
+import Link from "next/link";
 
-// This is a dynamic category page that will handle all categories
-// Category data will be fetched from database based on params.category
-// Examples: /categories/cat-food, /categories/dog-toys, /categories/bird-supplies
+// ✅ Next.js 15 - params is now a Promise
+type PageProps = {
+  params: Promise<{
+    category: string;
+  }>;
+  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
+};
 
-// Future: Generate metadata dynamically
-// export async function generateMetadata({ params }: { params: { category: string } }) {
-//   const categoryData = await fetchCategoryData(params.category)
-//   return {
-//     title: `${categoryData.name} | Pet Palace`,
-//     description: categoryData.description,
-//   }
-// }
+// ✅ Make component async and await params
+export default async function CategoryPage({ params }: PageProps) {
+  // ✅ Await the params promise
+  const { category } = await params;
 
-export default function CategoryPage({ params }: { params: { category: string } }) {
   const filterTabs = [
     "Brand",
     "Shop For",
@@ -31,7 +39,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
     "Special Diet",
     "Protein Source",
     "Price Range",
-  ]
+  ];
 
   const categories = [
     { name: "All Cat Food", icon: "🐱", count: 245 },
@@ -41,7 +49,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
     { name: "Kitten Food", icon: "🐾", count: 45 },
     { name: "Veterinary Food", icon: "💊", count: 23 },
     { name: "Supplements", icon: "💊", count: 34 },
-  ]
+  ];
 
   const products = [
     {
@@ -122,7 +130,7 @@ export default function CategoryPage({ params }: { params: { category: string } 
       sizes: ["400g", "1kg", "2.5kg"],
       badges: ["10%", "15%", "18%"],
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-white">
@@ -136,223 +144,222 @@ export default function CategoryPage({ params }: { params: { category: string } 
               Home
             </Link>
             <span className="text-gray-400">/</span>
-            <span className="text-gray-900 font-medium capitalize">{params.category.replace("-", " ")}</span>
+            <span className="text-gray-900 font-medium capitalize">
+              {category.replace("-", " ")}
+            </span>
           </nav>
         </div>
       </div>
 
-      {/* Hero Banner */}
-      <section className="bg-gradient-to-r from-orange-400 to-orange-500 py-12">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-            <div>
-              <h1 className="text-5xl font-bold text-white mb-4">Premium Pet Products</h1>
-              <p className="text-2xl text-orange-100 mb-8">Quality products for your beloved pets!</p>
-              <Button className="bg-white text-orange-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl">
-                Shop Now
+      {/* Header Section */}
+      <div className="container mx-auto px-4 py-6">
+        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-6">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 mb-2 capitalize">
+              {category.replace("-", " ")}
+            </h1>
+            <p className="text-gray-600">
+              Premium quality products for your beloved pets
+            </p>
+          </div>
+
+          {/* View Toggle & Sort */}
+          <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="p-2">
+                <Grid3X3 className="w-4 h-4" />
+              </Button>
+              <Button variant="ghost" size="sm" className="p-2">
+                <List className="w-4 h-4" />
               </Button>
             </div>
-            <div className="relative">
-              <Image
-                src="/placeholder.svg?height=400&width=600&text=Cat+Food+Products+with+Cat"
-                alt="Cat food products with cat"
-                width={600}
-                height={400}
-                className="rounded-2xl"
-              />
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Sort by:</span>
+              <Button variant="outline" size="sm" className="gap-2">
+                Popularity
+                <ChevronDown className="w-4 h-4" />
+              </Button>
             </div>
           </div>
         </div>
-      </section>
 
-      {/* Filter Tabs */}
-      <div className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center gap-1 py-4 overflow-x-auto">
-            <h2 className="text-2xl font-bold text-gray-900 mr-6 whitespace-nowrap capitalize">
-              {params.category.replace("-", " ")}
-            </h2>
-            {filterTabs.map((tab, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                className="whitespace-nowrap rounded-full border-gray-300 hover:border-blue-500 hover:text-blue-600"
-              >
-                {tab}
-                <ChevronDown className="w-4 h-4 ml-1" />
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="grid lg:grid-cols-4 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Sidebar Filters */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-24">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-2 mb-6">
-                  <SlidersHorizontal className="w-5 h-5 text-gray-600" />
-                  <h3 className="text-lg font-bold text-gray-900">Filters</h3>
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 sticky top-4">
+              {/* Search */}
+              <div className="mb-6">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Search products..."
+                    className="pl-10 h-10 rounded-lg border-gray-200"
+                  />
                 </div>
+              </div>
 
-                {/* Search Filter */}
-                <div className="mb-6">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <Input placeholder="Search products..." className="pl-10 rounded-xl" />
-                  </div>
-                </div>
-
-                {/* Categories */}
-                <div className="space-y-3">
-                  {categories.map((category, index) => (
-                    <div
+              {/* Categories */}
+              <div className="mb-6">
+                <h3 className="font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                  <SlidersHorizontal className="w-4 h-4" />
+                  Categories
+                </h3>
+                <div className="space-y-2">
+                  {categories.map((cat, index) => (
+                    <button
                       key={index}
-                      className="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50 cursor-pointer transition-colors"
+                      className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors text-left"
                     >
-                      <span className="text-2xl">{category.icon}</span>
-                      <div className="flex-1">
-                        <span className="font-medium text-gray-900">{category.name}</span>
-                        <span className="text-sm text-gray-500 ml-2">({category.count})</span>
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{cat.icon}</span>
+                        <span className="text-sm font-medium text-gray-700">
+                          {cat.name}
+                        </span>
                       </div>
-                    </div>
+                      <Badge variant="secondary" className="text-xs">
+                        {cat.count}
+                      </Badge>
+                    </button>
                   ))}
                 </div>
+              </div>
 
-                {/* Price Range */}
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <h4 className="font-bold text-gray-900 mb-4">Price Range</h4>
-                  <div className="grid grid-cols-2 gap-3">
-                    <Input placeholder="Min" className="rounded-xl" />
-                    <Input placeholder="Max" className="rounded-xl" />
+              {/* Filter Tabs */}
+              <div className="space-y-4">
+                {filterTabs.map((tab, index) => (
+                  <div key={index} className="border-b border-gray-100 pb-4">
+                    <button className="w-full flex items-center justify-between p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                      <span className="text-sm font-medium text-gray-700">
+                        {tab}
+                      </span>
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    </button>
                   </div>
-                  <Button className="w-full mt-3 bg-blue-600 hover:bg-blue-700 rounded-xl">Apply</Button>
-                </div>
-              </CardContent>
-            </Card>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Products Grid */}
           <div className="lg:col-span-3">
-            {/* Sort and View Options */}
-            <div className="flex items-center justify-between mb-6">
-              <p className="text-gray-600">Showing {products.length} of 245 products</p>
-              <div className="flex items-center gap-4">
-                <select className="border border-gray-300 rounded-xl px-4 py-2 text-sm">
-                  <option>Sort by: Featured</option>
-                  <option>Price: Low to High</option>
-                  <option>Price: High to Low</option>
-                  <option>Customer Rating</option>
-                  <option>Newest First</option>
-                </select>
-                <div className="flex items-center gap-2">
-                  <Button variant="outline" size="icon" className="rounded-xl">
-                    <Grid3X3 className="w-4 h-4" />
-                  </Button>
-                  <Button variant="outline" size="icon" className="rounded-xl">
-                    <List className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+            <div className="mb-4 flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Showing {products.length} of 245 products
+              </p>
             </div>
 
-            {/* Products Grid */}
-            <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {products.map((product) => (
-                <Card key={product.id} className="group hover:shadow-lg transition-all duration-300 border-0 bg-white">
-                  <CardContent className="p-0">
-                    {/* Product Image */}
-                    <div className="relative overflow-hidden rounded-t-xl">
-                      <Image
-                        src={product.image || "/placeholder.svg"}
-                        alt={product.name}
-                        width={300}
-                        height={300}
-                        className="w-full h-64 object-cover group-hover:scale-105 transition-transform duration-300"
-                      />
-                      {/* Discount Badge */}
-                      <Badge className="absolute top-3 left-3 bg-green-500 text-white font-bold">
+                <Card
+                  key={product.id}
+                  className="group hover:shadow-lg transition-all duration-200 border-gray-200 rounded-2xl overflow-hidden"
+                >
+                  <div className="relative">
+                    <Image
+                      src={product.image || "/placeholder.svg"}
+                      alt={product.name}
+                      width={300}
+                      height={300}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
+                    />
+
+                    {/* Wishlist Button */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-3 right-3 w-8 h-8 bg-white/80 hover:bg-white rounded-full shadow-sm"
+                    >
+                      <Heart className="w-4 h-4" />
+                    </Button>
+
+                    {/* Discount Badge */}
+                    {product.discount && (
+                      <Badge className="absolute top-3 left-3 bg-red-500 hover:bg-red-600 text-white text-xs">
                         {product.discount}
                       </Badge>
-                      {/* Wishlist Button */}
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-3 right-3 bg-white/80 hover:bg-white rounded-full"
-                      >
-                        <Heart className="w-4 h-4" />
-                      </Button>
-                    </div>
+                    )}
+                  </div>
 
-                    {/* Product Info */}
-                    <div className="p-4">
-                      {/* Brand */}
-                      <p className="text-sm text-blue-600 font-medium mb-1">{product.brand}</p>
-
-                      {/* Product Name */}
-                      <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                  <CardContent className="p-4">
+                    <div className="mb-2">
+                      <p className="text-xs text-gray-500 font-medium mb-1">
+                        {product.brand}
+                      </p>
+                      <h3 className="font-semibold text-gray-900 text-sm leading-tight line-clamp-2">
                         {product.name}
                       </h3>
+                    </div>
 
-                      {/* Rating */}
-                      <div className="flex items-center gap-2 mb-3">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                          <span className="text-sm font-medium">{product.rating}</span>
-                        </div>
-                        <span className="text-sm text-gray-500">({product.reviews} reviews)</span>
+                    {/* Rating */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex items-center gap-1">
+                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        <span className="text-sm font-medium">
+                          {product.rating}
+                        </span>
                       </div>
+                      <span className="text-xs text-gray-500">
+                        ({product.reviews} reviews)
+                      </span>
+                    </div>
 
-                      {/* Size Options */}
-                      <div className="flex flex-wrap gap-2 mb-4">
+                    {/* Size Options */}
+                    <div className="mb-3">
+                      <div className="flex flex-wrap gap-1">
                         {product.sizes.slice(0, 3).map((size, index) => (
-                          <Button
-                            key={index}
-                            variant="outline"
-                            size="sm"
-                            className="text-xs rounded-lg border-gray-300 hover:border-blue-500 hover:text-blue-600"
-                          >
-                            {size}
-                          </Button>
+                          <div key={index} className="relative">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs h-7 px-2 rounded-md border-gray-200 hover:border-orange-300 hover:bg-orange-50"
+                            >
+                              {size}
+                            </Button>
+                            {product.badges[index] && (
+                              <Badge className="absolute -top-1 -right-1 bg-green-500 text-white text-xs px-1 py-0 h-4 min-w-0">
+                                {product.badges[index]}
+                              </Badge>
+                            )}
+                          </div>
                         ))}
                         {product.sizes.length > 3 && (
-                          <Button variant="ghost" size="sm" className="text-xs text-blue-600">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs h-7 px-2 text-blue-600 hover:text-blue-700"
+                          >
                             +{product.sizes.length - 3} more
                           </Button>
                         )}
                       </div>
-
-                      {/* Price */}
-                      <div className="flex items-center gap-2 mb-4">
-                        <span className="text-xl font-bold text-gray-900">₹{product.discountedPrice}</span>
-                        <span className="text-sm text-gray-500 line-through">₹{product.originalPrice}</span>
-                        <Badge className="bg-red-100 text-red-600 text-xs">
-                          {Math.round(
-                            ((product.originalPrice - product.discountedPrice) / product.originalPrice) * 100,
-                          )}
-                          % OFF
-                        </Badge>
-                      </div>
-
-                      {/* Add to Cart Button */}
-                      <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-xl flex items-center gap-2">
-                        <ShoppingCart className="w-4 h-4" />
-                        Add to Cart
-                      </Button>
                     </div>
+
+                    {/* Price */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className="text-lg font-bold text-gray-900">
+                        ₹{product.discountedPrice}
+                      </span>
+                      <span className="text-sm text-gray-500 line-through">
+                        ₹{product.originalPrice}
+                      </span>
+                    </div>
+
+                    {/* Add to Cart Button */}
+                    <Button className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold rounded-lg h-9">
+                      <ShoppingCart className="w-4 h-4 mr-2" />
+                      Add to Cart
+                    </Button>
                   </CardContent>
                 </Card>
               ))}
             </div>
 
             {/* Load More */}
-            <div className="text-center mt-12">
+            <div className="text-center mt-8">
               <Button
                 variant="outline"
-                className="px-8 py-3 rounded-xl border-gray-300 hover:border-blue-500 hover:text-blue-600"
+                className="px-8 py-2 rounded-lg border-gray-200 hover:border-orange-300 hover:bg-orange-50"
               >
                 Load More Products
               </Button>
@@ -363,5 +370,18 @@ export default function CategoryPage({ params }: { params: { category: string } 
 
       <Footer />
     </div>
-  )
+  );
+}
+
+// ✅ Next.js 15 - async generateMetadata
+export async function generateMetadata({ params }: PageProps) {
+  const { category } = await params;
+
+  return {
+    title: `${category.replace("-", " ")} - PetPalace`,
+    description: `Shop the best ${category.replace(
+      "-",
+      " "
+    )} products at PetPalace`,
+  };
 }

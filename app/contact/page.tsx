@@ -1,241 +1,289 @@
-import { Card, CardContent } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import Header from "@/components/header"
-import Footer from "@/components/footer"
-import { Phone, Mail, MessageCircle, MapPin, Clock, Send, User, MessageSquare, Heart, HelpCircle } from "lucide-react"
+import { Header } from "@/components/header";
+import { Footer } from "@/components/footer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { MapPin, Phone, Mail, Clock, MessageCircle, Send } from "lucide-react";
 
 export default function ContactPage() {
-  const contactMethods = [
+  const contactInfo = [
     {
       icon: Phone,
-      title: "Call Us",
-      description: "Speak with our pet experts",
-      contact: "1800-123-4567",
-      subtext: "Toll-free • 24/7 Support",
-      color: "blue",
+      title: "Phone Support",
+      details: "1800-123-4567",
+      subtext: "Toll-free • Available 24/7",
+      color: "text-blue-600",
+      bgColor: "bg-blue-100",
     },
     {
       icon: Mail,
-      title: "Email Us",
-      description: "Get detailed assistance",
-      contact: "support@petpalace.com",
-      subtext: "Response within 2 hours",
-      color: "orange",
+      title: "Email Support",
+      details: "support@petpalace.com",
+      subtext: "We&apos;ll respond within 2 hours",
+      color: "text-green-600",
+      bgColor: "bg-green-100",
     },
-    {
-      icon: MessageCircle,
-      title: "Live Chat",
-      description: "Instant help available",
-      contact: "Chat Now",
-      subtext: "Available 9 AM - 9 PM",
-      color: "blue",
-    },
-  ]
-
-  const officeInfo = [
     {
       icon: MapPin,
-      title: "Head Office",
-      details: ["123 Pet Street", "Surat, Gujarat 395001", "India"],
+      title: "Visit Our Store",
+      details: "123 Pet Street, Surat, Gujarat",
+      subtext: "Open Mon-Sat, 9 AM - 8 PM",
+      color: "text-orange-600",
+      bgColor: "bg-orange-100",
+    },
+  ];
+
+  const faqs = [
+    {
+      question: "What are your delivery charges?",
+      answer:
+        "We offer free delivery on orders above ₹499. For orders below ₹499, delivery charges are ₹99.",
     },
     {
-      icon: Clock,
-      title: "Business Hours",
-      details: ["Monday - Friday: 9 AM - 9 PM", "Saturday: 10 AM - 8 PM", "Sunday: 10 AM - 6 PM"],
+      question: "Do you have a return policy?",
+      answer:
+        "Yes, we have a 7-day return policy for unopened products. Pet food and treats cannot be returned once opened for hygiene reasons.",
     },
-  ]
+    {
+      question: "Are your products authentic?",
+      answer:
+        "We source all our products directly from authorized distributors and manufacturers to ensure 100% authenticity.",
+    },
+    {
+      question: "Do you provide same-day delivery?",
+      answer:
+        "Yes, we offer same-day delivery in select cities including Mumbai, Delhi, Bangalore, and Pune for orders placed before 2 PM.",
+    },
+  ];
 
   return (
     <div className="min-h-screen bg-white">
       <Header />
 
-      {/* Hero Section - Light Background with Black Font */}
-      <section className="bg-gradient-to-br from-blue-50 to-blue-100 py-16">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-14 h-14 bg-blue-200 bg-opacity-60 rounded-2xl flex items-center justify-center">
-              <MessageSquare className="w-7 h-7 text-blue-700" />
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-black">Contact Us</h1>
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-blue-50 via-white to-orange-50 py-16">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            <Badge className="mb-6 bg-orange-100 text-orange-800 px-4 py-2 text-sm font-semibold">
+              Contact Us
+            </Badge>
+            <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-6">
+              We&apos;re here to{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-orange-500 to-blue-600">
+                help you and your pets
+              </span>
+            </h1>
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              Have questions about our products or need pet care advice? Our
+              friendly team of pet experts is ready to assist you 24/7.
+            </p>
           </div>
-          <p className="text-lg text-black max-w-2xl mx-auto">
-            We're here to help you and your pets. Reach out anytime for expert advice and support.
-          </p>
         </div>
       </section>
 
-      {/* Contact Methods */}
-      <section className="py-20">
+      {/* Contact Information */}
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-6 text-gray-900">Get in Touch</h2>
-            <p className="text-xl text-gray-600">Choose the way that works best for you</p>
-          </div>
-          <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {contactMethods.map((method, index) => (
-              <Card
-                key={index}
-                className="text-center hover:shadow-lg transition-all duration-300 border-0 bg-white group cursor-pointer"
-              >
-                <CardContent className="p-8">
-                  <div className="mb-6">
+          <div className="max-w-6xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Get in Touch
+              </h2>
+              <p className="text-xl text-gray-600">
+                Choose the way that works best for you
+              </p>
+            </div>
+            <div className="grid md:grid-cols-3 gap-8 mb-16">
+              {contactInfo.map((info, index) => (
+                <Card
+                  key={index}
+                  className="border-0 shadow-lg hover:shadow-xl transition-all duration-200"
+                >
+                  <CardContent className="p-6 text-center">
                     <div
-                      className={`w-16 h-16 mx-auto rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 ${
-                        method.color === "orange" ? "bg-orange-100" : "bg-blue-100"
-                      }`}
+                      className={`w-16 h-16 ${info.bgColor} rounded-2xl flex items-center justify-center mx-auto mb-4`}
                     >
-                      <method.icon
-                        className={`w-8 h-8 ${method.color === "orange" ? "text-orange-600" : "text-blue-600"}`}
-                      />
+                      <info.icon className={`w-8 h-8 ${info.color}`} />
                     </div>
-                  </div>
-                  <h3 className="text-xl font-bold mb-2 text-gray-900">{method.title}</h3>
-                  <p className="text-gray-600 mb-4">{method.description}</p>
-                  <p
-                    className={`font-semibold text-lg mb-2 ${
-                      method.color === "orange" ? "text-orange-600" : "text-blue-600"
-                    }`}
-                  >
-                    {method.contact}
-                  </p>
-                  <p className="text-sm text-gray-500">{method.subtext}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Contact Form & Info */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-16 max-w-6xl mx-auto">
-            {/* Contact Form */}
-            <div>
-              <div className="flex items-center gap-3 mb-8">
-                <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Send className="w-6 h-6 text-blue-600" />
-                </div>
-                <h2 className="text-3xl font-bold text-gray-900">Send us a Message</h2>
-              </div>
-              <Card className="border-0 shadow-lg">
-                <CardContent className="p-8">
-                  <form className="space-y-6">
-                    <div className="grid md:grid-cols-2 gap-6">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                          <User className="w-4 h-4" />
-                          First Name
-                        </label>
-                        <Input
-                          placeholder="Your first name"
-                          className="h-12 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                          <User className="w-4 h-4" />
-                          Last Name
-                        </label>
-                        <Input
-                          placeholder="Your last name"
-                          className="h-12 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                        <Mail className="w-4 h-4" />
-                        Email Address
-                      </label>
-                      <Input
-                        type="email"
-                        placeholder="your.email@example.com"
-                        className="h-12 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                        <Phone className="w-4 h-4" />
-                        Phone Number
-                      </label>
-                      <Input
-                        type="tel"
-                        placeholder="+91 98765 43210"
-                        className="h-12 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                        <MessageSquare className="w-4 h-4" />
-                        Subject
-                      </label>
-                      <Input
-                        placeholder="How can we help you?"
-                        className="h-12 rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2 flex items-center gap-2">
-                        <MessageCircle className="w-4 h-4" />
-                        Message
-                      </label>
-                      <Textarea
-                        placeholder="Tell us more about your inquiry..."
-                        rows={5}
-                        className="rounded-xl border-gray-200 focus:border-blue-500 focus:ring-blue-500 resize-none"
-                      />
-                    </div>
-                    <Button className="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white py-4 rounded-xl text-lg font-semibold flex items-center justify-center gap-2">
-                      <Send className="w-5 h-5" />
-                      Send Message
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      {info.title}
+                    </h3>
+                    <p className="text-lg font-semibold text-gray-800 mb-1">
+                      {info.details}
+                    </p>
+                    <p className="text-sm text-gray-600">{info.subtext}</p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
 
-            {/* Office Information */}
-            <div>
-              <h2 className="text-3xl font-bold mb-8 text-gray-900">Visit Our Office</h2>
-              <div className="space-y-8">
-                {officeInfo.map((info, index) => (
-                  <Card key={index} className="border-0 shadow-lg">
-                    <CardContent className="p-8">
-                      <div className="flex items-start gap-4">
-                        <div
-                          className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                            index === 0 ? "bg-orange-100" : "bg-blue-100"
-                          }`}
-                        >
-                          <info.icon className={`w-6 h-6 ${index === 0 ? "text-orange-600" : "text-blue-600"}`} />
-                        </div>
-                        <div>
-                          <h3 className="text-xl font-bold mb-3 text-gray-900">{info.title}</h3>
-                          <div className="space-y-1">
-                            {info.details.map((detail, detailIndex) => (
-                              <p key={detailIndex} className="text-gray-600">
-                                {detail}
-                              </p>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-
-                {/* Map Placeholder */}
-                <Card className="border-0 shadow-lg overflow-hidden">
-                  <div className="h-64 bg-gradient-to-br from-blue-100 to-orange-100 flex items-center justify-center">
-                    <div className="text-center">
-                      <MapPin className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-                      <p className="text-gray-600 font-medium">Interactive Map</p>
-                      <p className="text-sm text-gray-500">Find us on Google Maps</p>
+            {/* Contact Form */}
+            <div className="grid lg:grid-cols-2 gap-12">
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                  Send us a Message
+                </h3>
+                <form className="space-y-6">
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label
+                        htmlFor="firstName"
+                        className="block text-sm font-semibold text-gray-700 mb-2"
+                      >
+                        First Name
+                      </label>
+                      <Input
+                        id="firstName"
+                        type="text"
+                        placeholder="Enter your first name"
+                        className="h-12 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0"
+                      />
+                    </div>
+                    <div>
+                      <label
+                        htmlFor="lastName"
+                        className="block text-sm font-semibold text-gray-700 mb-2"
+                      >
+                        Last Name
+                      </label>
+                      <Input
+                        id="lastName"
+                        type="text"
+                        placeholder="Enter your last name"
+                        className="h-12 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0"
+                      />
                     </div>
                   </div>
+
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Email Address
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="Enter your email address"
+                      className="h-12 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="phone"
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Phone Number
+                    </label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="Enter your phone number"
+                      className="h-12 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="subject"
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Subject
+                    </label>
+                    <Input
+                      id="subject"
+                      type="text"
+                      placeholder="What can we help you with?"
+                      className="h-12 rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0"
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="message"
+                      className="block text-sm font-semibold text-gray-700 mb-2"
+                    >
+                      Message
+                    </label>
+                    <Textarea
+                      id="message"
+                      placeholder="Tell us more about your inquiry..."
+                      className="min-h-[120px] rounded-lg border-2 border-gray-200 focus:border-blue-500 focus:ring-0"
+                    />
+                  </div>
+
+                  <Button className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200">
+                    <Send className="w-5 h-5 mr-2" />
+                    Send Message
+                  </Button>
+                </form>
+              </div>
+
+              <div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                  Business Hours
+                </h3>
+                <Card className="border-0 shadow-lg mb-8">
+                  <CardContent className="p-6">
+                    <div className="space-y-4">
+                      {[
+                        { day: "Monday - Friday", hours: "9:00 AM - 8:00 PM" },
+                        { day: "Saturday", hours: "9:00 AM - 6:00 PM" },
+                        { day: "Sunday", hours: "10:00 AM - 4:00 PM" },
+                      ].map((schedule, index) => (
+                        <div
+                          key={index}
+                          className="flex justify-between items-center py-2 border-b border-gray-100 last:border-b-0"
+                        >
+                          <span className="font-semibold text-gray-700">
+                            {schedule.day}
+                          </span>
+                          <span className="text-gray-600">
+                            {schedule.hours}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-5 h-5 text-green-600" />
+                        <span className="font-semibold text-green-800">
+                          24/7 Online Support
+                        </span>
+                      </div>
+                      <p className="text-sm text-green-700 mt-1">
+                        Our online chat support is available round the clock for
+                        urgent queries.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <h3 className="text-2xl font-bold text-gray-900 mb-6">
+                  Quick Chat
+                </h3>
+                <Card className="border-0 shadow-lg">
+                  <CardContent className="p-6">
+                    <div className="text-center">
+                      <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <MessageCircle className="w-8 h-8 text-blue-600" />
+                      </div>
+                      <h4 className="font-bold text-gray-900 mb-2">
+                        Need Immediate Help?
+                      </h4>
+                      <p className="text-gray-600 mb-4">
+                        Start a live chat with our pet care experts for instant
+                        assistance.
+                      </p>
+                      <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg">
+                        Start Live Chat
+                      </Button>
+                    </div>
+                  </CardContent>
                 </Card>
               </div>
             </div>
@@ -244,82 +292,48 @@ export default function ContactPage() {
       </section>
 
       {/* FAQ Section */}
-      <section className="py-20">
+      <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <div className="flex items-center justify-center gap-3 mb-6">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
-                <HelpCircle className="w-6 h-6 text-orange-600" />
-              </div>
-              <h2 className="text-4xl font-bold text-gray-900">Frequently Asked Questions</h2>
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-xl text-gray-600">
+                Quick answers to common questions
+              </p>
             </div>
-            <p className="text-xl text-gray-600">Quick answers to common questions</p>
-          </div>
-          <div className="max-w-4xl mx-auto space-y-6">
-            {[
-              {
-                question: "What are your delivery timings?",
-                answer:
-                  "We deliver Monday to Saturday, 9 AM to 9 PM. Same-day delivery available for orders placed before 2 PM.",
-              },
-              {
-                question: "Do you offer veterinary consultations?",
-                answer:
-                  "Yes! We have certified veterinarians available for online consultations. Book through our website or call us.",
-              },
-              {
-                question: "What's your return policy?",
-                answer:
-                  "We offer a 30-day return policy on all products. Items must be in original condition with packaging.",
-              },
-              {
-                question: "Do you have a loyalty program?",
-                answer:
-                  "Yes! Join our Pet Palace Rewards program to earn points on every purchase and get exclusive discounts.",
-              },
-            ].map((faq, index) => (
-              <Card key={index} className="border-0 shadow-sm hover:shadow-md transition-shadow duration-300">
-                <CardContent className="p-6">
-                  <h3 className="text-lg font-semibold mb-3 text-gray-900 flex items-center gap-3">
-                    <div className="w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center">
-                      <HelpCircle className="w-4 h-4" />
-                    </div>
-                    {faq.question}
-                  </h3>
-                  <p className="text-gray-600 ml-11">{faq.answer}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 bg-gradient-to-r from-orange-500 to-orange-600">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex items-center justify-center gap-3 mb-6">
-            <div className="w-12 h-12 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
-              <Heart className="w-6 h-6 text-white" />
+            <div className="space-y-6">
+              {faqs.map((faq, index) => (
+                <Card
+                  key={index}
+                  className="border-0 shadow-sm hover:shadow-md transition-all duration-200"
+                >
+                  <CardContent className="p-6">
+                    <h3 className="text-lg font-bold text-gray-900 mb-3">
+                      {faq.question}
+                    </h3>
+                    <p className="text-gray-600 leading-relaxed">
+                      {faq.answer}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
-            <h2 className="text-4xl font-bold text-white">Still Have Questions?</h2>
-          </div>
-          <p className="text-xl text-orange-100 mb-10 max-w-2xl mx-auto">
-            Our pet experts are always ready to help you make the best choices for your furry friends
-          </p>
-          <div className="flex flex-col sm:flex-row gap-6 justify-center">
-            <Button className="bg-white text-orange-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold rounded-xl flex items-center gap-2">
-              <Phone className="w-5 h-5" />
-              Call Now: 1800-123-4567
-            </Button>
-            <Button className="bg-blue-600 text-white hover:bg-blue-700 px-8 py-4 text-lg font-semibold rounded-xl flex items-center gap-2">
-              <MessageCircle className="w-5 h-5" />
-              Start Live Chat
-            </Button>
+            <div className="text-center mt-8">
+              <p className="text-gray-600 mb-4">Still have questions?</p>
+              <Button
+                variant="outline"
+                className="border-2 border-orange-200 text-orange-600 hover:bg-orange-50 hover:border-orange-300 px-6 py-2 rounded-lg font-semibold"
+              >
+                View All FAQs
+              </Button>
+            </div>
           </div>
         </div>
       </section>
 
       <Footer />
     </div>
-  )
+  );
 }

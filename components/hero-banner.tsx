@@ -3,6 +3,7 @@
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "./ui/button";
+import Image from "next/image";
 
 export function HeroBanner() {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -30,12 +31,10 @@ export function HeroBanner() {
     },
   ];
 
-  // Auto-play functionality
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
-    }, 5000); // Change slide every 5 seconds
-
+    }, 5000);
     return () => clearInterval(timer);
   }, [slides.length]);
 
@@ -53,27 +52,24 @@ export function HeroBanner() {
 
   return (
     <section className="relative overflow-hidden">
-      {/* Carousel Container */}
       <div className="relative h-[500px] w-full">
-        {/* Slides */}
         <div className="relative w-full h-full">
           {slides.map((slide, index) => (
             <div
               key={slide.id}
               className={`absolute inset-0 transition-all duration-700 ease-in-out ${
                 index === currentSlide
-                  ? "opacity-100 translate-x-0"
-                  : index < currentSlide
-                  ? "opacity-0 -translate-x-full"
-                  : "opacity-0 translate-x-full"
+                  ? "opacity-100 translate-x-0 z-10"
+                  : "opacity-0 translate-x-full z-0"
               }`}
             >
-              <img
-                src={slide.image || "/placeholder.svg"}
+              <Image
+                src={slide.image}
                 alt={slide.alt}
-                className="w-full h-full object-cover"
+                layout="fill"
+                objectFit="cover"
+                priority={index === 0}
               />
-              {/* Optional overlay for better text readability if needed */}
               <div className="absolute inset-0 bg-black/10"></div>
             </div>
           ))}
@@ -84,7 +80,7 @@ export function HeroBanner() {
           variant="ghost"
           size="icon"
           onClick={prevSlide}
-          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/80 hover:bg-white rounded-full shadow-lg z-10 text-gray-700 hover:text-gray-900 backdrop-blur-sm"
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/80 hover:bg-white rounded-full shadow-lg z-20 text-gray-700 hover:text-gray-900 backdrop-blur-sm"
         >
           <ChevronLeft className="w-5 h-5" />
         </Button>
@@ -93,13 +89,13 @@ export function HeroBanner() {
           variant="ghost"
           size="icon"
           onClick={nextSlide}
-          className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/80 hover:bg-white rounded-full shadow-lg z-10 text-gray-700 hover:text-gray-900 backdrop-blur-sm"
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/80 hover:bg-white rounded-full shadow-lg z-20 text-gray-700 hover:text-gray-900 backdrop-blur-sm"
         >
           <ChevronRight className="w-5 h-5" />
         </Button>
 
         {/* Slide Indicators */}
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 flex gap-2 z-20">
           {slides.map((_, index) => (
             <button
               key={index}
@@ -114,7 +110,7 @@ export function HeroBanner() {
         </div>
 
         {/* Slide Counter */}
-        <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm">
+        <div className="absolute top-4 right-4 bg-black/50 text-white px-3 py-1 rounded-full text-sm font-medium backdrop-blur-sm z-20">
           {currentSlide + 1} / {slides.length}
         </div>
       </div>

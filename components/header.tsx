@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -20,13 +20,16 @@ export function Header() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const placeholders = [
-    "Search for premium pet products...",
-    "Find toys for your furry friends...",
-    "Discover healthy pet food...",
-    "Shop grooming essentials...",
-    "Browse pet accessories...",
-  ];
+  const placeholders = useMemo(
+    () => [
+      "Search for premium pet products...",
+      "Find toys for your furry friends...",
+      "Discover healthy pet food...",
+      "Shop grooming essentials...",
+      "Browse pet accessories...",
+    ],
+    []
+  );
 
   const updatePlaceholder = useCallback(() => {
     const currentText = placeholders[currentIndex];

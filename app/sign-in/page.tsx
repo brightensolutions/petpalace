@@ -123,7 +123,7 @@ export default function SignInPage() {
                   <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 flex items-center gap-3">
                     <input type="checkbox" className="w-5 h-5" />
                     <span className="text-sm text-gray-700">
-                      I'm not a robot
+                      I&apos;m not a robot
                     </span>
                     <div className="text-xs text-gray-500">reCAPTCHA</div>
                   </div>
@@ -161,7 +161,7 @@ export default function SignInPage() {
                   </Link>{" "}
                   and{" "}
                   <Link href="/terms" className="text-blue-600 hover:underline">
-                    T&C
+                    T&amp;C
                   </Link>
                   .
                 </p>
@@ -198,7 +198,7 @@ export default function SignInPage() {
                     onClick={() => setIsOtpSent(false)}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
-                    Didn't receive OTP? Resend
+                    Didn&apos;t receive OTP? Resend
                   </button>
                 </div>
               </div>
@@ -208,7 +208,7 @@ export default function SignInPage() {
           {/* Sign Up Link */}
           <div className="mt-6 text-center">
             <p className="text-gray-600">
-              Don't have an account?{" "}
+              Don&apos;t have an account?{" "}
               <Link
                 href="/sign-up"
                 className="font-semibold text-blue-600 hover:text-blue-700"

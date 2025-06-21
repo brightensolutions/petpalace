@@ -202,8 +202,9 @@ export default function SignUpPage() {
                   <div className="bg-gray-100 border border-gray-300 rounded-lg p-4 flex items-center gap-3">
                     <input type="checkbox" className="w-5 h-5" />
                     <span className="text-sm text-gray-700">
-                      I'm not a robot
+                      I&apos;m not a robot
                     </span>
+
                     <div className="text-xs text-gray-500">reCAPTCHA</div>
                   </div>
                 </div>
@@ -277,7 +278,7 @@ export default function SignUpPage() {
                     onClick={() => setIsOtpSent(false)}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
-                    Didn't receive OTP? Resend
+                    Didn&apos;t receive OTP? Resend
                   </button>
                 </div>
               </div>
