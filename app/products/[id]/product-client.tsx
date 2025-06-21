@@ -11,12 +11,14 @@ import {
   ShoppingCart,
   ChevronLeft,
   ChevronRight,
-  type Truck,
   Plus,
   Minus,
   User,
   ThumbsUp,
   ThumbsDown,
+  Truck,
+  RotateCcw,
+  Shield,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -36,7 +38,7 @@ interface Offer {
 }
 
 interface Feature {
-  icon: typeof Truck;
+  icon: string;
   text: string;
 }
 
@@ -131,6 +133,15 @@ export default function ProductClient({
       console.log("Checking delivery for pincode:", pincode);
       // Add pincode validation logic here
     }
+  };
+
+  const getIconComponent = (iconName: string) => {
+    const iconMap = {
+      truck: Truck,
+      "rotate-ccw": RotateCcw,
+      shield: Shield,
+    };
+    return iconMap[iconName as keyof typeof iconMap] || Truck;
   };
 
   return (
@@ -397,12 +408,15 @@ export default function ProductClient({
 
                 {/* Features */}
                 <div className="space-y-3">
-                  {product.features.map((feature, index) => (
-                    <div key={index} className="flex items-center gap-3">
-                      <feature.icon className="w-5 h-5 text-gray-600" />
-                      <span className="text-gray-700">{feature.text}</span>
-                    </div>
-                  ))}
+                  {product.features.map((feature, index) => {
+                    const IconComponent = getIconComponent(feature.icon);
+                    return (
+                      <div key={index} className="flex items-center gap-3">
+                        <IconComponent className="w-5 h-5 text-gray-600" />
+                        <span className="text-gray-700">{feature.text}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>

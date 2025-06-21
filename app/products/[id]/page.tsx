@@ -1,6 +1,5 @@
 import Header from "@/components/header";
 import Footer from "@/components/footer";
-import { Truck, RotateCcw, Shield } from "lucide-react";
 import Link from "next/link";
 import ProductClient from "./product-client";
 
@@ -26,7 +25,7 @@ interface Offer {
 }
 
 interface Feature {
-  icon: typeof Truck;
+  icon: string;
   text: string;
 }
 
@@ -134,9 +133,9 @@ export default async function ProductPage({ params }: ProductPageProps) {
       },
     ],
     features: [
-      { icon: Truck, text: "Enjoy Free Delivery above ₹699" },
-      { icon: RotateCcw, text: "No Exchange & Returns" },
-      { icon: Shield, text: "100% Authentic Products" },
+      { icon: "truck", text: "Enjoy Free Delivery above ₹699" },
+      { icon: "rotate-ccw", text: "No Exchange & Returns" },
+      { icon: "shield", text: "100% Authentic Products" },
     ],
     customerReviews: [
       {
