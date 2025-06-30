@@ -73,7 +73,7 @@ export function OffersSection() {
 
   return (
     <section className="py-12 bg-white w-full">
-      <div className="w-full px-4">
+      <div className="w-full px-10">
         {/* Section Header */}
         <div className="mb-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">

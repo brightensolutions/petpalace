@@ -6,7 +6,7 @@ import ProductClient from "./product-client";
 // Updated interface for Next.js 15 - params is now a Promise
 interface ProductPageProps {
   params: Promise<{
-    id: string;
+    slug: string; // Changed from 'id' to 'slug' to match [slug] folder
   }>;
 }
 
@@ -69,7 +69,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   // Mock product data - will come from database in future
   const product: Product = {
-    id: resolvedParams.id,
+    id: resolvedParams.slug, // Use slug instead of id
     brand: "Royal Canin",
     name: "Royal Canin Ultra Light Wet Cat Food - 85 g packs",
     rating: 4.8,

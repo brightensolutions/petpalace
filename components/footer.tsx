@@ -160,12 +160,11 @@ export function Footer() {
             <h3 className="text-2xl font-bold text-gray-900">Pet Categories</h3>
             <ul className="space-y-3">
               {[
-                { name: "Dog Supplies", popular: true },
-                { name: "Cat Supplies", popular: true },
-                { name: "Pet Food & Treats" },
-                { name: "Toys & Games" },
-                { name: "Health & Medicine" },
-                { name: "Grooming Essentials" },
+                { name: "Cats", popular: true },
+                { name: "Dogs", popular: true },
+                { name: "Pharmacy" },
+                { name: "Shop by brand" },
+                { name: "Pet Consultation" },
               ].map((category, index) => (
                 <li key={index}>
                   <a

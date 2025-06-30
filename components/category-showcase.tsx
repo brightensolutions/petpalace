@@ -23,82 +23,40 @@ export function CategoryShowcase() {
     { id: 16, name: "Supplements", image: "/categories/category.webp" },
   ];
 
-  // Split categories into two rows of 8 each
-  const firstRow = categories.slice(0, 8);
-  const secondRow = categories.slice(8, 16);
-
   return (
-    <section className="py-12 bg-white w-full">
-      <div className="w-full px-4">
+    <section className="bg-white w-full pt-4 pb-4">
+      <div className="w-full px-4 sm:px-6 lg:px-10">
         {/* Section Header */}
-        <div className="mb-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+        <div className="mb-5 text-left">
+          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">
             Trending Add-To-Carts
           </h2>
           <p className="text-gray-600 text-lg">Were you looking for these?</p>
         </div>
 
-        {/* Categories Grid - Two Rows of 8 */}
-        <div className="space-y-4">
-          {/* First Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4">
-            {firstRow.map((category) => (
-              <Card
-                key={category.id}
-                className="group hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-200 hover:border-orange-300 rounded-2xl overflow-hidden bg-white"
-              >
-                <CardContent className="p-0">
-                  {/* Image Section */}
-                  <div className="aspect-square bg-gradient-to-br from-orange-50 to-blue-50 p-4 flex items-center justify-center">
+        {/* Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4">
+          {categories.map((category) => (
+            <div key={category.id} className="flex flex-col items-center">
+              <Card className="w-full border border-gray-200 hover:border-orange-400 transition-all duration-300 rounded-2xl overflow-hidden shadow-sm hover:shadow-md group">
+                {/* REMOVE ALL padding and margin */}
+                <CardContent className="p-0 m-0">
+                  <div className="relative w-full aspect-square bg-gradient-to-br from-orange-50 to-blue-50">
                     <Image
-                      src={category.image || "/placeholder.svg"}
+                      src={category.image}
                       alt={category.name}
-                      width={300}
-                      height={200}
-                      className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
+                      fill
+                      className="object-cover group-hover:scale-105 transition-transform duration-300 rounded-2xl"
                     />
-                  </div>
-
-                  {/* Category Name */}
-                  <div className="p-4 text-center">
-                    <h3 className="font-semibold text-gray-900 text-lg group-hover:text-orange-600 transition-colors duration-300">
-                      {category.name}
-                    </h3>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-
-          {/* Second Row */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4">
-            {secondRow.map((category) => (
-              <Card
-                key={category.id}
-                className="group hover:shadow-lg transition-all duration-300 cursor-pointer border border-gray-200 hover:border-orange-300 rounded-2xl overflow-hidden bg-white"
-              >
-                <CardContent className="p-0">
-                  {/* Image Section */}
-                  <div className="aspect-square bg-gradient-to-br from-orange-50 to-blue-50 p-4 flex items-center justify-center">
-                    <Image
-                      src={category.image || "/placeholder.svg"}
-                      alt={category.name}
-                      width={300}
-                      height={200}
-                      className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-300"
-                    />
-                  </div>
-
-                  {/* Category Name */}
-                  <div className="p-4 text-center">
-                    <h3 className="font-semibold text-gray-900 text-lg group-hover:text-orange-600 transition-colors duration-300">
-                      {category.name}
-                    </h3>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+              {/* Original font size (text-base) */}
+              <h3 className="mt-2 text-xl font-semibold text-gray-900 text-center group-hover:text-orange-600 transition-colors duration-300">
+                {category.name}
+              </h3>
+            </div>
+          ))}
         </div>
       </div>
     </section>

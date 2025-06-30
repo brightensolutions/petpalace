@@ -65,7 +65,7 @@ export function VideoShowcase() {
 
   return (
     <section className="py-12 bg-white w-full">
-      <div className="w-full px-4">
+      <div className="w-full px-4 sm:px-6 lg:px-10">
         {/* Section Header */}
         <div className="mb-8">
           <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
@@ -97,17 +97,18 @@ export function VideoShowcase() {
             <ChevronRight className="w-5 h-5 text-gray-600" />
           </Button>
 
-          {/* Single Row Video Container */}
+          {/* Scrollable Video Row */}
           <div
             ref={scrollContainerRef}
             className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 px-12"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {videos.map((video) => (
-              <div key={video.id} className="flex-shrink-0 w-56">
-                {/* Simple Video Card */}
+              <div
+                key={video.id}
+                className="flex-shrink-0 min-w-[16.66%] max-w-[16.66%] px-1"
+              >
                 <div className="relative">
-                  {/* Video Container */}
                   <div
                     className="relative rounded-lg overflow-hidden bg-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300"
                     style={{ aspectRatio: "9/16" }}
@@ -123,8 +124,6 @@ export function VideoShowcase() {
                     </video>
                   </div>
                 </div>
-
-                {/* Simple Caption */}
                 <div className="mt-3 text-center">
                   <h3 className="font-semibold text-gray-900 text-base">
                     {video.title}
