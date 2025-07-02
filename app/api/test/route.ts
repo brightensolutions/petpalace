@@ -1,15 +1,29 @@
-import { NextResponse } from "next/server";
-import clientPromise from "@/lib/mongodb"; // or use relative path if alias fails
+// app/api/test/route.ts
 
+import connectDb from "@/lib/db/db";
+
+// ✅ GET handler without unused `request` param
 export async function GET() {
   try {
-    const client = await clientPromise;
-    const db = client.db("petpalace");
-    const collections = await db.listCollections().toArray();
+    await connectDb();
 
-    return NextResponse.json({ success: true, collections });
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return NextResponse.json({ success: false, message }, { status: 500 });
+    return new Response(JSON.stringify({ message: "✅ MongoDB Connected" }), {
+      status: 200,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+  } catch (error) {
+    console.error("❌ DB Connection Error:", (error as Error).message);
+
+    return new Response(
+      JSON.stringify({ error: "❌ Failed to connect to MongoDB" }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
   }
 }
