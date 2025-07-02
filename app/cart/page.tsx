@@ -83,6 +83,8 @@ export default function CartPage() {
   ]);
 
   const [promoCode, setPromoCode] = useState("");
+
+  const [donationAmount, setDonationAmount] = useState(0);
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
 
   // Offer products data
@@ -412,7 +414,7 @@ export default function CartPage() {
                 <CardContent className="p-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
                     <Gift className="w-5 h-5 text-orange-600" />
-                    Frequently Bought Together
+                    ABHI NAHI TO KABHI NAHI
                   </h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {offerProducts.slice(0, 4).map((offer) => (
@@ -531,6 +533,41 @@ export default function CartPage() {
                       </div>
                     ))}
                   </div>
+                </CardContent>
+              </Card>
+              {/* Donate to Foundation */}
+              <Card>
+                <CardContent className="p-6">
+                  <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
+                    ❤️ Support Pet Foundation
+                  </h2>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Add a small donation to support stray and rescued animals.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {[5, 10, 15, 20, 25].map((amount) => (
+                      <Button
+                        key={amount}
+                        variant={
+                          donationAmount === amount ? "default" : "outline"
+                        }
+                        className={`px-4 py-2 rounded-full ${
+                          donationAmount === amount
+                            ? "bg-orange-500 text-white"
+                            : "border-gray-300 text-gray-700"
+                        }`}
+                        onClick={() => setDonationAmount(amount)}
+                      >
+                        ₹{amount}
+                      </Button>
+                    ))}
+                  </div>
+                  {donationAmount > 0 && (
+                    <p className="mt-3 text-sm text-green-600">
+                      Thank you for adding ₹{donationAmount} to support the
+                      cause! 🐾
+                    </p>
+                  )}
                 </CardContent>
               </Card>
 
