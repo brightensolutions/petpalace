@@ -1,10 +1,8 @@
-// app/api/products/route.ts
-
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
 import Product from "@/lib/models/Product";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
     const products = await Product.find()
@@ -12,7 +10,9 @@ export async function GET(req: NextRequest) {
       .populate("brand_id");
 
     return NextResponse.json(products);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    const errorMsg =
+      err instanceof Error ? err.message : "An unknown error occurred";
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

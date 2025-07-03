@@ -1,15 +1,15 @@
-// app/api/product-offers/route.ts
-
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
 import ProductOffer from "@/lib/models/ProductOffer";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
     const offers = await ProductOffer.find();
     return NextResponse.json(offers);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    const errorMsg =
+      err instanceof Error ? err.message : "An unknown error occurred";
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

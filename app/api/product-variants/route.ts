@@ -1,15 +1,15 @@
-// app/api/product-variants/route.ts
-
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
 import ProductVariant from "@/lib/models/ProductVariant";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     await dbConnect();
     const variants = await ProductVariant.find();
     return NextResponse.json(variants);
-  } catch (err: any) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+  } catch (err) {
+    const errorMsg =
+      err instanceof Error ? err.message : "An unknown error occurred";
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }

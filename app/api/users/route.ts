@@ -1,5 +1,3 @@
-// app/api/users/check-phone/route.ts
-
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
 import User from "@/lib/models/User";
@@ -13,7 +11,8 @@ export async function POST(req: NextRequest) {
 
     const user = await User.findOne({ number });
     return NextResponse.json({ exists: !!user });
-  } catch (err: any) {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : "Server error";
+    return NextResponse.json({ error: errorMsg }, { status: 500 });
   }
 }
