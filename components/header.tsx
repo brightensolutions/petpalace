@@ -17,6 +17,8 @@ import Image from "next/image";
 import Link from "next/link";
 
 export function Header() {
+  const [userExists, setUserExists] = useState(false);
+
   const [placeholderText, setPlaceholderText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -62,6 +64,24 @@ export function Header() {
   useEffect(() => {
     return updatePlaceholder();
   }, [updatePlaceholder]);
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/users/me", {
+          method: "GET",
+          credentials: "include", // important to send cookies
+        });
+        const data = await res.json();
+        setUserExists(data.authenticated === true);
+      } catch (err) {
+        console.error("Auth check failed:", err);
+        setUserExists(false);
+      }
+    };
+
+    checkAuth();
+  }, []);
 
   const menuData = {
     Cats: {
@@ -306,14 +326,25 @@ export function Header() {
             </div>
 
             {/* Sign In Button - Responsive */}
-            <Link href="/sign-in">
-              <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-2 sm:px-3 py-1 rounded-md lg:rounded-lg font-semibold text-xs lg:text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-8 sm:h-10 flex items-center gap-1">
-                <div className="w-4 h-4 sm:w-5 sm:h-5 bg-white/20 rounded-sm lg:rounded-md flex items-center justify-center">
-                  <User className="w-2 h-2 sm:w-3 sm:h-3" />
-                </div>
-                <span className="hidden sm:inline">Sign In</span>
-              </Button>
-            </Link>
+            {userExists ? (
+              <Link href="/account">
+                <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-2 sm:px-3 py-1 rounded-md lg:rounded-lg font-semibold text-xs lg:text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-8 sm:h-10 flex items-center gap-1">
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 bg-white/20 rounded-sm lg:rounded-md flex items-center justify-center">
+                    <User className="w-2 h-2 sm:w-3 sm:h-3" />
+                  </div>
+                  <span className="hidden sm:inline">Account</span>
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/sign-in">
+                <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-2 sm:px-3 py-1 rounded-md lg:rounded-lg font-semibold text-xs lg:text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-8 sm:h-10 flex items-center gap-1">
+                  <div className="w-4 h-4 sm:w-5 sm:h-5 bg-white/20 rounded-sm lg:rounded-md flex items-center justify-center">
+                    <User className="w-2 h-2 sm:w-3 sm:h-3" />
+                  </div>
+                  <span className="hidden sm:inline">Login / Sign Up</span>
+                </Button>
+              </Link>
+            )}
 
             {/* Cart - Responsive */}
             <div className="relative">

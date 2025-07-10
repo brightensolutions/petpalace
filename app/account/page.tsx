@@ -9,15 +9,16 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import { toast } from "@/components/ui/use-toast";
+
 import {
   User,
-  Package,
-  CreditCard,
+  UserCog,
   MapPin,
-  Wallet,
+  PackageCheck,
+  Coins,
   Heart,
-  Bell,
-  Settings,
+  PhoneCall,
   LogOut,
   Edit,
   Plus,
@@ -33,9 +34,9 @@ import {
   Building,
   Phone,
   Award,
+  PawPrint,
   TrendingUp,
   ShoppingBag,
-  Coins,
 } from "lucide-react";
 import Image from "next/image";
 
@@ -70,7 +71,7 @@ interface Transaction {
 }
 
 export default function UserDashboard() {
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSection, setActiveSection] = useState("orders");
   const [isEditing, setIsEditing] = useState(false);
 
   // Mock user data
@@ -176,16 +177,26 @@ export default function UserDashboard() {
       status: "completed",
     },
   ];
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/users/logout", {
+        method: "POST",
+        credentials: "include", // required to send cookies
+      });
+
+      window.location.href = "/sign-in"; // redirect after logout
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
 
   const sidebarItems = [
-    { id: "overview", label: "Overview", icon: User },
-    { id: "orders", label: "My Orders", icon: Package },
-    { id: "payments", label: "Payments", icon: CreditCard },
-    { id: "addresses", label: "Addresses", icon: MapPin },
-    { id: "wallet", label: "Wallet & Points", icon: Wallet },
-    { id: "wishlist", label: "Wishlist", icon: Heart },
-    { id: "profile", label: "Profile", icon: Settings },
-    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "profile", label: "My Profile", icon: UserCog }, // 👤 Profile settings
+    { id: "addresses", label: "Addresses", icon: MapPin }, // 📍 Location/address
+    { id: "orders", label: "My Orders", icon: PackageCheck }, // 📦 Confirmed orders
+    { id: "wallet", label: "My Petpalace Points", icon: Coins }, // 🪙 Wallet/points
+    { id: "wishlist", label: "My Wishlist", icon: Heart }, // ❤️ Favorite items
+    { id: "contact", label: "Contact Us", icon: PhoneCall }, // ☎️ Contact support
   ];
 
   const getStatusColor = (status: string) => {
@@ -223,33 +234,6 @@ export default function UserDashboard() {
       case "overview":
         return (
           <div className="space-y-6">
-            {/* Welcome Section */}
-            <div className="bg-gradient-to-r from-orange-500 to-orange-600 rounded-2xl p-6 text-white">
-              <div className="flex items-center gap-4">
-                <Avatar className="w-16 h-16 border-4 border-white/20">
-                  <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                  <AvatarFallback className="bg-white/20 text-white text-xl font-bold">
-                    {user.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <h1 className="text-2xl font-bold">
-                    Welcome back, {user.name}!
-                  </h1>
-                  <p className="text-orange-100">
-                    Member since {user.joinDate}
-                  </p>
-                  <Badge className="bg-white/20 text-white mt-2">
-                    <Award className="w-3 h-3 mr-1" />
-                    {user.membershipTier} Member
-                  </Badge>
-                </div>
-              </div>
-            </div>
-
             {/* Stats Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
               <Card>
@@ -282,7 +266,7 @@ export default function UserDashboard() {
                 </CardContent>
               </Card>
 
-              <Card>
+              {/* <Card>
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -296,7 +280,7 @@ export default function UserDashboard() {
                     </div>
                   </div>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               <Card>
                 <CardContent className="p-6">
@@ -489,7 +473,7 @@ export default function UserDashboard() {
                 </CardContent>
               </Card>
 
-              <Card>
+              {/* <Card>
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
                     <CreditCard className="w-6 h-6 text-blue-600" />
@@ -497,7 +481,7 @@ export default function UserDashboard() {
                   <p className="text-sm text-gray-600">Successful Payments</p>
                   <p className="text-2xl font-bold">{user.totalOrders}</p>
                 </CardContent>
-              </Card>
+              </Card> */}
 
               <Card>
                 <CardContent className="p-6 text-center">
@@ -514,7 +498,7 @@ export default function UserDashboard() {
               <CardHeader>
                 <CardTitle>Recent Transactions</CardTitle>
               </CardHeader>
-              <CardContent>
+              {/* <CardContent>
                 <div className="space-y-4">
                   {transactions.map((txn) => (
                     <div
@@ -559,7 +543,7 @@ export default function UserDashboard() {
                     </div>
                   ))}
                 </div>
-              </CardContent>
+              </CardContent> */}
             </Card>
           </div>
         );
@@ -891,44 +875,49 @@ export default function UserDashboard() {
                   <div className="flex items-center gap-3 mb-6">
                     <Avatar className="w-12 h-12">
                       <AvatarImage src={user.avatar || "/placeholder.svg"} />
-                      <AvatarFallback>
-                        {user.name
-                          .split(" ")
-                          .map((n) => n[0])
-                          .join("")}
+                      <AvatarFallback className="bg-orange-100 text-orange-600 flex items-center justify-center">
+                        <PawPrint className="w-5 h-5" />
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold">{user.name}</p>
+                      <p className="font-semibold">Welcome Back!</p>
                       <p className="text-sm text-gray-600">
-                        {user.membershipTier} Member
+                        Good to See You Again
                       </p>
                     </div>
                   </div>
 
-                  <nav className="space-y-2">
+                  <nav className="flex flex-col gap-3">
                     {sidebarItems.map((item) => (
                       <Button
                         key={item.id}
                         variant={
                           activeSection === item.id ? "default" : "ghost"
                         }
-                        className={`w-full justify-start ${
+                        className={`w-full justify-start text-lg font-medium px-4 py-2 rounded-lg transition-colors ${
                           activeSection === item.id
                             ? "bg-orange-500 hover:bg-orange-600 text-white"
-                            : "hover:bg-gray-100"
+                            : "hover:bg-gray-100 text-gray-700"
                         }`}
                         onClick={() => setActiveSection(item.id)}
                       >
-                        <item.icon className="w-4 h-4 mr-3" />
+                        <item.icon
+                          className={`w-5 h-5 mr-3 ${
+                            activeSection === item.id
+                              ? "text-white"
+                              : "text-orange-500"
+                          }`}
+                        />
                         {item.label}
                       </Button>
                     ))}
+
                     <Button
                       variant="ghost"
-                      className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+                      className="w-full justify-start text-base text-red-600 hover:text-red-700 hover:bg-red-50 font-medium"
+                      onClick={handleLogout}
                     >
-                      <LogOut className="w-4 h-4 mr-3" />
+                      <LogOut className="w-5 h-5 mr-3 text-red-600" />
                       Logout
                     </Button>
                   </nav>

@@ -3,15 +3,10 @@ import mongoose from "mongoose";
 let isConnected = false;
 
 const connectDb = async (): Promise<void> => {
-  if (isConnected) {
-    return;
-  }
+  if (isConnected) return;
 
   try {
-    const db = await mongoose.connect(process.env.MONGO_URI as string, {
-      dbName: "petpalace",
-    });
-
+    const db = await mongoose.connect(process.env.MONGODB_URI as string);
     isConnected = true;
     console.log("✅ MongoDB connected:", db.connection.name);
   } catch (error: unknown) {
