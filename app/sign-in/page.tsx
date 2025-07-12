@@ -40,7 +40,6 @@ export default function SignInPage() {
     }
 
     try {
-      // Check if user exists
       const checkRes = await fetch("/api/users/check", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -49,7 +48,6 @@ export default function SignInPage() {
       const checkData = await checkRes.json();
 
       if (!checkData.exists) {
-        // Create user
         const createRes = await fetch("/api/users/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -62,7 +60,6 @@ export default function SignInPage() {
         }
       }
 
-      // In both cases (new or existing), go to email step
       setShowEmailInput(true);
     } catch (err) {
       console.error("OTP Verify Error:", err);
@@ -88,6 +85,12 @@ export default function SignInPage() {
       const data = await res.json();
 
       if (data.success) {
+        // ✅ Login to set cookie
+        await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ number: fullNumber, email }),
+        });
         router.push("/");
       } else {
         alert("❌ Failed to update email.");
@@ -98,7 +101,16 @@ export default function SignInPage() {
     }
   };
 
-  const handleSkipEmail = () => {
+  const handleSkipEmail = async () => {
+    const fullNumber = `${countryCode}${phoneNumber}`;
+
+    // ✅ Login even if email skipped
+    await fetch("/api/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ number: fullNumber }),
+    });
+
     router.push("/");
   };
 

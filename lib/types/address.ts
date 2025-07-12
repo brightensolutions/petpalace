@@ -1,13 +1,15 @@
 export interface Address {
-  _id: string;
-  street: string;
+  _id?: string;
+  name: string; // Full name
+  phone: string; // Contact number
+  company?: string; // Optional company name
+  address: string; // Combined line1 + line2
   city: string;
   state: string;
-  zipCode: string;
+  pincode: string;
   country: string;
+  label: string; // e.g. Home, Work
   isDefault: boolean;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export interface CreateAddressRequest {

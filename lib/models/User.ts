@@ -2,13 +2,15 @@ import { Schema, model, models } from "mongoose";
 
 // 📦 Address sub-schema
 const AddressSchema = new Schema({
-  label: { type: String, default: "Home" }, // Home, Work, etc.
-  line1: { type: String },
-  line2: String,
-  city: String,
-  state: String,
-  pincode: String,
+  name: { type: String, required: true }, // Full name
+  phone: { type: String, required: true }, // Contact number
+  company: { type: String, default: "" }, // Optional company name
+  address: { type: String, required: true }, // Combined line1 + line2
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+  pincode: { type: String, required: true },
   country: { type: String, default: "India" },
+  label: { type: String, default: "Home" }, // e.g. Home, Work
   isDefault: { type: Boolean, default: false },
 });
 
