@@ -6,15 +6,15 @@ import User from "@/lib/models/User";
 
 export async function POST(request: Request) {
   try {
-    const { number, email } = await request.json();
+    const { phone, email } = await request.json();
 
     await connectDb();
 
     // Find or create user
-    let user = await User.findOne({ number });
+    let user = await User.findOne({ phone });
 
     if (!user) {
-      user = await User.create({ number, email });
+      user = await User.create({ phone, email });
     } else if (email && user.email !== email) {
       user.email = email;
       await user.save();

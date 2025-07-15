@@ -180,30 +180,20 @@ export default function UserDashboard() {
     },
   ];
 
-  const transactions: Transaction[] = [
+  const wishlistItems = [
     {
-      id: "txn1",
-      date: "2024-01-15",
-      type: "debit",
-      amount: 2599,
-      description: "Order #ORD001 - Dog Food & Accessories",
-      status: "completed",
+      id: 1,
+      name: "Organic Chicken Dog Treats",
+      category: "Dog Treats",
+      price: 299,
+      image: "/images/products/chicken-treat.jpg",
     },
     {
-      id: "txn2",
-      date: "2024-01-12",
-      type: "credit",
-      amount: 500,
-      description: "Cashback from previous order",
-      status: "completed",
-    },
-    {
-      id: "txn3",
-      date: "2024-01-10",
-      type: "debit",
-      amount: 1299,
-      description: "Order #ORD002 - Cat Litter & Toys",
-      status: "completed",
+      id: 2,
+      name: "Catnip Toy Mouse",
+      category: "Cat Toys",
+      price: 149,
+      image: "/images/products/catnip-toy.jpg",
     },
   ];
 
@@ -569,90 +559,56 @@ export default function UserDashboard() {
             </div>
           </div>
         );
-      case "payments":
+      case "wishlist":
         return (
           <div className="space-y-6">
             <div className="flex items-center justify-between">
-              <h2 className="text-2xl font-bold">Payment History</h2>
+              <h2 className="text-2xl font-bold">My Wishlist</h2>
               <Button variant="outline" size="sm">
                 <Download className="w-4 h-4 mr-1" />
-                Download Statement
+                Export Wishlist
               </Button>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <CheckCircle className="w-6 h-6 text-green-600" />
-                  </div>
-                  <p className="text-sm text-gray-600">Total Paid</p>
-                  <p className="text-2xl font-bold">
-                    ₹{(user.totalSpent || 0).toLocaleString()}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6 text-center">
-                  <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mx-auto mb-3">
-                    <Gift className="w-6 h-6 text-orange-600" />
-                  </div>
-                  <p className="text-sm text-gray-600">Cashback Earned</p>
-                  <p className="text-2xl font-bold">₹2,340</p>{" "}
-                  {/* Mocked value */}
-                </CardContent>
-              </Card>
-            </div>
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Transactions</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {transactions.map((txn, index) => (
-                    <div
-                      key={txn.id || index}
-                      className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg"
-                    >
-                      <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          txn.type === "credit" ? "bg-green-100" : "bg-red-100"
-                        }`}
-                      >
-                        {txn.type === "credit" ? (
-                          <TrendingUp className="w-5 h-5 text-green-600" />
-                        ) : (
-                          <Wallet className="w-5 h-5 text-red-600" />
-                        )}
+
+            {wishlistItems?.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {wishlistItems.map((item, index) => (
+                  <Card key={item.id || index}>
+                    <CardContent className="p-4">
+                      <div className="flex gap-4">
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-24 h-24 object-cover rounded-lg"
+                        />
+                        <div className="flex flex-col justify-between flex-1">
+                          <div>
+                            <h3 className="text-lg font-semibold">
+                              {item.name}
+                            </h3>
+                            <p className="text-sm text-gray-500">
+                              {item.category}
+                            </p>
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <p className="font-bold text-orange-600">
+                              ₹{item.price}
+                            </p>
+                            <Button size="sm" variant="outline">
+                              Add to Cart
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{txn.description}</p>
-                        <p className="text-sm text-gray-600">{txn.date}</p>
-                      </div>
-                      <div className="text-right">
-                        <p
-                          className={`font-bold ${
-                            txn.type === "credit"
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {txn.type === "credit" ? "+" : "-"}₹{txn.amount}
-                        </p>
-                        <Badge
-                          className={
-                            txn.status === "completed"
-                              ? "bg-green-100 text-green-800"
-                              : "bg-yellow-100 text-yellow-800"
-                          }
-                        >
-                          {txn.status}
-                        </Badge>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-gray-500">Your wishlist is empty.</p>
+              </div>
+            )}
           </div>
         );
       case "addresses":
@@ -743,47 +699,28 @@ export default function UserDashboard() {
       case "wallet":
         return (
           <div className="space-y-6">
-            <h2 className="text-2xl font-bold">Wallet & Loyalty Points</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* Wallet Balance */}
-              <Card className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                      <Wallet className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="text-purple-100">Wallet Balance</p>
-                      <p className="text-3xl font-bold">
-                        ₹{(user.walletBalance || 0).toLocaleString()}
-                      </p>
-                    </div>
+            <h2 className="text-2xl font-bold">Petpalace Points</h2>
+
+            {/* Loyalty Points Card */}
+            <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
+              <CardContent className="p-6">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                    <Coins className="w-6 h-6" />
                   </div>
-                  <Button className="w-full mt-4 bg-white/20 hover:bg-white/30 text-white border-white/20">
-                    Add Money
-                  </Button>
-                </CardContent>
-              </Card>
-              {/* Loyalty Points */}
-              <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                      <Coins className="w-6 h-6" />
-                    </div>
-                    <div>
-                      <p className="text-orange-100">Loyalty Points</p>
-                      <p className="text-3xl font-bold">
-                        {user.loyaltyPoints || 0}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-orange-100">Your Petpalace Points</p>
+                    <p className="text-3xl font-bold">
+                      {user.loyaltyPoints || 0}
+                    </p>
                   </div>
-                  <Button className="w-full mt-4 bg-white/20 hover:bg-white/30 text-white border-white/20">
-                    Redeem Points
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+                <Button className="w-full mt-4 bg-white/20 hover:bg-white/30 text-white border-white/20">
+                  Redeem Points
+                </Button>
+              </CardContent>
+            </Card>
+
             {/* Points History */}
             <Card>
               <CardHeader>
@@ -851,6 +788,7 @@ export default function UserDashboard() {
             </Card>
           </div>
         );
+
       case "profile":
         return (
           <div className="space-y-6">
@@ -889,6 +827,124 @@ export default function UserDashboard() {
             </Card>
           </div>
         );
+      case "contact":
+        return (
+          <div className="bg-white rounded-xl shadow-md p-6 md:p-10">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              {/* Left Column – Contact Info */}
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold">Contact Information</h2>
+                <p className="text-gray-600">
+                  Take a minute to see the FAQ section below. We hope it will
+                  answer some of your common queries. In case you still haven't
+                  found your answer, here's how you can contact us:
+                </p>
+
+                <div className="space-y-2 text-sm text-gray-800">
+                  <p>
+                    <strong>Call us at:</strong> 011-40845122
+                  </p>
+                  <p>
+                    <strong>Working Hours:</strong> Monday–Saturday, 9am to 9pm
+                  </p>
+                  <p>
+                    <strong>For Support and Queries:</strong>{" "}
+                    <a
+                      href="mailto:hello@petpalace.com"
+                      className="text-blue-600 underline"
+                    >
+                      hello@petpalace.com
+                    </a>
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Column – Contact Form */}
+              <div className="space-y-4">
+                <h2 className="text-2xl font-bold">Send us a Message</h2>
+                <form className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        First Name
+                      </label>
+                      <input
+                        type="text"
+                        name="firstName"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Last Name
+                      </label>
+                      <input
+                        type="text"
+                        name="lastName"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Email Address
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Phone Number
+                      </label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Subject
+                    </label>
+                    <input
+                      type="text"
+                      name="subject"
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Message
+                    </label>
+                    <textarea
+                      name="message"
+                      rows={4}
+                      className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
+                    ></textarea>
+                  </div>
+
+                  <div className="text-right">
+                    <Button
+                      type="submit"
+                      className="bg-orange-500 hover:bg-orange-600 text-white"
+                    >
+                      Send Message
+                    </Button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        );
+
       default:
         return <div>Section not found</div>;
     }
@@ -923,8 +979,8 @@ export default function UserDashboard() {
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="font-semibold">Welcome Back!</p>
-                      <p className="text-sm text-gray-600">
+                      <p className="text-lg font-semibold">Welcome Back!</p>
+                      <p className="text-base text-gray-600">
                         Good to See You Again
                       </p>
                     </div>
@@ -955,7 +1011,7 @@ export default function UserDashboard() {
                     ))}
                     <Button
                       variant="ghost"
-                      className="w-full justify-start text-base text-red-600 hover:text-red-700 hover:bg-red-50 font-medium"
+                      className="w-full justify-start text-lg text-red-600 hover:text-red-700 hover:bg-red-50 font-medium"
                       onClick={handleLogout}
                     >
                       <LogOut className="w-5 h-5 mr-3 text-red-600" />
