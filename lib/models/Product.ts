@@ -10,8 +10,9 @@ const ProductSchema = new Schema({
   mrp: { type: Number },
   rating: { type: Number },
   review_count: { type: Number },
-  category_id: { type: Schema.Types.ObjectId, ref: "Category" },
-  brand_id: { type: Schema.Types.ObjectId, ref: "Brand" },
+  category_id: { type: Schema.Types.ObjectId, ref: "Category" }, // <-- important
+  brand_id: { type: Schema.Types.ObjectId, ref: "Brand" }, // <-- important
+  images: [{ type: String }], // <-- define this so it doesn't crash if used
 });
 
 const Product = models.Product || model("Product", ProductSchema);

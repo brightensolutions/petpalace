@@ -2,30 +2,77 @@
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
 import Category from "@/lib/models/Category";
+import { writeFile, mkdir } from "fs/promises";
+import fs from "fs";
+import path from "path";
+import { v4 as uuidv4 } from "uuid";
 
-// GET categories
+const UPLOAD_DIR = path.join(process.cwd(), "public/categories");
+
+async function ensureUploadDirExists() {
+  if (!fs.existsSync(UPLOAD_DIR)) {
+    await mkdir(UPLOAD_DIR, { recursive: true });
+  }
+}
+
 export async function GET() {
   await dbConnect();
   const categories = await Category.find();
   return NextResponse.json({ success: true, data: categories });
 }
 
-// POST new category
 export async function POST(req: NextRequest) {
-  await dbConnect();
-  const formData = await req.formData();
+  try {
+    await dbConnect();
+    await ensureUploadDirExists();
 
-  const name = formData.get("name")?.toString();
-  const slug = formData.get("slug")?.toString();
-  const parentId = formData.get("parentId")?.toString() || null;
+    const formData = await req.formData();
+    const name = formData.get("name")?.toString();
+    const slug = formData.get("slug")?.toString();
+    const parentId = formData.get("parentId")?.toString() || null;
+    const image = formData.get("image") as File | null;
 
-  if (!name || !slug) {
+    if (!name || !slug) {
+      return NextResponse.json(
+        { success: false, message: "Name and slug are required" },
+        { status: 400 }
+      );
+    }
+
+    // Check for duplicate name
+    const existing = await Category.findOne({ name });
+    if (existing) {
+      return NextResponse.json(
+        { success: false, message: "Category name already exists" },
+        { status: 409 }
+      );
+    }
+
+    let imageUrl = "";
+
+    if (image && typeof image === "object") {
+      const buffer = Buffer.from(await image.arrayBuffer());
+      const ext = image.name.split(".").pop();
+      const fileName = `cat-${uuidv4()}.${ext}`;
+      const fullPath = path.join(UPLOAD_DIR, fileName);
+
+      await writeFile(fullPath, buffer);
+      imageUrl = `/categories/${fileName}`;
+    }
+
+    const newCat = await Category.create({
+      name,
+      slug,
+      parentId,
+      image: imageUrl,
+    });
+
+    return NextResponse.json({ success: true, data: newCat }, { status: 201 });
+  } catch (err) {
+    console.error("POST category error:", err);
     return NextResponse.json(
-      { success: false, message: "Missing required fields" },
-      { status: 400 }
+      { success: false, message: "Internal Server Error" },
+      { status: 500 }
     );
   }
-
-  const newCat = await Category.create({ name, slug, parentId });
-  return NextResponse.json({ success: true, data: newCat }, { status: 201 });
 }
