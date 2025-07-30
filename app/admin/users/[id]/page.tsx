@@ -1,150 +1,56 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
+import { notFound } from "next/navigation";
 import Link from "next/link";
-import { toast } from "sonner";
 
-export default function EditUserPage() {
-  const router = useRouter();
-  const params = useParams();
-  const id = params.id as string;
+export const dynamic = "force-dynamic";
 
-  const [form, setForm] = useState({
-    name: "",
-    email: "",
-    number: "",
-    role: "user",
-  });
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      try {
-        const res = await fetch(`/api/admin/users/${id}`);
-        if (!res.ok) throw new Error("Failed to fetch user");
-        const data = await res.json();
-        setForm(data);
-      } catch (error) {
-        console.error(error);
-        toast.error("Failed to load user");
-      }
-    };
-
-    if (id) fetchUser();
-  }, [id]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    try {
-      const res = await fetch(`/api/admin/users/${id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(form),
-      });
-
-      if (!res.ok) throw new Error("Update failed");
-
-      toast.success("User updated successfully!");
-      router.push("/users");
-    } catch (error) {
-      console.error(error);
-      toast.error("Something went wrong");
+async function getUser(id: string) {
+  const res = await fetch(
+    `${process.env.NEXT_PUBLIC_SITE_URL}/api/admin/users/${id}`,
+    {
+      cache: "no-store",
     }
-  };
+  );
 
-  const handleDelete = async () => {
-    if (!confirm("Are you sure you want to delete this user?")) return;
+  if (!res.ok) return null;
+  return res.json();
+}
 
-    try {
-      const res = await fetch(`/api/admin/users/${id}`, {
-        method: "DELETE",
-      });
+export default async function ViewUserPage({
+  params,
+}: {
+  params: { id: string };
+}) {
+  const user = await getUser(params.id);
 
-      if (!res.ok) throw new Error("Delete failed");
-
-      toast.success("User deleted successfully!");
-      router.push("/users");
-    } catch (error) {
-      console.error(error);
-      toast.error("Delete failed");
-    }
-  };
+  if (!user) return notFound();
 
   return (
-    <div className="w-full p-6 md:p-10">
-      <Link
-        href="/users"
-        className="text-sm text-blue-600 hover:underline inline-block mb-4"
-      >
-        ← Back to All Users
+    <div className="p-6">
+      <h1 className="text-2xl font-bold mb-4">User Details</h1>
+      <div className="border p-4 rounded shadow bg-white">
+        <p>
+          <strong>ID:</strong> {user._id}
+        </p>
+        <p>
+          <strong>Name:</strong> {user.name || "N/A"}
+        </p>
+        <p>
+          <strong>Email:</strong> {user.email}
+        </p>
+        <p>
+          <strong>Number:</strong> {user.number}
+        </p>
+        <p>
+          <strong>Role:</strong> {user.role}
+        </p>
+        <p>
+          <strong>Created At:</strong>{" "}
+          {new Date(user.createdAt).toLocaleString()}
+        </p>
+      </div>
+      <Link href="/users" className="mt-4 inline-block text-blue-600 underline">
+        ← Back to Users
       </Link>
-
-      <h1 className="text-3xl font-bold mb-6 text-orange-600">Edit User</h1>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <div>
-          <Label htmlFor="name">Name</Label>
-          <Input
-            id="name"
-            value={form.name}
-            onChange={(e) => setForm({ ...form, name: e.target.value })}
-            required
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="email">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            value={form.email}
-            onChange={(e) => setForm({ ...form, email: e.target.value })}
-            required
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="number">Phone</Label>
-          <Input
-            id="number"
-            value={form.number}
-            onChange={(e) => setForm({ ...form, number: e.target.value })}
-          />
-        </div>
-
-        <div>
-          <Label htmlFor="role">Role</Label>
-          <select
-            id="role"
-            value={form.role}
-            onChange={(e) => setForm({ ...form, role: e.target.value })}
-            className="w-full border rounded px-3 py-2 mt-1"
-          >
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-          </select>
-        </div>
-
-        <div className="flex gap-4">
-          <Button
-            type="submit"
-            className="bg-orange-500 text-white hover:bg-orange-600"
-          >
-            Update
-          </Button>
-
-          <Button type="button" onClick={handleDelete} variant="destructive">
-            Delete
-          </Button>
-        </div>
-      </form>
     </div>
   );
 }
