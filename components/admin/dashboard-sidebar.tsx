@@ -11,6 +11,10 @@ import {
   ShoppingCart,
   Tag,
   Search,
+  Image as ImageIcon,
+  Flame, // 🔥 Icon for trending
+  Video,
+  FileText,
 } from "lucide-react";
 
 import {
@@ -26,14 +30,13 @@ import {
   SidebarRail,
   SidebarInput,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 
 export function DashboardSidebar({
   ...props
 }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar {...props} className="text-gray-800 shadow-md bg-white">
-      {/* Top Header - Solid Orange Background */}
+      {/* Top Header */}
       <SidebarHeader className="flex items-center justify-between px-6 py-4 bg-orange-500 text-white">
         <Link href="/admin" className="flex items-center gap-2 font-semibold">
           <Package2 className="h-6 w-6 text-orange-400" />
@@ -79,7 +82,7 @@ export function DashboardSidebar({
         {/* Management Section */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-orange-500 text-lg">
-            Management
+            Inventory Management
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -139,6 +142,66 @@ export function DashboardSidebar({
                   >
                     <ShoppingCart className="text-orange-500" />
                     <span>Orders</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Content Management Section */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-orange-500 text-lg">
+            Content Management
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/admin/sliders"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <ImageIcon className="text-orange-500" />
+                    <span>Sliders</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* 🔥 Trending Categories Link */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/admin/trending-categories"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <Flame className="text-orange-500" />
+                    <span>Trending Categories</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* 🎬 Video Management Link */}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/admin/videos"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <Video className="text-orange-500" />
+                    <span>Videos</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/admin/blogs"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <FileText className="text-orange-500" />
+                    <span>Blogs</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

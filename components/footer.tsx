@@ -136,16 +136,19 @@ export function Footer() {
             <h3 className="text-2xl font-bold text-gray-900">Quick Links</h3>
             <ul className="space-y-3">
               {[
-                { name: "About Us" },
-                { name: "Contact" },
-                { name: "Privacy Policy" },
-                { name: "Terms & Conditions" },
-                { name: "Return Policy" },
-                { name: "Track Your Order" },
+                { name: "About Us", href: "/about" },
+                { name: "Contact", href: "/contact" },
+                { name: "Privacy Policy", href: "/privacy-policy" },
+                { name: "Terms & Conditions", href: "/terms-and-conditions" },
+                {
+                  name: "Cancellation & Refund Policy",
+                  href: "/cancellation-refund-policy",
+                },
+                { name: "Shipping Policy", href: "/shipping-policy" },
               ].map((link, index) => (
                 <li key={index}>
                   <a
-                    href="#"
+                    href={link.href}
                     className="text-base text-gray-600 hover:text-orange-600 transition-colors duration-200 hover:translate-x-1 transform font-medium"
                   >
                     {link.name}

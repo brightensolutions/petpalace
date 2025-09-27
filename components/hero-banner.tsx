@@ -7,56 +7,57 @@ import Image from "next/image";
 
 export function HeroBanner() {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [slides, setSlides] = useState<
+    { _id: string; image: string; alt: string; link: string }[]
+  >([]);
 
-  const slides = [
-    {
-      id: 1,
-      image: "/sliders/slider.webp",
-      alt: "Pet Sale Banner",
-    },
-    {
-      id: 2,
-      image: "/sliders/slider.webp",
-      alt: "Premium Pet Food Banner",
-    },
-    {
-      id: 3,
-      image: "/sliders/slider.webp",
-      alt: "Interactive Pet Toys Banner",
-    },
-    {
-      id: 4,
-      image: "/sliders/slider.webp",
-      alt: "Pet Wellness Center Banner",
-    },
-  ];
-
+  // Fetch sliders from API
   useEffect(() => {
+    async function fetchSliders() {
+      try {
+        const res = await fetch("/api/sliders");
+        const data = await res.json();
+        setSlides(
+          data.map((slide: any) => ({
+            _id: slide._id,
+            image: slide.image,
+            alt: slide.title || "Slider Image",
+            link: slide.link || "#",
+          }))
+        );
+      } catch (err) {
+        console.error("Error fetching sliders:", err);
+      }
+    }
+    fetchSliders();
+  }, []);
+
+  // Auto slide
+  useEffect(() => {
+    if (slides.length === 0) return;
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
     }, 5000);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, [slides]);
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
-
-  const prevSlide = () => {
+  const nextSlide = () => setCurrentSlide((prev) => (prev + 1) % slides.length);
+  const prevSlide = () =>
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
+  const goToSlide = (index: number) => setCurrentSlide(index);
 
-  const goToSlide = (index: number) => {
-    setCurrentSlide(index);
-  };
+  if (slides.length === 0) return null; // Loading or empty state
 
   return (
     <section className="relative overflow-hidden">
       <div className="relative h-[500px] w-full">
         <div className="relative w-full h-full">
           {slides.map((slide, index) => (
-            <div
-              key={slide.id}
+            <a
+              key={slide._id}
+              href={slide.link}
+              target="_blank"
+              rel="noopener noreferrer"
               className={`absolute inset-0 transition-all duration-700 ease-in-out ${
                 index === currentSlide
                   ? "opacity-100 translate-x-0 z-10"
@@ -66,12 +67,12 @@ export function HeroBanner() {
               <Image
                 src={slide.image}
                 alt={slide.alt}
-                layout="fill"
-                objectFit="cover"
+                fill
+                style={{ objectFit: "cover" }}
                 priority={index === 0}
               />
               <div className="absolute inset-0 bg-black/10"></div>
-            </div>
+            </a>
           ))}
         </div>
 
