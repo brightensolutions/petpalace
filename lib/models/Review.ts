@@ -1,40 +1,74 @@
-import { Schema, model, models } from "mongoose";
+import mongoose, { Schema, type Document, type Model } from "mongoose";
 
-const ReviewSchema = new Schema({
-  id: {
-    type: Number,
-    required: true,
-    unique: true,
-  },
-  product_id: {
-    type: Schema.Types.ObjectId,
-    ref: "Product",
-    required: true,
-  },
-  reviewer_name: {
-    type: String,
-  },
-  verified: {
-    type: Boolean,
-  },
-  rating: {
-    type: Number,
-  },
-  title: {
-    type: String,
-  },
-  content: {
-    type: String,
-  },
-  review_date: {
-    type: Date,
-  },
-  helpful_count: {
-    type: Number,
-  },
-});
+export interface IReview extends Document {
+  product: mongoose.Types.ObjectId;
+  user_name: string;
+  user_email: string;
+  rating: number;
+  title: string;
+  comment: string;
+  approved: boolean;
+  helpful: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-// ✅ Prevent model overwrite during development (hot reload safe)
-const Review = models.Review || model("Review", ReviewSchema);
+const ReviewSchema = new Schema<IReview>(
+  {
+    product: {
+      type: Schema.Types.ObjectId,
+      ref: "Product",
+      required: [true, "Product reference is required"],
+      index: true,
+    },
+    user_name: {
+      type: String,
+      required: [true, "User name is required"],
+      trim: true,
+    },
+    user_email: {
+      type: String,
+      required: [true, "User email is required"],
+      trim: true,
+      lowercase: true,
+    },
+    rating: {
+      type: Number,
+      required: [true, "Rating is required"],
+      min: 1,
+      max: 5,
+    },
+    title: {
+      type: String,
+      required: [true, "Review title is required"],
+      trim: true,
+      maxlength: 100,
+    },
+    comment: {
+      type: String,
+      required: [true, "Review comment is required"],
+      trim: true,
+      maxlength: 1000,
+    },
+    approved: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    helpful: {
+      type: Number,
+      default: 0,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
+
+// Index for efficient querying of approved reviews for a product
+ReviewSchema.index({ product: 1, approved: 1 });
+
+const Review: Model<IReview> =
+  mongoose.models.Review || mongoose.model<IReview>("Review", ReviewSchema);
 
 export default Review;

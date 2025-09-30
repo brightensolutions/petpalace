@@ -1,10 +1,23 @@
-import { Schema, model, models } from "mongoose";
+import mongoose, { Schema, type Model, type InferSchemaType } from "mongoose";
 
-const BrandSchema = new Schema({
-  name: { type: String, required: true },
-});
+const BrandSchema = new Schema(
+  {
+    name: { type: String, required: true, unique: true, trim: true },
+    slug: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    image: { type: String, default: "" },
+  },
+  { timestamps: true }
+);
 
-// ✅ Prevent model overwrite in dev
-const Brand = models.Brand || model("Brand", BrandSchema);
+export type BrandType = InferSchemaType<typeof BrandSchema>;
 
+// ✅ Force registration if not already
+const Brand =
+  mongoose.models.Brand || mongoose.model<BrandType>("Brand", BrandSchema);
 export default Brand;

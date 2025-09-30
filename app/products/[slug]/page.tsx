@@ -2,11 +2,11 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import Link from "next/link";
 import ProductClient from "./product-client";
+import { notFound } from "next/navigation";
 
-// Updated interface for Next.js 15 - params is now a Promise
 interface ProductPageProps {
   params: Promise<{
-    slug: string; // Changed from 'id' to 'slug' to match [slug] folder
+    slug: string;
   }>;
 }
 
@@ -48,6 +48,7 @@ interface Product {
   reviews: number;
   images: string[];
   packs: Pack[];
+  variantsByType: { [key: string]: any[] };
   offers: Offer[];
   features: Feature[];
   customerReviews: CustomerReview[];
@@ -62,60 +63,104 @@ interface RelatedProduct {
   discount: string;
 }
 
-// Make the component async to handle Promise-based params
-export default async function ProductPage({ params }: ProductPageProps) {
-  // Await the params Promise
-  const resolvedParams = await params;
+async function getProduct(slug: string) {
+  try {
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    const res = await fetch(`${baseUrl}/api/products/${slug}`, {
+      cache: "no-store",
+    });
 
-  // Mock product data - will come from database in future
+    if (!res.ok) {
+      return null;
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error("[v0] Error fetching product:", error);
+    return null;
+  }
+}
+
+export default async function ProductPage({ params }: ProductPageProps) {
+  const resolvedParams = await params;
+  const dbProduct = await getProduct(resolvedParams.slug);
+
+  if (!dbProduct) {
+    notFound();
+  }
+
+  const variantsByType: { [key: string]: any[] } = {};
+  const packs: Pack[] = [];
+
+  if (dbProduct.variants && dbProduct.variants.length > 0) {
+    dbProduct.variants.forEach((variant: any) => {
+      // Group variants by type
+      if (!variantsByType[variant.type]) {
+        variantsByType[variant.type] = [];
+      }
+      variantsByType[variant.type].push(variant);
+
+      // Extract packs
+      if (variant.packs && variant.packs.length > 0) {
+        variant.packs.forEach((pack: any) => {
+          const originalPrice = pack.price || dbProduct.mrp || 0;
+          const discountPercent = pack.discount_percent || 0;
+          const salePrice = originalPrice * (1 - discountPercent / 100);
+
+          packs.push({
+            name: pack.label || variant.label,
+            discount: `${discountPercent}% off`,
+            originalPrice,
+            salePrice,
+          });
+        });
+      } else if (variant.price) {
+        // Single variant without packs
+        const originalPrice = variant.price;
+        const discountPercent = variant.discount_percent || 0;
+        const salePrice = originalPrice * (1 - discountPercent / 100);
+
+        packs.push({
+          name: variant.label,
+          discount: `${discountPercent}% off`,
+          originalPrice,
+          salePrice,
+        });
+      }
+    });
+  }
+
+  // Fallback to base product price if no variants
+  if (packs.length === 0) {
+    packs.push({
+      name: "Single Pack",
+      discount: "0% off",
+      originalPrice: dbProduct.mrp || dbProduct.base_price || 0,
+      salePrice: dbProduct.base_price || dbProduct.mrp || 0,
+    });
+  }
+
+  // Prepare images array
+  const images = [dbProduct.main_image, ...(dbProduct.images || [])].filter(
+    Boolean
+  );
+
   const product: Product = {
-    id: resolvedParams.slug, // Use slug instead of id
-    brand: "Royal Canin",
-    name: "Royal Canin Ultra Light Wet Cat Food - 85 g packs",
-    rating: 4.8,
-    reviews: 156,
-    images: [
-      "/placeholder.svg?height=600&width=600&text=Royal+Canin+Main+Product",
-      "/placeholder.svg?height=600&width=600&text=Royal+Canin+Back+View",
-      "/placeholder.svg?height=600&width=600&text=Royal+Canin+Ingredients",
-      "/placeholder.svg?height=600&width=600&text=Royal+Canin+Nutrition",
-      "/placeholder.svg?height=600&width=600&text=Royal+Canin+Usage",
-      "/placeholder.svg?height=600&width=600&text=Royal+Canin+Cat+Eating",
-      "/placeholder.svg?height=600&width=600&text=Royal+Canin+Package",
-      "/placeholder.svg?height=600&width=600&text=Royal+Canin+Size+Comparison",
-      "/placeholder.svg?height=600&width=600&text=Royal+Canin+Benefits",
-      "/placeholder.svg?height=600&width=600&text=Royal+Canin+Feeding+Guide",
-    ],
-    packs: [
-      {
-        name: "Pack Of 1",
-        discount: "12% off",
-        originalPrice: 114.0,
-        salePrice: 100.32,
-      },
-      {
-        name: "Pack Of 4",
-        discount: "12% off",
-        originalPrice: 456.0,
-        salePrice: 401.28,
-      },
-      {
-        name: "Pack Of 8",
-        discount: "12% off",
-        originalPrice: 912.0,
-        salePrice: 802.56,
-      },
-      {
-        name: "Pack Of 12",
-        discount: "12% off",
-        originalPrice: 1368.0,
-        salePrice: 1203.84,
-      },
-    ],
+    id: resolvedParams.slug,
+    brand: dbProduct.brand?.name || "Unknown Brand",
+    name: dbProduct.name,
+    rating: 4.5,
+    reviews: 0,
+    images:
+      images.length > 0
+        ? images
+        : ["/placeholder.svg?height=600&width=600&text=No+Image"],
+    packs,
+    variantsByType,
     offers: [
       {
-        title: "Extra 3% OFF on Royal Canin No Minimum Cart Value",
-        code: "HUFT3",
+        title: "Extra 3% OFF on orders above ₹999",
+        code: "SAVE3",
         bgColor: "bg-orange-100",
         textColor: "text-orange-800",
       },
@@ -125,114 +170,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
         bgColor: "bg-blue-100",
         textColor: "text-blue-800",
       },
-      {
-        title: "Extra ₹150 off on orders above ₹2499",
-        code: "SAVE150",
-        bgColor: "bg-green-100",
-        textColor: "text-green-800",
-      },
     ],
     features: [
       { icon: "truck", text: "Enjoy Free Delivery above ₹699" },
       { icon: "rotate-ccw", text: "No Exchange & Returns" },
       { icon: "shield", text: "100% Authentic Products" },
     ],
-    customerReviews: [
-      {
-        id: 1,
-        name: "Priya Sharma",
-        rating: 5,
-        date: "2024-01-15",
-        title: "Excellent quality food for my cat",
-        comment:
-          "My cat absolutely loves this food! The texture is perfect and she finishes her bowl every time. Great for weight management too.",
-        helpful: 12,
-        verified: true,
-      },
-      {
-        id: 2,
-        name: "Rajesh Kumar",
-        rating: 4,
-        date: "2024-01-10",
-        title: "Good product but expensive",
-        comment:
-          "Quality is good and my cat likes it. However, it's quite expensive compared to other brands. The packaging is excellent.",
-        helpful: 8,
-        verified: true,
-      },
-      {
-        id: 3,
-        name: "Anita Patel",
-        rating: 5,
-        date: "2024-01-05",
-        title: "Perfect for senior cats",
-        comment:
-          "My 12-year-old cat has been eating this for months now. It's easy to digest and she maintains a healthy weight.",
-        helpful: 15,
-        verified: true,
-      },
-      {
-        id: 4,
-        name: "Vikram Singh",
-        rating: 4,
-        date: "2023-12-28",
-        title: "Cat loves the taste",
-        comment:
-          "Initially my cat was hesitant but now she loves it. Good quality ingredients and proper nutrition.",
-        helpful: 6,
-        verified: false,
-      },
-      {
-        id: 5,
-        name: "Meera Joshi",
-        rating: 5,
-        date: "2023-12-20",
-        title: "Highly recommended",
-        comment:
-          "Best wet food for cats. My vet recommended this and I can see the difference in my cat's health.",
-        helpful: 9,
-        verified: true,
-      },
-      {
-        id: 6,
-        name: "Arjun Reddy",
-        rating: 3,
-        date: "2023-12-15",
-        title: "Average product",
-        comment:
-          "It's okay but nothing special. My cat eats it but doesn't seem very excited about it.",
-        helpful: 3,
-        verified: true,
-      },
-    ],
+    customerReviews: [],
   };
 
-  const relatedProducts: RelatedProduct[] = [
-    {
-      id: 1,
-      name: "Royal Canin Kitten Wet Food",
-      image: "/placeholder.svg?height=200&width=200&text=Kitten+Food",
-      price: 89.99,
-      originalPrice: 99.99,
-      discount: "Get Extra 5% OFF",
-    },
-    {
-      id: 2,
-      name: "Royal Canin Adult Cat Food",
-      image: "/placeholder.svg?height=200&width=200&text=Adult+Cat+Food",
-      price: 159.99,
-      originalPrice: 179.99,
-      discount: "Get Extra 5% OFF",
-    },
-    {
-      id: 3,
-      name: "Royal Canin Senior Cat Food",
-      image: "/placeholder.svg?height=200&width=200&text=Senior+Cat+Food",
-      price: 199.99,
-      originalPrice: 229.99,
-      discount: "Get Extra 5% OFF",
-    },
-  ];
+  const relatedProducts: RelatedProduct[] = [];
 
   return (
     <div className="min-h-screen bg-white">
@@ -246,12 +193,13 @@ export default async function ProductPage({ params }: ProductPageProps) {
               Home
             </Link>
             <span className="text-gray-400">/</span>
+            <span className="text-gray-600">{product.brand}</span>
+            <span className="text-gray-400">/</span>
             <span className="text-gray-900 font-medium">{product.name}</span>
           </nav>
         </div>
       </div>
 
-      {/* Pass data to client component for interactivity */}
       <ProductClient product={product} relatedProducts={relatedProducts} />
 
       <Footer />

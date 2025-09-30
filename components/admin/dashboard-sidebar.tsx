@@ -15,6 +15,7 @@ import {
   Flame, // 🔥 Icon for trending
   Video,
   FileText,
+  Award,
 } from "lucide-react";
 
 import {
@@ -94,6 +95,18 @@ export function DashboardSidebar({
                   >
                     <LayoutGrid className="text-orange-500" />
                     <span>Categories</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/admin/brands"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <Award className="text-orange-500" /> {/* New icon */}
+                    <span>Brands</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

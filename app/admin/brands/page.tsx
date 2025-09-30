@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, PlusCircle, Eye } from "lucide-react";
+import { MoreHorizontal, PlusCircle } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -35,69 +35,62 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 
-interface Product {
+interface Brand {
   _id: string;
   name: string;
-  slug: string;
-  main_image?: string;
-  base_price?: number;
-  stock?: number;
-  category?: { name: string };
+  image?: string;
 }
 
-export default function ManageProductsPage() {
+export default function ManageBrandsPage() {
   const router = useRouter();
 
-  const [products, setProducts] = useState<Product[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchBrands = async () => {
       try {
-        const res = await fetch("/api/admin/products");
+        const res = await fetch("/api/admin/brands");
         const json = await res.json();
         if (json.success) {
-          setProducts(json.data);
+          setBrands(json.data);
         } else {
-          toast.error("Failed to load products");
+          toast.error("Failed to load brands");
         }
       } catch (error) {
-        toast.error("Error fetching products");
+        toast.error("Error fetching brands");
       }
     };
 
-    fetchProducts();
+    fetchBrands();
   }, []);
 
-  const filteredProducts = products.filter((p) => {
+  const filteredBrands = brands.filter((b) => {
     const search = searchTerm.toLowerCase();
-    return (
-      p.name.toLowerCase().includes(search) ||
-      p.category?.name.toLowerCase().includes(search)
-    );
+    return b.name.toLowerCase().includes(search);
   });
 
-  const totalPages = Math.ceil(filteredProducts.length / rowsPerPage);
-  const paginatedProducts = filteredProducts.slice(
+  const totalPages = Math.ceil(filteredBrands.length / rowsPerPage);
+  const paginatedBrands = filteredBrands.slice(
     (currentPage - 1) * rowsPerPage,
     currentPage * rowsPerPage
   );
 
   const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+    if (!confirm("Are you sure you want to delete this brand?")) return;
 
     try {
-      const res = await fetch(`/api/admin/products/${id}`, {
+      const res = await fetch(`/api/admin/brands/${id}`, {
         method: "DELETE",
       });
 
       if (res.ok) {
-        setProducts((prev) => prev.filter((p) => p._id !== id));
-        toast.success("Product deleted successfully.");
+        setBrands((prev) => prev.filter((b) => b._id !== id));
+        toast.success("Brand deleted successfully.");
       } else {
-        toast.error("Failed to delete product.");
+        toast.error("Failed to delete brand.");
       }
     } catch (err) {
       toast.error("An error occurred while deleting.");
@@ -117,16 +110,16 @@ export default function ManageProductsPage() {
       <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4">
         <div className="grid gap-1 pt-6">
           <CardTitle className="text-2xl font-bold text-blue-700">
-            Products
+            Brands
           </CardTitle>
           <CardDescription className="text-gray-500">
-            Manage your products and inventory.
+            Manage your product brands.
           </CardDescription>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center sm:gap-4 gap-2 w-full sm:w-auto">
           <Input
             type="text"
-            placeholder="Search products..."
+            placeholder="Search brands..."
             className="sm:w-64"
             value={searchTerm}
             onChange={(e) => {
@@ -152,10 +145,10 @@ export default function ManageProductsPage() {
           </Select>
           <Button
             className="bg-orange-500 text-white hover:bg-orange-600"
-            onClick={() => router.push("/admin/products/add")}
+            onClick={() => router.push("/admin/brands/add")}
           >
             <PlusCircle className="h-4 w-4 mr-1" />
-            Add Product
+            Add Brand
           </Button>
         </div>
       </CardHeader>
@@ -167,40 +160,22 @@ export default function ManageProductsPage() {
               <TableRow>
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Base Price</TableHead>
-                <TableHead>Stock</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedProducts.length > 0 ? (
-                paginatedProducts.map((p) => (
-                  <TableRow key={p._id}>
+              {paginatedBrands.length > 0 ? (
+                paginatedBrands.map((b) => (
+                  <TableRow key={b._id}>
                     <TableCell>
                       <img
-                        src={p.main_image || "/placeholder.svg"}
-                        alt={p.name}
+                        src={b.image || "/placeholder.svg"}
+                        alt={b.name}
                         className="h-10 w-10 object-cover rounded"
                       />
                     </TableCell>
                     <TableCell className="font-semibold text-gray-800">
-                      {p.name}
-                    </TableCell>
-                    <TableCell className="text-gray-600">
-                      {p.category?.name || "-"}
-                    </TableCell>
-                    <TableCell>₹{p.base_price ?? 0}</TableCell>
-                    <TableCell>
-                      {p.stock && p.stock > 0 ? (
-                        <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-sm">
-                          In stock
-                        </span>
-                      ) : (
-                        <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-sm">
-                          Out of stock
-                        </span>
-                      )}
+                      {b.name}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -212,21 +187,14 @@ export default function ManageProductsPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuItem
                             onClick={() =>
-                              router.push(`/admin/products/${p._id}`)
+                              router.push(`/admin/brands/${b._id}`)
                             }
                           >
                             Edit
                           </DropdownMenuItem>
                           <DropdownMenuItem
-                            onClick={() =>
-                              window.open(`/products/${p.slug}`, "_blank")
-                            }
-                          >
-                            View
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => handleDelete(p._id)}
+                            onClick={() => handleDelete(b._id)}
                           >
                             Delete
                           </DropdownMenuItem>
@@ -238,10 +206,10 @@ export default function ManageProductsPage() {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={3}
                     className="text-center text-gray-500 py-6"
                   >
-                    No products found.
+                    No brands found.
                   </TableCell>
                 </TableRow>
               )}

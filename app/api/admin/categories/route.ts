@@ -15,12 +15,14 @@ async function ensureUploadDirExists() {
   }
 }
 
+// GET all categories
 export async function GET() {
   await dbConnect();
   const categories = await Category.find();
   return NextResponse.json({ success: true, data: categories });
 }
 
+// POST create a new category
 export async function POST(req: NextRequest) {
   try {
     await dbConnect();
@@ -29,7 +31,6 @@ export async function POST(req: NextRequest) {
     const formData = await req.formData();
     const name = formData.get("name")?.toString();
     const slug = formData.get("slug")?.toString();
-    const parentId = formData.get("parentId")?.toString() || null;
     const image = formData.get("image") as File | null;
 
     if (!name || !slug) {
@@ -53,21 +54,23 @@ export async function POST(req: NextRequest) {
     if (image && typeof image === "object") {
       const buffer = Buffer.from(await image.arrayBuffer());
       const ext = image.name.split(".").pop();
-      const fileName = `cat-${uuidv4()}.${ext}`;
+      const fileName = `category-${uuidv4()}.${ext}`;
       const fullPath = path.join(UPLOAD_DIR, fileName);
 
       await writeFile(fullPath, buffer);
       imageUrl = `/categories/${fileName}`;
     }
 
-    const newCat = await Category.create({
+    const newCategory = await Category.create({
       name,
       slug,
-      parentId,
       image: imageUrl,
     });
 
-    return NextResponse.json({ success: true, data: newCat }, { status: 201 });
+    return NextResponse.json(
+      { success: true, data: newCategory },
+      { status: 201 }
+    );
   } catch (err) {
     console.error("POST category error:", err);
     return NextResponse.json(

@@ -1,13 +1,14 @@
+// File: /app/api/admin/brands/[id]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
-import Category from "@/lib/models/Category";
+import Brand from "@/lib/models/Brand";
 import { writeFile, mkdir } from "fs/promises";
+import fs from "fs";
 import path from "path";
 import { v4 as uuidv4 } from "uuid";
-import fs from "fs";
 
 // Upload folder path
-const UPLOAD_DIR = path.join(process.cwd(), "public/uploads/categories");
+const UPLOAD_DIR = path.join(process.cwd(), "public/uploads/brands");
 
 async function ensureUploadDir() {
   if (!fs.existsSync(UPLOAD_DIR)) {
@@ -15,27 +16,24 @@ async function ensureUploadDir() {
   }
 }
 
-// 🟩 DELETE /api/admin/categories/[id]
+// 🟩 DELETE /api/admin/brands/[id]
 export async function DELETE(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     await dbConnect();
-    const category = await Category.findByIdAndDelete(params.id);
-    if (!category) {
-      return NextResponse.json(
-        { error: "Category not found" },
-        { status: 404 }
-      );
+    const brand = await Brand.findByIdAndDelete(params.id);
+    if (!brand) {
+      return NextResponse.json({ error: "Brand not found" }, { status: 404 });
     }
 
     return NextResponse.json({
       success: true,
-      message: "Category deleted successfully",
+      message: "Brand deleted successfully",
     });
   } catch (err) {
-    console.error("DELETE category error:", err);
+    console.error("DELETE brand error:", err);
     return NextResponse.json(
       { error: "Internal Server Error" },
       { status: 500 }
@@ -43,24 +41,24 @@ export async function DELETE(
   }
 }
 
-// 🟩 GET /api/admin/categories/[id]
+// 🟩 GET /api/admin/brands/[id]
 export async function GET(
   request: Request,
   { params }: { params: { id: string } }
 ) {
   try {
     await dbConnect();
-    const category = await Category.findById(params.id);
-    if (!category) {
+    const brand = await Brand.findById(params.id);
+    if (!brand) {
       return NextResponse.json(
-        { success: false, message: "Category not found" },
+        { success: false, message: "Brand not found" },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ success: true, data: category });
+    return NextResponse.json({ success: true, data: brand });
   } catch (err) {
-    console.error("GET category error:", err);
+    console.error("GET brand error:", err);
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500 }
@@ -68,7 +66,7 @@ export async function GET(
   }
 }
 
-// 🟩 PUT /api/admin/categories/[id]
+// 🟩 PUT /api/admin/brands/[id]
 export async function PUT(
   req: NextRequest,
   { params }: { params: { id: string } }
@@ -80,7 +78,6 @@ export async function PUT(
     const formData = await req.formData();
     const name = formData.get("name") as string;
     const slug = formData.get("slug") as string;
-    const parentId = formData.get("parentId") as string;
     const imageFile = formData.get("image") as File | null;
 
     if (!name || !slug) {
@@ -91,44 +88,40 @@ export async function PUT(
     }
 
     // Check if name already exists (excluding current ID)
-    const existing = await Category.findOne({ name, _id: { $ne: params.id } });
+    const existing = await Brand.findOne({ name, _id: { $ne: params.id } });
     if (existing) {
       return NextResponse.json(
-        { success: false, message: "Category name already exists" },
+        { success: false, message: "Brand name already exists" },
         { status: 409 }
       );
     }
 
-    let updateFields: any = {
-      name,
-      slug,
-      parentId: parentId || null,
-    };
+    let updateFields: any = { name, slug };
 
     if (imageFile && typeof imageFile === "object") {
       const buffer = Buffer.from(await imageFile.arrayBuffer());
       const ext = imageFile.name.split(".").pop();
-      const fileName = `cat-${uuidv4()}.${ext}`;
+      const fileName = `brand-${uuidv4()}.${ext}`;
       const fullPath = path.join(UPLOAD_DIR, fileName);
 
       await writeFile(fullPath, buffer);
-      updateFields.image = `/uploads/categories/${fileName}`;
+      updateFields.image = `/uploads/brands/${fileName}`;
     }
 
-    const updated = await Category.findByIdAndUpdate(params.id, updateFields, {
+    const updated = await Brand.findByIdAndUpdate(params.id, updateFields, {
       new: true,
     });
 
     if (!updated) {
       return NextResponse.json(
-        { success: false, message: "Category not found" },
+        { success: false, message: "Brand not found" },
         { status: 404 }
       );
     }
 
     return NextResponse.json({ success: true, data: updated });
   } catch (err) {
-    console.error("PUT category error:", err);
+    console.error("PUT brand error:", err);
     return NextResponse.json(
       { success: false, message: "Internal Server Error" },
       { status: 500 }

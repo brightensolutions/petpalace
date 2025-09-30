@@ -1,10 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import type React from "react";
+
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import {
   Star,
   Heart,
@@ -19,9 +23,11 @@ import {
   Truck,
   RotateCcw,
   Shield,
+  X,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { toast } from "sonner";
 
 interface Pack {
   name: string;
@@ -61,6 +67,7 @@ interface Product {
   reviews: number;
   images: string[];
   packs: Pack[];
+  variantsByType?: { [key: string]: any[] };
   offers: Offer[];
   features: Feature[];
   customerReviews: CustomerReview[];
@@ -85,12 +92,62 @@ export default function ProductClient({
   relatedProducts,
 }: ProductClientProps) {
   const [selectedImage, setSelectedImage] = useState(0);
+  const [selectedVariantType, setSelectedVariantType] = useState<string>("");
+  const [selectedVariant, setSelectedVariant] = useState(0);
   const [selectedPack, setSelectedPack] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [pincode, setPincode] = useState("");
   const [thumbnailStartIndex, setThumbnailStartIndex] = useState(0);
 
-  const currentPack = product.packs[selectedPack];
+  const [showReviewForm, setShowReviewForm] = useState(false);
+  const [reviewForm, setReviewForm] = useState({
+    userName: "",
+    userEmail: "",
+    rating: 5,
+    title: "",
+    comment: "",
+  });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  useEffect(() => {
+    if (
+      product.variantsByType &&
+      Object.keys(product.variantsByType).length > 0
+    ) {
+      setSelectedVariantType(Object.keys(product.variantsByType)[0]);
+    }
+  }, [product]);
+
+  const getAvailablePacks = (): Pack[] => {
+    if (
+      product.variantsByType &&
+      selectedVariantType &&
+      product.variantsByType[selectedVariantType]
+    ) {
+      const currentVariant =
+        product.variantsByType[selectedVariantType][selectedVariant];
+      if (currentVariant?.packs && currentVariant.packs.length > 0) {
+        return currentVariant.packs.map((pack: any) => {
+          const originalPrice =
+            pack.price || product.packs[0]?.originalPrice || 0;
+          const discountPercent = pack.discount_percent || 0;
+          const salePrice = originalPrice * (1 - discountPercent / 100);
+
+          return {
+            name: pack.label || pack.name,
+            discount: `${discountPercent}% off`,
+            originalPrice,
+            salePrice,
+          };
+        });
+      }
+    }
+    return product.packs;
+  };
+
+  const availablePacks = getAvailablePacks();
+  const currentPack = availablePacks[selectedPack] || product.packs[0];
+
   const visibleThumbnails = 4;
   const maxThumbnailIndex = Math.max(
     0,
@@ -116,6 +173,11 @@ export default function ProductClient({
 
   const prevThumbnails = () => {
     setThumbnailStartIndex(Math.max(0, thumbnailStartIndex - 1));
+  };
+
+  const handleVariantChange = (index: number) => {
+    setSelectedVariant(index);
+    setSelectedPack(0); // Reset to first pack when variant changes
   };
 
   const handleAddToCart = () => {
@@ -144,14 +206,82 @@ export default function ProductClient({
     return iconMap[iconName as keyof typeof iconMap] || Truck;
   };
 
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingReview(true);
+
+    try {
+      const response = await fetch("/api/reviews", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          productId: product.id,
+          userName: reviewForm.userName,
+          userEmail: reviewForm.userEmail,
+          rating: reviewForm.rating,
+          title: reviewForm.title,
+          comment: reviewForm.comment,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast.success("Review Submitted!", {
+          description: "Your review will be visible after admin approval.",
+        });
+        setShowReviewForm(false);
+        setReviewForm({
+          userName: "",
+          userEmail: "",
+          rating: 5,
+          title: "",
+          comment: "",
+        });
+      } else {
+        toast.error("Error", {
+          description: data.error || "Failed to submit review",
+        });
+      }
+    } catch (error) {
+      toast.error("Error", {
+        description: "Failed to submit review. Please try again.",
+      });
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
+
+  const renderStarRating = (
+    currentRating: number,
+    onRatingChange?: (rating: number) => void
+  ) => {
+    return Array.from({ length: 5 }, (_, i) => (
+      <button
+        key={i}
+        type="button"
+        onClick={() => onRatingChange?.(i + 1)}
+        className={`${
+          onRatingChange ? "cursor-pointer hover:scale-110" : ""
+        } transition-transform`}
+        disabled={!onRatingChange}
+      >
+        <Star
+          className={`w-6 h-6 ${
+            i < currentRating ? "text-yellow-400 fill-current" : "text-gray-300"
+          }`}
+        />
+      </button>
+    ));
+  };
+
   return (
     <>
-      {/* Main Product Section */}
       <div className="container mx-auto px-4 py-8">
         <div className="grid lg:grid-cols-2 gap-12">
-          {/* Product Images */}
           <div className="space-y-4">
-            {/* Main Image */}
             <div className="relative bg-gray-50 rounded-2xl overflow-hidden">
               <Image
                 src={product.images[selectedImage] || "/placeholder.svg"}
@@ -161,7 +291,6 @@ export default function ProductClient({
                 className="w-full h-96 lg:h-[500px] object-contain"
               />
 
-              {/* Navigation Arrows */}
               <Button
                 variant="ghost"
                 size="icon"
@@ -192,10 +321,8 @@ export default function ProductClient({
               </Button>
             </div>
 
-            {/* Thumbnail Carousel */}
             <div className="relative">
               <div className="flex items-center gap-2">
-                {/* Previous Button */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -206,7 +333,6 @@ export default function ProductClient({
                   <ChevronLeft className="w-4 h-4" />
                 </Button>
 
-                {/* Thumbnails */}
                 <div className="flex gap-2 overflow-hidden">
                   {product.images
                     .slice(
@@ -237,7 +363,6 @@ export default function ProductClient({
                     })}
                 </div>
 
-                {/* Next Button */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -251,9 +376,7 @@ export default function ProductClient({
             </div>
           </div>
 
-          {/* Product Details */}
           <div className="space-y-6">
-            {/* Rating and Wishlist */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <div className="flex items-center gap-1">
@@ -273,7 +396,6 @@ export default function ProductClient({
               </Button>
             </div>
 
-            {/* Brand and Title */}
             <div>
               <Link
                 href={`/brands/${product.brand
@@ -288,13 +410,53 @@ export default function ProductClient({
               </h1>
             </div>
 
-            {/* Pack Options */}
+            {product.variantsByType &&
+              Object.keys(product.variantsByType).length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <span>
+                      {selectedVariantType === "weight" ? "⚖️" : "📏"}
+                    </span>{" "}
+                    {selectedVariantType === "weight" ? "Weight" : "Size"}{" "}
+                    Options
+                  </h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {product.variantsByType[selectedVariantType]?.map(
+                      (variant: any, index: number) => (
+                        <button
+                          key={index}
+                          onClick={() => handleVariantChange(index)}
+                          className={`relative p-3 rounded-xl border-2 text-left transition-colors ${
+                            selectedVariant === index
+                              ? "border-blue-500 bg-blue-50"
+                              : "border-gray-200 hover:border-gray-300"
+                          }`}
+                        >
+                          <div className="font-medium text-gray-900">
+                            {variant.label}
+                          </div>
+                          {variant.stock > 0 ? (
+                            <div className="text-xs text-green-600 mt-1">
+                              In Stock
+                            </div>
+                          ) : (
+                            <div className="text-xs text-red-600 mt-1">
+                              Out of Stock
+                            </div>
+                          )}
+                        </button>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+
             <div>
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
                 <span>📦</span> Pack Options
               </h3>
               <div className="grid grid-cols-2 gap-3">
-                {product.packs.map((pack, index) => (
+                {availablePacks.map((pack, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedPack(index)}
@@ -313,7 +475,6 @@ export default function ProductClient({
               </div>
             </div>
 
-            {/* Offers */}
             <div className="space-y-3">
               {product.offers.map((offer, index) => (
                 <div key={index} className={`p-3 rounded-lg ${offer.bgColor}`}>
@@ -325,7 +486,6 @@ export default function ProductClient({
               ))}
             </div>
 
-            {/* Price */}
             <div className="space-y-2">
               <div className="flex items-baseline gap-3">
                 <span className="text-3xl font-bold text-gray-900">
@@ -349,7 +509,6 @@ export default function ProductClient({
               </p>
             </div>
 
-            {/* Quantity and Add to Cart */}
             <div className="space-y-4">
               <div className="flex items-center gap-4">
                 <span className="font-medium">Quantity:</span>
@@ -383,14 +542,12 @@ export default function ProductClient({
               </Button>
             </div>
 
-            {/* Delivery Information */}
             <Card>
               <CardContent className="p-6">
                 <h3 className="font-semibold text-gray-900 mb-4">
                   Delivery & Service Information
                 </h3>
 
-                {/* Pincode Checker */}
                 <div className="flex gap-2 mb-4">
                   <Input
                     placeholder="Enter Pincode To Check Delivery"
@@ -406,7 +563,6 @@ export default function ProductClient({
                   </Button>
                 </div>
 
-                {/* Features */}
                 <div className="space-y-3">
                   {product.features.map((feature, index) => {
                     const IconComponent = getIconComponent(feature.icon);
@@ -424,10 +580,8 @@ export default function ProductClient({
         </div>
       </div>
 
-      {/* Customer Reviews Section */}
       <section className="py-16" id="reviews">
         <div className="container mx-auto px-4">
-          {/* Reviews Header */}
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
@@ -448,12 +602,158 @@ export default function ProductClient({
                 </span>
               </div>
             </div>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white">
-              Write a Review
+            <Button
+              onClick={() => setShowReviewForm(!showReviewForm)}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {showReviewForm ? "Cancel" : "Write a Review"}
             </Button>
           </div>
 
-          {/* Reviews Grid */}
+          {showReviewForm && (
+            <Card className="mb-8 border-2 border-blue-200">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-900">
+                    Write Your Review
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setShowReviewForm(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    <X className="w-5 h-5" />
+                  </Button>
+                </div>
+
+                <form onSubmit={handleReviewSubmit} className="space-y-6">
+                  <div>
+                    <Label className="text-base font-semibold mb-2 block">
+                      Your Rating <span className="text-red-500">*</span>
+                    </Label>
+                    <div className="flex items-center gap-1">
+                      {renderStarRating(reviewForm.rating, (rating) =>
+                        setReviewForm({ ...reviewForm, rating })
+                      )}
+                      <span className="ml-2 text-gray-600">
+                        ({reviewForm.rating} out of 5)
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label
+                        htmlFor="userName"
+                        className="text-base font-semibold mb-2 block"
+                      >
+                        Your Name <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="userName"
+                        type="text"
+                        placeholder="Enter your name"
+                        value={reviewForm.userName}
+                        onChange={(e) =>
+                          setReviewForm({
+                            ...reviewForm,
+                            userName: e.target.value,
+                          })
+                        }
+                        required
+                        className="w-full"
+                      />
+                    </div>
+                    <div>
+                      <Label
+                        htmlFor="userEmail"
+                        className="text-base font-semibold mb-2 block"
+                      >
+                        Your Email <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="userEmail"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={reviewForm.userEmail}
+                        onChange={(e) =>
+                          setReviewForm({
+                            ...reviewForm,
+                            userEmail: e.target.value,
+                          })
+                        }
+                        required
+                        className="w-full"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label
+                      htmlFor="reviewTitle"
+                      className="text-base font-semibold mb-2 block"
+                    >
+                      Review Title <span className="text-red-500">*</span>
+                    </Label>
+                    <Input
+                      id="reviewTitle"
+                      type="text"
+                      placeholder="Give your review a title"
+                      value={reviewForm.title}
+                      onChange={(e) =>
+                        setReviewForm({ ...reviewForm, title: e.target.value })
+                      }
+                      required
+                      maxLength={100}
+                      className="w-full"
+                    />
+                  </div>
+
+                  <div>
+                    <Label
+                      htmlFor="reviewComment"
+                      className="text-base font-semibold mb-2 block"
+                    >
+                      Your Review <span className="text-red-500">*</span>
+                    </Label>
+                    <Textarea
+                      id="reviewComment"
+                      placeholder="Share your experience with this product..."
+                      value={reviewForm.comment}
+                      onChange={(e) =>
+                        setReviewForm({
+                          ...reviewForm,
+                          comment: e.target.value,
+                        })
+                      }
+                      required
+                      maxLength={1000}
+                      rows={5}
+                      className="w-full resize-none"
+                    />
+                    <p className="text-sm text-gray-500 mt-1">
+                      {reviewForm.comment.length}/1000 characters
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <Button
+                      type="submit"
+                      disabled={isSubmittingReview}
+                      className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3"
+                    >
+                      {isSubmittingReview ? "Submitting..." : "Submit Review"}
+                    </Button>
+                    <p className="text-sm text-gray-600">
+                      Your review will be published after admin approval
+                    </p>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          )}
+
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
             {product.customerReviews.map((review) => (
               <Card key={review.id} className="border-0 shadow-sm h-fit">
@@ -522,16 +822,14 @@ export default function ProductClient({
             ))}
           </div>
 
-          {/* Load More Reviews */}
           <div className="text-center">
-            <Button variant="outline" className="px-8 py-3">
+            <Button variant="outline" className="px-8 py-3 bg-transparent">
               Load More Reviews
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Handpicked for You */}
       <section className="bg-gray-50 py-16">
         <div className="container mx-auto px-4">
           <h2 className="text-2xl font-bold text-gray-900 mb-8">

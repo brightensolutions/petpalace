@@ -2,7 +2,7 @@
 
 import type React from "react";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import slugify from "slugify";
@@ -24,6 +24,8 @@ import { XIcon, GripVertical } from "lucide-react";
 interface Category {
   _id: string;
   name: string;
+  parentId?: string | null;
+  parent?: { _id: string; name: string } | null;
 }
 
 interface Brand {
@@ -136,6 +138,118 @@ export default function AddProductPage() {
   useEffect(() => {
     setSlug(slugify(name, { lower: true, strict: true }));
   }, [name]);
+
+  const categoryTree = useMemo(() => {
+    const getParentId = (c: Category) =>
+      c.parentId ??
+      (c.parent as unknown as { _id?: string } | null)?._id ??
+      null;
+
+    // Separate parents and children
+    const parents = categories.filter((c) => !getParentId(c));
+    const childrenMap = new Map<string, Category[]>();
+
+    // Build children map
+    categories.forEach((c) => {
+      const pid = getParentId(c);
+      if (pid) {
+        const list = childrenMap.get(pid) ?? [];
+        list.push(c);
+        childrenMap.set(pid, list);
+      }
+    });
+
+    // Recursive function to build tree with depth
+    const buildTree = (parentId: string | null, depth = 0): any[] => {
+      const children = parentId
+        ? (childrenMap.get(parentId) ?? []).sort((a, b) =>
+            a.name.localeCompare(b.name)
+          )
+        : parents.sort((a, b) => a.name.localeCompare(b.name));
+
+      return children.flatMap((cat) => [
+        { ...cat, depth },
+        ...buildTree(cat._id, depth + 1),
+      ]);
+    };
+
+    return buildTree(null);
+  }, [categories]);
+
+  const leafCategories = useMemo(() => {
+    const getParentId = (c: Category) =>
+      c.parentId ??
+      (c.parent as unknown as { _id?: string } | null)?._id ??
+      null;
+
+    const childrenMap = new Map<string, Category[]>();
+
+    // Build children map
+    categories.forEach((c) => {
+      const pid = getParentId(c);
+      if (pid) {
+        const list = childrenMap.get(pid) ?? [];
+        list.push(c);
+        childrenMap.set(pid, list);
+      }
+    });
+
+    // A category is a leaf if it has no children
+    return new Set(
+      categories.filter((c) => !childrenMap.has(c._id)).map((c) => c._id)
+    );
+  }, [categories]);
+
+  const getParentChain = useCallback(
+    (categoryId: string): string[] => {
+      const chain: string[] = [categoryId];
+      let currentCategory = categories.find((c) => c._id === categoryId);
+
+      while (currentCategory) {
+        const getParentId = (c: Category) =>
+          c.parentId ??
+          (c.parent as unknown as { _id?: string } | null)?._id ??
+          null;
+
+        const parentId = getParentId(currentCategory);
+        if (!parentId) break;
+
+        chain.push(parentId);
+        currentCategory = categories.find((c) => c._id === parentId);
+      }
+
+      return chain;
+    },
+    [categories]
+  );
+
+  const toggleCategoryCheckbox = useCallback(
+    (id: string) => {
+      setSelectedCategories((prev) => {
+        if (prev.includes(id)) {
+          // Remove this category and check if any other selected categories need its parents
+          const newSelected = prev.filter((catId) => catId !== id);
+
+          // Get all parent chains for remaining selected categories
+          const allNeededCategories = new Set<string>();
+          newSelected.forEach((catId) => {
+            if (leafCategories.has(catId)) {
+              getParentChain(catId).forEach((parentId) =>
+                allNeededCategories.add(parentId)
+              );
+            }
+          });
+
+          return Array.from(allNeededCategories);
+        } else {
+          // Add this category and all its parents
+          const chain = getParentChain(id);
+          return Array.from(new Set([...prev, ...chain]));
+        }
+      });
+    },
+    [leafCategories, getParentChain]
+  );
 
   // Handlers
   const toggleCheckbox = (
@@ -501,29 +615,75 @@ export default function AddProductPage() {
           >
             <div>
               <Label>Categories</Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-2">
-                {categories.map((cat) => (
-                  <label
-                    key={cat._id}
-                    className="flex items-center gap-2 cursor-pointer text-sm"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={selectedCategories.includes(cat._id)}
-                      onChange={() =>
-                        toggleCheckbox(
-                          cat._id,
-                          selectedCategories,
-                          setSelectedCategories
-                        )
-                      }
-                      className="form-checkbox h-4 w-4 text-orange-600 rounded"
-                    />
-                    {cat.name}
-                  </label>
-                ))}
+              <p className="text-sm text-muted-foreground mt-1 mb-2">
+                Select the most specific subcategories. Parent categories will
+                be included automatically.
+              </p>
+              <div className="mt-2 border rounded-md p-4 max-h-96 overflow-y-auto bg-white">
+                {categoryTree.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">
+                    No categories available
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    {categoryTree.map((cat) => {
+                      const getParentId = (c: Category) =>
+                        c.parentId ??
+                        (c.parent as unknown as { _id?: string } | null)?._id ??
+                        null;
+                      const parentId = getParentId(cat);
+                      const parentName = parentId
+                        ? categories.find((c) => c._id === parentId)?.name
+                        : null;
+
+                      const isLeaf = leafCategories.has(cat._id);
+                      const isSelected = selectedCategories.includes(cat._id);
+                      const isAutoSelected = isSelected && !isLeaf;
+
+                      return (
+                        <label
+                          key={cat._id}
+                          className={`flex items-start gap-2 text-sm hover:bg-gray-50 p-1 rounded ${
+                            isLeaf
+                              ? "cursor-pointer"
+                              : "cursor-not-allowed opacity-60"
+                          }`}
+                          style={{ paddingLeft: `${cat.depth * 20 + 4}px` }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            disabled={!isLeaf}
+                            onChange={() => toggleCategoryCheckbox(cat._id)}
+                            className="form-checkbox h-4 w-4 text-orange-600 rounded mt-0.5 flex-shrink-0 disabled:cursor-not-allowed"
+                          />
+                          <span className="flex-1">
+                            {cat.name}
+                            {!isLeaf && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                (parent category)
+                              </span>
+                            )}
+                            {isAutoSelected && (
+                              <span className="text-xs text-blue-600 ml-2">
+                                (auto-selected)
+                              </span>
+                            )}
+                            {parentName && isLeaf && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                (under {parentName})
+                              </span>
+                            )}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
+
+            {/* Brands unchanged */}
             <div>
               <Label>Brands</Label>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2 mt-2">

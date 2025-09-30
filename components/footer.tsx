@@ -1,6 +1,8 @@
 "use client";
-import Image from "next/image";
 
+import React, { useEffect, useState } from "react";
+import Image from "next/image";
+import { Button } from "./ui/button";
 import {
   Facebook,
   Twitter,
@@ -13,9 +15,35 @@ import {
   Truck,
   Clock,
 } from "lucide-react";
-import { Button } from "./ui/button";
+
+interface Category {
+  _id: string;
+  name: string;
+  slug?: string;
+  parentId?: string | null;
+}
 
 export function Footer() {
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  useEffect(() => {
+    async function fetchCategories() {
+      try {
+        const res = await fetch("/api/categories");
+        if (!res.ok) throw new Error("Failed to fetch categories");
+        const data: Category[] = await res.json();
+
+        // Only include parent categories (parentId null or undefined)
+        const parentCategories = data.filter((cat) => !cat.parentId);
+        setCategories(parentCategories);
+      } catch (err) {
+        console.error("Error fetching categories:", err);
+      }
+    }
+
+    fetchCategories();
+  }, []);
+
   return (
     <footer className="bg-white border-t border-gray-200">
       {/* Trust Indicators */}
@@ -87,13 +115,11 @@ export function Footer() {
                 className="h-16 w-auto object-contain group-hover:scale-105 transition-transform duration-200"
               />
             </div>
-
             <p className="text-gray-600 leading-relaxed text-base">
               Your one-stop destination for premium pet supplies, nutritious
               food, and fun accessories. We treat your pets like family because
               they deserve nothing but the best!
             </p>
-
             {/* Social Media */}
             <div className="space-y-3">
               <h4 className="font-bold text-gray-900 text-lg">
@@ -158,39 +184,30 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Categories */}
+          {/* Parent Categories */}
           <div className="space-y-6">
             <h3 className="text-2xl font-bold text-gray-900">Pet Categories</h3>
             <ul className="space-y-3">
-              {[
-                { name: "Cats", popular: true },
-                { name: "Dogs", popular: true },
-                { name: "Pharmacy" },
-                { name: "Shop by brand" },
-                { name: "Pet Consultation" },
-              ].map((category, index) => (
-                <li key={index}>
-                  <a
-                    href="#"
-                    className="flex items-center gap-2 text-base text-gray-600 hover:text-orange-600 transition-colors duration-200 hover:translate-x-1 transform group"
-                  >
-                    <span className="font-medium">{category.name}</span>
-                    {category.popular && (
-                      <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
-                        HOT
-                      </span>
-                    )}
-                  </a>
-                </li>
-              ))}
+              {categories.length > 0 ? (
+                categories.map((category) => (
+                  <li key={category._id}>
+                    <a
+                      href={`/categories/${category.slug || category._id}`}
+                      className="flex items-center gap-2 text-base text-gray-600 hover:text-orange-600 transition-colors duration-200 hover:translate-x-1 transform group"
+                    >
+                      <span className="font-medium">{category.name}</span>
+                    </a>
+                  </li>
+                ))
+              ) : (
+                <li className="text-gray-500 text-sm">Loading categories...</li>
+              )}
             </ul>
           </div>
 
-          {/* Contact Info Only */}
+          {/* Contact Info */}
           <div className="space-y-6">
             <h3 className="text-2xl font-bold text-gray-900">Get In Touch</h3>
-
-            {/* Contact Info */}
             <div className="space-y-4">
               {[
                 {
@@ -239,7 +256,7 @@ export function Footer() {
         </div>
       </div>
 
-      {/* Simple Copyright Section */}
+      {/* Copyright */}
       <div className="bg-gray-100 py-4">
         <div className="max-w-7xl mx-auto px-4">
           <div className="text-center">
