@@ -1,10 +1,9 @@
 "use client";
 
-import { Search, ShoppingCart, Menu, User } from "lucide-react";
+import { Search, ShoppingCart, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -20,6 +19,7 @@ interface Category {
 export function Header() {
   const [userExists, setUserExists] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [topbarContent, setTopbarContent] = useState<string>("");
 
   const [placeholderText, setPlaceholderText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -36,6 +36,7 @@ export function Header() {
     []
   );
 
+  // Typing animation for search input placeholder
   const updatePlaceholder = useCallback(() => {
     const currentText = placeholders[currentIndex];
     const timeout = setTimeout(
@@ -65,6 +66,7 @@ export function Header() {
 
   useEffect(() => updatePlaceholder(), [updatePlaceholder]);
 
+  // Fetch authentication state
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -74,14 +76,14 @@ export function Header() {
         });
         const data = await res.json();
         setUserExists(data.authenticated === true);
-      } catch (err) {
-        console.error("Auth check failed:", err);
+      } catch {
         setUserExists(false);
       }
     };
     checkAuth();
   }, []);
 
+  // Fetch categories
   useEffect(() => {
     const fetchCategories = async () => {
       try {
@@ -91,18 +93,29 @@ export function Header() {
         else if (data.success && Array.isArray(data.data))
           setCategories(data.data);
         else setCategories([]);
-      } catch (err) {
-        console.error("❌ Failed to fetch categories:", err);
+      } catch {
         setCategories([]);
       }
     };
     fetchCategories();
   }, []);
 
-  // ✅ Fix: include all top-level categories
+  useEffect(() => {
+    const fetchTopbar = async () => {
+      try {
+        const res = await fetch("/api/topbar-content");
+        const data = await res.json();
+        setTopbarContent(data.content || "");
+      } catch {
+        setTopbarContent("");
+      }
+    };
+    fetchTopbar();
+  }, []);
+
+  // Filter top-level categories
   const topCategories = categories.filter(
-    (cat) =>
-      cat.parentId === null || cat.parentId === undefined || cat.parentId === ""
+    (cat) => !cat.parentId || cat.parentId === ""
   );
 
   const getSubcategories = (parentId: string) =>
@@ -110,13 +123,12 @@ export function Header() {
 
   return (
     <header className="bg-white shadow-sm sticky top-0 z-[9999]">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-600 text-white py-1 md:py-2 px-2 md:px-4 text-center text-xs md:text-sm font-medium">
-        <span className="hidden sm:inline">
-          Special Offer: Free delivery + 20% OFF on your first order above ₹999
-        </span>
-        <span className="sm:hidden">Free delivery + 20% OFF above ₹999</span>
-      </div>
+      {/* Topbar Banner */}
+      {topbarContent && (
+        <div className="bg-orange-500 text-white text-center py-2 px-4 text-sm">
+          {topbarContent}
+        </div>
+      )}
 
       {/* Main Header */}
       <div className="container mx-auto px-3 md:px-6 py-1">
@@ -157,14 +169,14 @@ export function Header() {
           <div className="flex items-center gap-1 lg:gap-2">
             {userExists ? (
               <Link href="/account">
-                <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-2 sm:px-3 py-1 rounded-md lg:rounded-lg font-semibold text-xs lg:text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-8 sm:h-10 flex items-center gap-1">
+                <Button className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-2 sm:px-3 py-1 rounded-md lg:rounded-lg font-semibold text-xs lg:text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-8 sm:h-10 flex items-center gap-1">
                   <User className="w-3 h-3" />
                   <span className="hidden sm:inline">Account</span>
                 </Button>
               </Link>
             ) : (
               <Link href="/sign-in">
-                <Button className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-2 sm:px-3 py-1 rounded-md lg:rounded-lg font-semibold text-xs lg:text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-8 sm:h-10 flex items-center gap-1">
+                <Button className="bg-gradient-to-r from-orange-500 to-orange-600 text-white px-2 sm:px-3 py-1 rounded-md lg:rounded-lg font-semibold text-xs lg:text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-8 sm:h-10 flex items-center gap-1">
                   <User className="w-3 h-3" />
                   <span className="hidden sm:inline">Login / Sign Up</span>
                 </Button>
@@ -179,7 +191,7 @@ export function Header() {
                   size="icon"
                   className="w-8 h-8 sm:w-10 sm:h-10 rounded-md lg:rounded-lg border-2 border-gray-200 hover:border-blue-300 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 transition-all duration-200 shadow-sm hover:shadow-md"
                 >
-                  <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 text-gray-700 hover:text-blue-600 transition-colors" />
+                  <ShoppingCart className="w-3 h-3 sm:w-4 sm:h-4 text-gray-700 hover:text-blue-600" />
                 </Button>
               </Link>
               <Badge className="absolute -top-1 -right-1 h-3 w-3 sm:h-4 sm:w-4 rounded-full p-0 text-xs bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center justify-center font-semibold shadow-lg">
@@ -190,13 +202,12 @@ export function Header() {
         </div>
       </div>
 
-      {/* Desktop Mega Menu */}
+      {/* Mega Menu */}
       <div className="hidden lg:block border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white shadow-sm relative">
         <div className="container mx-auto px-6 relative">
           <nav className="flex items-center justify-center gap-6 py-2">
             {topCategories.map((parent) => {
-              const subParents = getSubcategories(parent._id); // subcategories
-
+              const subParents = getSubcategories(parent._id);
               return (
                 <div key={parent._id} className="relative group">
                   <Link

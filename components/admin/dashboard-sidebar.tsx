@@ -16,6 +16,7 @@ import {
   Video,
   FileText,
   Award,
+  Star,
 } from "lucide-react";
 
 import {
@@ -172,6 +173,18 @@ export function DashboardSidebar({
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link
+                    href="/admin/topbar-content"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <LayoutGrid className="text-orange-500" />
+                    <span>Topbar Content</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
                     href="/admin/sliders"
                     className="flex items-center gap-2 hover:text-orange-600 text-base"
                   >
@@ -190,6 +203,17 @@ export function DashboardSidebar({
                   >
                     <Flame className="text-orange-500" />
                     <span>Trending Categories</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/admin/reviews"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <Star className="text-orange-500" />
+                    <span>Reviews</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

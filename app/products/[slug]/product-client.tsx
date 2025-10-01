@@ -28,6 +28,8 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
+import { useWishlist } from "@/hooks/use-wishlist";
+import { useRouter } from "next/navigation";
 
 interface Pack {
   name: string;
@@ -108,6 +110,31 @@ export default function ProductClient({
     comment: "",
   });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+
+  const [userId, setUserId] = useState<string | undefined>(undefined);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await fetch("/api/users/me", {
+          method: "GET",
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (data.authenticated === true) {
+          setUserId(data.user._id);
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  const { isInWishlist, toggleWishlist, isLoaded } = useWishlist({
+    userId,
+  });
 
   useEffect(() => {
     if (
@@ -277,6 +304,54 @@ export default function ProductClient({
     ));
   };
 
+  const handleWishlistToggle = async () => {
+    console.log("[v0] handleWishlistToggle called");
+    console.log("[v0] Product ID:", product.id);
+    console.log("[v0] isLoaded:", isLoaded);
+    console.log("[v0] Current wishlist status:", isInWishlist(product.id));
+    console.log("[v0] userId:", userId);
+
+    if (!userId) {
+      toast.error("Login Required", {
+        description: "Please login to add items to your wishlist",
+        action: {
+          label: "Login",
+          onClick: () => router.push("/sign-in"),
+        },
+      });
+      return;
+    }
+
+    const result = await toggleWishlist({
+      productId: product.id,
+      productName: product.name,
+      productImage: product.images[0] || "/placeholder.svg",
+      productPrice: currentPack.salePrice,
+      addedAt: new Date().toISOString(),
+    });
+
+    if (result.requiresAuth) {
+      toast.error("Login Required", {
+        description: "Please login to add items to your wishlist",
+        action: {
+          label: "Login",
+          onClick: () => router.push("/sign-in"),
+        },
+      });
+      return;
+    }
+
+    if (result.added) {
+      toast.success("Added to Wishlist", {
+        description: `${product.name} has been added to your wishlist`,
+      });
+    } else {
+      toast.info("Removed from Wishlist", {
+        description: `${product.name} has been removed from your wishlist`,
+      });
+    }
+  };
+
   return (
     <>
       <div className="container mx-auto px-4 py-8">
@@ -390,9 +465,19 @@ export default function ProductClient({
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-gray-400 hover:text-red-500"
+                className={`transition-colors ${
+                  isLoaded && isInWishlist(product.id)
+                    ? "text-red-500 hover:text-red-600"
+                    : "text-gray-400 hover:text-red-500"
+                }`}
+                onClick={handleWishlistToggle}
+                disabled={!isLoaded}
               >
-                <Heart className="w-6 h-6" />
+                <Heart
+                  className={`w-6 h-6 transition-all ${
+                    isLoaded && isInWishlist(product.id) ? "fill-current" : ""
+                  }`}
+                />
               </Button>
             </div>
 
@@ -475,15 +560,23 @@ export default function ProductClient({
               </div>
             </div>
 
-            <div className="space-y-3">
-              {product.offers.map((offer, index) => (
-                <div key={index} className={`p-3 rounded-lg ${offer.bgColor}`}>
-                  <div className={`font-medium ${offer.textColor}`}>
-                    {offer.title}. Use Code:{" "}
-                    <span className="font-bold">{offer.code}</span>
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                <span>🎁</span> Offers
+              </h3>
+              <div className="space-y-3">
+                {product.offers.map((offer, index) => (
+                  <div
+                    key={index}
+                    className={`p-3 rounded-lg ${offer.bgColor}`}
+                  >
+                    <div className={`font-medium ${offer.textColor}`}>
+                      {offer.title}. Use Code:{" "}
+                      <span className="font-bold">{offer.code}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             <div className="space-y-2">
