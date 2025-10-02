@@ -47,6 +47,14 @@ interface Order {
   trackingId?: string;
 }
 
+interface WishlistItem {
+  _id: string;
+  name: string;
+  category?: string;
+  price: number;
+  image: string;
+}
+
 interface Address {
   _id?: string; // Optional for new addresses, required for updates from DB
   name: string;
@@ -85,8 +93,17 @@ interface UserData {
   // Add other user properties as they come from your /api/users/me endpoint
 }
 
+interface WishlistItem {
+  _id: string;
+  name: string;
+  category?: string;
+  price: number;
+  image: string;
+}
+
 export default function UserDashboard() {
   const [user, setUser] = useState<UserData | null>(null);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
   const [editingAddress, setEditingAddress] = useState<Address | null>(null); // State to hold address being edited
   const [loading, setLoading] = useState(true); // Keep loading state for initial fetch
@@ -116,7 +133,23 @@ export default function UserDashboard() {
         setLoading(false);
       }
     };
+    const fetchWishlist = async () => {
+      try {
+        const res = await fetch("/api/users/wishlist", {
+          credentials: "include",
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setWishlistItems(data.wishlist || []);
+        } else {
+          console.warn("Wishlist fetch failed:", data.error);
+        }
+      } catch (err) {
+        console.error("Failed to fetch wishlist:", err);
+      }
+    };
     fetchUser();
+    fetchWishlist();
   }, []);
 
   // Show loading indicator or skeleton until user data is fetched
@@ -180,22 +213,22 @@ export default function UserDashboard() {
     },
   ];
 
-  const wishlistItems = [
-    {
-      id: 1,
-      name: "Organic Chicken Dog Treats",
-      category: "Dog Treats",
-      price: 299,
-      image: "/images/products/chicken-treat.jpg",
-    },
-    {
-      id: 2,
-      name: "Catnip Toy Mouse",
-      category: "Cat Toys",
-      price: 149,
-      image: "/images/products/catnip-toy.jpg",
-    },
-  ];
+  // const wishlistItems = [
+  //   {
+  //     id: 1,
+  //     name: "Organic Chicken Dog Treats",
+  //     category: "Dog Treats",
+  //     price: 299,
+  //     image: "/images/products/chicken-treat.jpg",
+  //   },
+  //   {
+  //     id: 2,
+  //     name: "Catnip Toy Mouse",
+  //     category: "Cat Toys",
+  //     price: 149,
+  //     image: "/images/products/catnip-toy.jpg",
+  //   },
+  // ];
 
   const handleLogout = async () => {
     try {
@@ -572,8 +605,8 @@ export default function UserDashboard() {
 
             {wishlistItems?.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {wishlistItems.map((item, index) => (
-                  <Card key={item.id || index}>
+                {wishlistItems.map((item) => (
+                  <Card key={item._id}>
                     <CardContent className="p-4">
                       <div className="flex gap-4">
                         <img
@@ -587,7 +620,7 @@ export default function UserDashboard() {
                               {item.name}
                             </h3>
                             <p className="text-sm text-gray-500">
-                              {item.category}
+                              {item.category || "Product"}
                             </p>
                           </div>
                           <div className="flex items-center justify-between mt-2">

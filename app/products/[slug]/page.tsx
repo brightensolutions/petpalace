@@ -42,6 +42,7 @@ interface CustomerReview {
 
 interface Product {
   id: string;
+  slug: string;
   brand: string;
   name: string;
   rating: number;
@@ -146,7 +147,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
   );
 
   const product: Product = {
-    id: resolvedParams.slug,
+    id: String(dbProduct._id), // ✅ Use MongoDB ObjectId
+    slug: resolvedParams.slug, // Keep slug for URL purposes
     brand: dbProduct.brand?.name || "Unknown Brand",
     name: dbProduct.name,
     rating: 4.5,

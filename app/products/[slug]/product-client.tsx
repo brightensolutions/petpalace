@@ -62,7 +62,8 @@ interface CustomerReview {
 }
 
 interface Product {
-  id: string;
+  id: string; // MongoDB ObjectId
+  slug: string; // URL slug
   brand: string;
   name: string;
   rating: number;
@@ -204,7 +205,7 @@ export default function ProductClient({
 
   const handleVariantChange = (index: number) => {
     setSelectedVariant(index);
-    setSelectedPack(0); // Reset to first pack when variant changes
+    setSelectedPack(0);
   };
 
   const handleAddToCart = () => {
@@ -214,13 +215,11 @@ export default function ProductClient({
       quantity,
       price: currentPack.salePrice,
     });
-    // Add cart logic here
   };
 
   const handlePincodeCheck = () => {
     if (pincode.trim()) {
       console.log("Checking delivery for pincode:", pincode);
-      // Add pincode validation logic here
     }
   };
 
@@ -306,7 +305,8 @@ export default function ProductClient({
 
   const handleWishlistToggle = async () => {
     console.log("[v0] handleWishlistToggle called");
-    console.log("[v0] Product ID:", product.id);
+    console.log("[v0] Product ID (MongoDB ObjectId):", product.id);
+    console.log("[v0] Product Slug:", product.slug);
     console.log("[v0] isLoaded:", isLoaded);
     console.log("[v0] Current wishlist status:", isInWishlist(product.id));
     console.log("[v0] userId:", userId);
@@ -323,7 +323,7 @@ export default function ProductClient({
     }
 
     const result = await toggleWishlist({
-      productId: product.id,
+      productId: product.id, // ✅ Now sending MongoDB ObjectId
       productName: product.name,
       productImage: product.images[0] || "/placeholder.svg",
       productPrice: currentPack.salePrice,

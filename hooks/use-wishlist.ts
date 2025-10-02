@@ -48,6 +48,7 @@ export function useWishlist(options: UseWishlistOptions = {}) {
 
   const addToWishlist = async (item: WishlistItem) => {
     console.log("[v0] addToWishlist called with:", item);
+    console.log("[v0] productId being sent:", item.productId); // Added debug log
 
     if (!userId) {
       return { requiresAuth: true };
@@ -65,7 +66,7 @@ export function useWishlist(options: UseWishlistOptions = {}) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId,
-          productId: item.productId, // ✅ ObjectId string
+          productId: item.productId, // ✅ Now sending MongoDB ObjectId string
         }),
       });
 
@@ -78,6 +79,8 @@ export function useWishlist(options: UseWishlistOptions = {}) {
           { ...item, addedAt: new Date().toISOString() },
         ]);
         return { requiresAuth: false };
+      } else {
+        console.error("[v0] API error:", responseData);
       }
       return { requiresAuth: false };
     } catch (error) {
