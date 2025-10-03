@@ -3,11 +3,12 @@
 import { Card, CardContent } from "./ui/card";
 import { Button } from "./ui/button";
 import { ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 
 export function FeaturedProducts() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(true);
 
   const scrollLeft = () => {
     scrollContainerRef.current?.scrollBy({ left: -300, behavior: "smooth" });
@@ -17,6 +18,7 @@ export function FeaturedProducts() {
     scrollContainerRef.current?.scrollBy({ left: 300, behavior: "smooth" });
   };
 
+  // Dummy products
   const products = [
     {
       id: 1,
@@ -76,6 +78,12 @@ export function FeaturedProducts() {
     },
   ];
 
+  // Simulate loading
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <section className="py-12 bg-white w-full">
       <div className="w-full px-4 sm:px-6 lg:px-10">
@@ -114,43 +122,67 @@ export function FeaturedProducts() {
             className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 px-12"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
-            {products.map((product) => (
-              <Card
-                key={product.id}
-                className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-orange-300 bg-white hover:scale-105 flex-shrink-0 w-[22%] min-w-[220px]"
-              >
-                <CardContent className="p-0">
-                  <div className="relative overflow-hidden rounded-t-lg">
-                    <Image
-                      src={product.image || "/placeholder.svg"}
-                      alt={product.name}
-                      width={200}
-                      height={200}
-                      className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
-                    />
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold text-base text-gray-900 mb-2 line-clamp-2 leading-tight">
-                      {product.name}
-                    </h3>
+            {loading
+              ? Array.from({ length: 5 }).map((_, i) => (
+                  <Card
+                    key={i}
+                    className="group border border-gray-200 rounded-lg flex-shrink-0 w-[22%] min-w-[220px] animate-pulse"
+                  >
+                    <CardContent className="p-0">
+                      {/* Image skeleton */}
+                      <div className="w-full h-64 bg-gray-200 rounded-t-lg"></div>
+                      <div className="p-4 space-y-3">
+                        {/* Title skeleton */}
+                        <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                        <div className="h-4 bg-gray-200 rounded w-1/2"></div>
 
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xl font-bold text-gray-900">
-                        ₹{product.price}
-                      </span>
-                      <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-full w-36 py-3 text-base font-semibold shadow-lg flex items-center justify-center">
-                        <ShoppingCart className="w-5 h-5 mr-2" />
-                        Add
-                      </Button>
-                    </div>
+                        {/* Price skeleton */}
+                        <div className="flex items-center justify-between">
+                          <div className="h-6 w-16 bg-gray-200 rounded"></div>
+                          <div className="h-10 w-24 bg-gray-200 rounded-full"></div>
+                        </div>
+                        <div className="h-4 bg-gray-200 rounded w-1/3"></div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))
+              : products.map((product) => (
+                  <Card
+                    key={product.id}
+                    className="group hover:shadow-lg transition-all duration-300 border border-gray-200 hover:border-orange-300 bg-white hover:scale-105 flex-shrink-0 w-[22%] min-w-[220px]"
+                  >
+                    <CardContent className="p-0">
+                      <div className="relative overflow-hidden rounded-t-lg">
+                        <Image
+                          src={product.image || "/placeholder.svg"}
+                          alt={product.name}
+                          width={200}
+                          height={200}
+                          className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                      <div className="p-4">
+                        <h3 className="font-semibold text-base text-gray-900 mb-2 line-clamp-2 leading-tight">
+                          {product.name}
+                        </h3>
 
-                    <div className="text-base text-gray-500 line-through">
-                      ₹{product.originalPrice}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xl font-bold text-gray-900">
+                            ₹{product.price}
+                          </span>
+                          <Button className="bg-orange-500 hover:bg-orange-600 text-white rounded-full w-36 py-3 text-base font-semibold shadow-lg flex items-center justify-center">
+                            <ShoppingCart className="w-5 h-5 mr-2" />
+                            Add
+                          </Button>
+                        </div>
+
+                        <div className="text-base text-gray-500 line-through">
+                          ₹{product.originalPrice}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
           </div>
         </div>
       </div>

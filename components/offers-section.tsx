@@ -3,10 +3,11 @@
 import { Card, CardContent } from "./ui/card";
 import { Copy, Check } from "lucide-react";
 import { Button } from "./ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export function OffersSection() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   const copyToClipboard = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -71,21 +72,50 @@ export function OffersSection() {
     },
   ];
 
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-12 bg-white w-full">
+        <div className="w-full px-4 sm:px-6 lg:px-10">
+          <div className="mb-8 space-y-2 animate-pulse">
+            <div className="h-8 w-1/3 bg-gray-300 rounded"></div>
+            <div className="h-4 w-1/2 bg-gray-200 rounded"></div>
+          </div>
+          <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Card
+                key={i}
+                className="border-0 shadow-sm rounded-2xl overflow-hidden animate-pulse"
+              >
+                <CardContent className="p-0">
+                  <div className="aspect-square bg-gray-200 relative"></div>
+                  <div className="h-6 bg-gray-300 mt-2 mx-2 rounded"></div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-12 bg-white w-full">
-      <div className="w-full px-10">
-        {/* Section Header */}
-        <div className="mb-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+      <div className="w-full px-4 sm:px-6 lg:px-10">
+        <div className="mb-6 sm:mb-8">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
             Exclusive Pet Deals & Offers
           </h2>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-xs sm:text-sm md:text-base">
             Save big on premium pet products with our special discount codes
           </p>
         </div>
 
-        {/* Offers Grid - Full Width */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-3 lg:grid-cols-6 gap-3">
           {offers.map((offer) => (
             <Card
               key={offer.id}
@@ -94,42 +124,37 @@ export function OffersSection() {
               <CardContent className="p-0">
                 {/* Main Card Area */}
                 <div
-                  className={`bg-gradient-to-br ${offer.bgGradient} p-6 relative h-40 flex flex-col justify-center`}
+                  className={`aspect-square bg-gradient-to-br ${offer.bgGradient} p-2 sm:p-3 lg:p-6 relative flex flex-col justify-center`}
                 >
-                  {/* Offer Name */}
-                  <div className="text-center mb-3">
+                  <div className="text-center mb-1 sm:mb-2">
                     <div
-                      className={`text-base font-bold ${offer.textColor} mb-2 tracking-wide`}
+                      className={`text-[9px] sm:text-xs lg:text-base font-bold ${offer.textColor} mb-1 tracking-wide`}
                     >
                       {offer.name}
                     </div>
                   </div>
-
-                  {/* Discount */}
                   <div className="text-center">
                     <div
-                      className={`text-3xl font-bold ${offer.textColor} leading-tight`}
+                      className={`text-[10px] sm:text-sm lg:text-3xl font-bold ${offer.textColor} leading-tight`}
                     >
                       {offer.discount}
                     </div>
                   </div>
-
-                  {/* Simple Decorative Circle */}
-                  <div className="absolute top-4 right-4 w-16 h-16 bg-white/30 rounded-full"></div>
+                  <div className="absolute top-1 right-1 sm:top-2 sm:right-2 lg:top-4 lg:right-4 w-8 h-8 sm:w-12 sm:h-12 lg:w-16 lg:h-16 bg-white/30 rounded-full"></div>
                 </div>
 
                 {/* Promo Code Bar */}
                 <div
-                  className={`bg-gradient-to-r ${offer.codeBarGradient} px-4 py-3 flex items-center justify-between cursor-pointer hover:opacity-90 transition-opacity`}
+                  className={`bg-gradient-to-r ${offer.codeBarGradient} px-2 sm:px-3 lg:px-4 py-1 sm:py-2 lg:py-3 flex items-center justify-between cursor-pointer hover:opacity-90 transition-opacity`}
                   onClick={() => copyToClipboard(offer.promoCode)}
                 >
-                  <span className="text-white font-medium text-base">
+                  <span className="text-white font-medium text-[9px] sm:text-xs lg:text-base">
                     Use: {offer.promoCode}
                   </span>
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 hover:bg-white/20 text-white"
+                    className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 p-0 hover:bg-white/20 text-white"
                   >
                     {copiedCode === offer.promoCode ? (
                       <Check className="w-3 h-3" />

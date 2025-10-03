@@ -2,10 +2,11 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "./ui/button";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 
 export function VideoShowcase() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [loading, setLoading] = useState(true);
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
@@ -46,22 +47,43 @@ export function VideoShowcase() {
       title: "Pet Exercise",
       videoUrl: "/placeholder.svg?height=400&width=225&text=Pet+Exercise+Video",
     },
-    {
-      id: 6,
-      title: "Pet Safety",
-      videoUrl: "/placeholder.svg?height=400&width=225&text=Pet+Safety+Video",
-    },
-    {
-      id: 7,
-      title: "Puppy Care",
-      videoUrl: "/placeholder.svg?height=400&width=225&text=Puppy+Care+Video",
-    },
-    {
-      id: 8,
-      title: "Senior Pet Care",
-      videoUrl: "/placeholder.svg?height=400&width=225&text=Senior+Pet+Video",
-    },
   ];
+
+  // Simulate API fetch delay
+  useEffect(() => {
+    const timer = setTimeout(() => setLoading(false), 1500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-12 bg-white w-full">
+        <div className="w-full px-4 sm:px-6 lg:px-10">
+          {/* Section Header Skeleton */}
+          <div className="mb-8">
+            <div className="h-8 w-64 bg-gray-200 rounded-md mb-3 animate-pulse"></div>
+            <div className="h-5 w-96 bg-gray-200 rounded-md animate-pulse"></div>
+          </div>
+
+          {/* Skeleton Row */}
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 px-12">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex-shrink-0 min-w-[16.66%] max-w-[16.66%] px-1"
+              >
+                <div
+                  className="rounded-lg bg-gray-200 animate-pulse"
+                  style={{ aspectRatio: "9/16" }}
+                ></div>
+                <div className="h-5 w-32 bg-gray-200 rounded-md mt-3 mx-auto animate-pulse"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-12 bg-white w-full">

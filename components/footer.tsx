@@ -25,6 +25,7 @@ interface Category {
 
 export function Footer() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchCategories() {
@@ -38,6 +39,8 @@ export function Footer() {
         setCategories(parentCategories);
       } catch (err) {
         console.error("Error fetching categories:", err);
+      } finally {
+        setLoading(false);
       }
     }
 
@@ -184,11 +187,19 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Parent Categories */}
+          {/* Parent Categories with Skeleton */}
           <div className="space-y-6">
             <h3 className="text-2xl font-bold text-gray-900">Pet Categories</h3>
             <ul className="space-y-3">
-              {categories.length > 0 ? (
+              {loading ? (
+                // Skeleton Loader
+                Array.from({ length: 5 }).map((_, i) => (
+                  <li
+                    key={i}
+                    className="h-5 w-40 bg-gray-200 rounded animate-pulse"
+                  />
+                ))
+              ) : categories.length > 0 ? (
                 categories.map((category) => (
                   <li key={category._id}>
                     <a
@@ -200,7 +211,9 @@ export function Footer() {
                   </li>
                 ))
               ) : (
-                <li className="text-gray-500 text-sm">Loading categories...</li>
+                <li className="text-gray-500 text-sm">
+                  No categories available
+                </li>
               )}
             </ul>
           </div>

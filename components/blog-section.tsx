@@ -28,18 +28,50 @@ export function BlogSection() {
     fetchBlogs();
   }, []);
 
+  // Skeleton UI while loading
   if (loading) {
     return (
       <section className="py-12 bg-gray-50">
-        <div className="container mx-auto px-4 text-center">
-          <p>Loading blogs...</p>
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-10">
+            <div className="h-8 w-64 bg-gray-200 rounded mx-auto animate-pulse" />
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            {/* Featured Skeleton */}
+            <div className="lg:col-span-2">
+              <Card className="overflow-hidden border-0 shadow-md">
+                <div className="w-full h-64 bg-gray-200 animate-pulse" />
+                <CardContent className="p-6">
+                  <div className="h-6 w-3/4 bg-gray-200 rounded animate-pulse" />
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Other Articles Skeleton */}
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <Card key={i} className="border-0 shadow-sm">
+                  <CardContent className="p-0">
+                    <div className="flex gap-3">
+                      <div className="w-20 h-16 bg-gray-200 animate-pulse rounded-l-lg" />
+                      <div className="flex-1 p-3">
+                        <div className="h-4 w-3/4 bg-gray-200 rounded animate-pulse mb-2" />
+                        <div className="h-4 w-1/2 bg-gray-200 rounded animate-pulse" />
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
         </div>
       </section>
     );
   }
 
-  const featuredBlogs = blogs.filter((blog) => blog.active).slice(0, 1); // take only 1 featured
-  const otherBlogs = blogs.filter((blog) => blog.active).slice(1, 4); // next 3
+  const featuredBlogs = blogs.filter((blog) => blog.active).slice(0, 1);
+  const otherBlogs = blogs.filter((blog) => blog.active).slice(1, 4);
 
   return (
     <section className="py-12 bg-gray-50">

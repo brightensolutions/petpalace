@@ -18,7 +18,6 @@ export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [showEmailInput, setShowEmailInput] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
-  const [notifyUpdates, setNotifyUpdates] = useState(false);
 
   const handleRequestOtp = () => {
     if (phoneNumber.length === 10) {
@@ -48,6 +47,7 @@ export default function SignInPage() {
       const checkData = await checkRes.json();
 
       if (!checkData.exists) {
+        // User does not exist → create new user
         const createRes = await fetch("/api/users/create", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -59,9 +59,23 @@ export default function SignInPage() {
           alert("Something went wrong while saving user.");
           return;
         }
+        setShowEmailInput(true); // New user → ask for email
+      } else {
+        // User exists → check if email exists
+        const userEmail = checkData.user?.email || "";
+        if (userEmail) {
+          // Email exists → log in directly
+          await fetch("/api/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ number: fullNumber }),
+          });
+          router.push("/");
+        } else {
+          // Email missing → show email input
+          setShowEmailInput(true);
+        }
       }
-
-      setShowEmailInput(true);
     } catch (err) {
       console.error("OTP Verify Error:", err);
       alert("Something went wrong.");

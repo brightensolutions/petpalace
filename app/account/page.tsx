@@ -135,17 +135,30 @@ export default function UserDashboard() {
     };
     const fetchWishlist = async () => {
       try {
+        console.log("[v0] Fetching wishlist from /api/users/wishlist");
         const res = await fetch("/api/users/wishlist", {
           credentials: "include",
         });
+
+        console.log("[v0] Response status:", res.status);
+        console.log("[v0] Response ok:", res.ok);
+
         const data = await res.json();
+        console.log("[v0] Response data:", data);
+
         if (res.ok) {
+          console.log("[v0] Wishlist data received:", data);
+          console.log("[v0] Wishlist array:", data.wishlist);
+          console.log("[v0] Wishlist length:", data.wishlist?.length);
           setWishlistItems(data.wishlist || []);
+          console.log("[v0] State updated with wishlist items");
         } else {
-          console.warn("Wishlist fetch failed:", data.error);
+          console.warn("[v0] Wishlist fetch failed:", data.error);
+          setWishlistItems([]);
         }
       } catch (err) {
-        console.error("Failed to fetch wishlist:", err);
+        console.error("[v0] Failed to fetch wishlist:", err);
+        setWishlistItems([]);
       }
     };
     fetchUser();
