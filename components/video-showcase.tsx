@@ -10,13 +10,21 @@ export function VideoShowcase() {
 
   const scrollLeft = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: -280, behavior: "smooth" });
+      const width =
+        window.innerWidth < 640
+          ? scrollContainerRef.current.offsetWidth / 2
+          : scrollContainerRef.current.offsetWidth / 6;
+      scrollContainerRef.current.scrollBy({ left: -width, behavior: "smooth" });
     }
   };
 
   const scrollRight = () => {
     if (scrollContainerRef.current) {
-      scrollContainerRef.current.scrollBy({ left: 280, behavior: "smooth" });
+      const width =
+        window.innerWidth < 640
+          ? scrollContainerRef.current.offsetWidth / 2
+          : scrollContainerRef.current.offsetWidth / 6;
+      scrollContainerRef.current.scrollBy({ left: width, behavior: "smooth" });
     }
   };
 
@@ -47,9 +55,13 @@ export function VideoShowcase() {
       title: "Pet Exercise",
       videoUrl: "/placeholder.svg?height=400&width=225&text=Pet+Exercise+Video",
     },
+    {
+      id: 6,
+      title: "Pet Training",
+      videoUrl: "/placeholder.svg?height=400&width=225&text=Pet+Training+Video",
+    },
   ];
 
-  // Simulate API fetch delay
   useEffect(() => {
     const timer = setTimeout(() => setLoading(false), 1500);
     return () => clearTimeout(timer);
@@ -59,18 +71,16 @@ export function VideoShowcase() {
     return (
       <section className="py-12 bg-white w-full">
         <div className="w-full px-4 sm:px-6 lg:px-10">
-          {/* Section Header Skeleton */}
           <div className="mb-8">
-            <div className="h-8 w-64 bg-gray-200 rounded-md mb-3 animate-pulse"></div>
-            <div className="h-5 w-96 bg-gray-200 rounded-md animate-pulse"></div>
+            <div className="h-6 w-48 bg-gray-200 rounded-md mb-3 animate-pulse"></div>
+            <div className="h-4 w-80 bg-gray-200 rounded-md animate-pulse"></div>
           </div>
 
-          {/* Skeleton Row */}
-          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 px-12">
-            {Array.from({ length: 5 }).map((_, i) => (
+          <div className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 px-2 sm:px-12">
+            {Array.from({ length: 6 }).map((_, i) => (
               <div
                 key={i}
-                className="flex-shrink-0 min-w-[16.66%] max-w-[16.66%] px-1"
+                className="flex-shrink-0 w-1/2 sm:w-[calc(16.66%-0.8rem)] px-1"
               >
                 <div
                   className="rounded-lg bg-gray-200 animate-pulse"
@@ -86,68 +96,64 @@ export function VideoShowcase() {
   }
 
   return (
-    <section className="py-12 bg-white w-full">
+    <section className="bg-white w-full">
       <div className="w-full px-4 sm:px-6 lg:px-10">
         {/* Section Header */}
         <div className="mb-8">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-2">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2">
             Pet Care Videos
           </h2>
-          <p className="text-gray-600 text-lg">
+          <p className="text-gray-600 text-base sm:text-sm md:text-base">
             Learn from our experts and give your pets the best care
           </p>
         </div>
 
-        {/* Video Slider Container */}
         <div className="relative">
           {/* Navigation Buttons */}
           <Button
             variant="ghost"
             size="icon"
             onClick={scrollLeft}
-            className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white hover:bg-gray-50 rounded-full shadow-lg border border-gray-200"
+            className="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 bg-white hover:bg-gray-50 rounded-full shadow-lg border border-gray-200"
           >
-            <ChevronLeft className="w-5 h-5 text-gray-600" />
+            <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
           </Button>
-
           <Button
             variant="ghost"
             size="icon"
             onClick={scrollRight}
-            className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-12 h-12 bg-white hover:bg-gray-50 rounded-full shadow-lg border border-gray-200"
+            className="absolute right-0 top-1/2 transform -translate-y-1/2 z-10 w-10 h-10 sm:w-12 sm:h-12 bg-white hover:bg-gray-50 rounded-full shadow-lg border border-gray-200"
           >
-            <ChevronRight className="w-5 h-5 text-gray-600" />
+            <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 text-gray-600" />
           </Button>
 
           {/* Scrollable Video Row */}
           <div
             ref={scrollContainerRef}
-            className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 px-12"
+            className="flex gap-4 overflow-x-auto scrollbar-hide pb-4 px-2 sm:px-12"
             style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
           >
             {videos.map((video) => (
               <div
                 key={video.id}
-                className="flex-shrink-0 min-w-[16.66%] max-w-[16.66%] px-1"
+                className="flex-shrink-0 w-1/2 sm:w-[calc(16.66%-0.8rem)] px-1"
               >
-                <div className="relative">
-                  <div
-                    className="relative rounded-lg overflow-hidden bg-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300"
-                    style={{ aspectRatio: "9/16" }}
+                <div
+                  className="relative rounded-lg overflow-hidden bg-gray-100 shadow-sm hover:shadow-md transition-shadow duration-300"
+                  style={{ aspectRatio: "9/16" }}
+                >
+                  <video
+                    className="w-full h-full object-cover cursor-pointer"
+                    controls
+                    preload="metadata"
+                    poster={video.videoUrl}
                   >
-                    <video
-                      className="w-full h-full object-cover cursor-pointer"
-                      controls
-                      preload="metadata"
-                      poster={video.videoUrl}
-                    >
-                      <source src={video.videoUrl} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  </div>
+                    <source src={video.videoUrl} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
                 </div>
                 <div className="mt-3 text-center">
-                  <h3 className="font-semibold text-gray-900 text-base">
+                  <h3 className="font-semibold text-gray-900 text-sm sm:text-base md:text-base">
                     {video.title}
                   </h3>
                 </div>

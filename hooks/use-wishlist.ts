@@ -1,148 +1,183 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
-export interface WishlistItem {
-  productId: string; // always MongoDB ObjectId string
+interface WishlistItem {
+  productId: string;
   productName: string;
   productImage: string;
   productPrice: number;
   addedAt: string;
 }
 
-interface UseWishlistOptions {
+interface UseWishlistProps {
   userId?: string;
 }
 
-export function useWishlist(options: UseWishlistOptions = {}) {
-  const { userId } = options;
-  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+interface UseWishlistReturn {
+  wishlist: WishlistItem[];
+  isInWishlist: (productId: string) => boolean;
+  toggleWishlist: (productId: string) => Promise<{
+    added: boolean;
+    requiresAuth: boolean;
+  }>;
+  removeFromWishlist: (productId: string) => Promise<void>;
+  isLoaded: boolean;
+}
+
+export function useWishlist({ userId }: UseWishlistProps): UseWishlistReturn {
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const loadWishlist = async () => {
-      if (userId) {
-        try {
-          console.log("[v0] Loading wishlist from database for user:", userId);
-          const response = await fetch(`/api/wishlist?userId=${userId}`);
-          if (response.ok) {
-            const data = await response.json();
-            const items = data.items.map((item: any) => ({
-              productId: String(item.productId?._id || item.productId), // ✅ enforce ObjectId string
-              productName: item.productId?.name || item.productName,
-              productImage: item.productId?.main_image || item.productImage,
-              productPrice: item.productId?.base_price || item.productPrice,
-              addedAt: item.createdAt,
-            }));
-            setWishlistItems(items);
+    const fetchWishlist = async () => {
+      if (!userId) {
+        const localWishlist = localStorage.getItem("wishlist");
+        if (localWishlist) {
+          try {
+            setWishlist(JSON.parse(localWishlist));
+          } catch (error) {
+            console.error("Error parsing local wishlist:", error);
           }
-        } catch (error) {
-          console.error("[v0] Error loading wishlist from database:", error);
         }
+        setIsLoaded(true);
+        return;
       }
-      setIsLoaded(true);
+
+      try {
+        const response = await fetch("/api/wishlist", {
+          method: "GET",
+          credentials: "include",
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setWishlist(data.items || []);
+        }
+      } catch (error) {
+        console.error("Error fetching wishlist:", error);
+      } finally {
+        setIsLoaded(true);
+      }
     };
 
-    loadWishlist();
+    fetchWishlist();
   }, [userId]);
 
-  const addToWishlist = async (item: WishlistItem) => {
-    console.log("[v0] addToWishlist called with:", item);
-    console.log("[v0] productId being sent:", item.productId); // Added debug log
+  const isInWishlist = useCallback(
+    (productId: string) => {
+      return wishlist.some((item) => item.productId === productId);
+    },
+    [wishlist]
+  );
 
-    if (!userId) {
-      return { requiresAuth: true };
-    }
+  const toggleWishlist = useCallback(
+    async (productId: string) => {
+      if (!userId) {
+        const isCurrentlyInWishlist = isInWishlist(productId);
+        let newWishlist: WishlistItem[];
 
-    // Prevent duplicates
-    if (wishlistItems.some((i) => i.productId === item.productId)) {
-      console.log("[v0] Item already in wishlist, skipping");
-      return { requiresAuth: false };
-    }
+        if (isCurrentlyInWishlist) {
+          newWishlist = wishlist.filter((w) => w.productId !== productId);
+        } else {
+          newWishlist = [
+            ...wishlist,
+            {
+              productId,
+              productName: "",
+              productImage: "",
+              productPrice: 0,
+              addedAt: new Date().toISOString(),
+            },
+          ];
+        }
 
-    try {
-      const response = await fetch("/api/wishlist", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userId,
-          productId: item.productId, // ✅ Now sending MongoDB ObjectId string
-        }),
-      });
+        setWishlist(newWishlist);
+        localStorage.setItem("wishlist", JSON.stringify(newWishlist));
 
-      const responseData = await response.json();
-      console.log("[v0] API response:", response.status, responseData);
-
-      if (response.ok) {
-        setWishlistItems((prev) => [
-          ...prev,
-          { ...item, addedAt: new Date().toISOString() },
-        ]);
-        return { requiresAuth: false };
-      } else {
-        console.error("[v0] API error:", responseData);
+        return {
+          added: !isCurrentlyInWishlist,
+          requiresAuth: false,
+        };
       }
-      return { requiresAuth: false };
-    } catch (error) {
-      console.error("[v0] Error adding to wishlist:", error);
-      return { requiresAuth: false };
-    }
-  };
 
-  const removeFromWishlist = async (productId: string) => {
-    console.log("[v0] removeFromWishlist called for productId:", productId);
+      try {
+        const isCurrentlyInWishlist = isInWishlist(productId);
+        const method = isCurrentlyInWishlist ? "DELETE" : "POST";
 
-    if (!userId) {
-      return { requiresAuth: true };
-    }
+        const response = await fetch("/api/wishlist", {
+          method,
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ productId }),
+        });
 
-    try {
-      const response = await fetch(
-        `/api/wishlist?productId=${productId}&userId=${userId}`,
-        { method: "DELETE" }
-      );
-      if (response.ok) {
-        setWishlistItems((prev) =>
-          prev.filter((item) => item.productId !== productId)
+        if (response.ok) {
+          const data = await response.json();
+          setWishlist(data.items || []);
+
+          return {
+            added: !isCurrentlyInWishlist,
+            requiresAuth: false,
+          };
+        } else if (response.status === 401) {
+          return {
+            added: false,
+            requiresAuth: true,
+          };
+        }
+
+        throw new Error("Failed to update wishlist");
+      } catch (error) {
+        console.error("Error toggling wishlist:", error);
+        return {
+          added: false,
+          requiresAuth: false,
+        };
+      }
+    },
+    [userId, wishlist, isInWishlist]
+  );
+
+  const removeFromWishlist = useCallback(
+    async (productId: string) => {
+      if (!userId) {
+        const newWishlist = wishlist.filter(
+          (item) => item.productId !== productId
         );
-        return { requiresAuth: false };
+        setWishlist(newWishlist);
+        localStorage.setItem("wishlist", JSON.stringify(newWishlist));
+        return;
       }
-      return { requiresAuth: false };
-    } catch (error) {
-      console.error("[v0] Error removing from wishlist:", error);
-      return { requiresAuth: false };
-    }
-  };
 
-  const isInWishlist = (productId: string) =>
-    wishlistItems.some((item) => item.productId === productId);
+      try {
+        const response = await fetch("/api/wishlist", {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          credentials: "include",
+          body: JSON.stringify({ productId }),
+        });
 
-  const toggleWishlist = async (item: WishlistItem) => {
-    console.log("[v0] toggleWishlist called with:", item);
-
-    if (!userId) {
-      return { added: false, requiresAuth: true };
-    }
-
-    if (isInWishlist(item.productId)) {
-      console.log("[v0] Item is in wishlist, removing...");
-      const result = await removeFromWishlist(item.productId);
-      return { added: false, requiresAuth: result?.requiresAuth || false };
-    } else {
-      console.log("[v0] Item not in wishlist, adding...");
-      const result = await addToWishlist(item);
-      return { added: true, requiresAuth: result?.requiresAuth || false };
-    }
-  };
+        if (response.ok) {
+          const data = await response.json();
+          setWishlist(data.items || []);
+        }
+      } catch (error) {
+        console.error("Error removing from wishlist:", error);
+      }
+    },
+    [userId, wishlist]
+  );
 
   return {
-    wishlistItems,
-    addToWishlist,
-    removeFromWishlist,
+    wishlist,
     isInWishlist,
     toggleWishlist,
-    clearWishlist: () => setWishlistItems([]),
-    wishlistCount: wishlistItems.length,
+    removeFromWishlist,
     isLoaded,
   };
 }

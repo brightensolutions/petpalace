@@ -3,6 +3,9 @@ import Footer from "@/components/footer";
 import Link from "next/link";
 import ProductClient from "./product-client";
 import { notFound } from "next/navigation";
+import dbConnect from "@/lib/db/db";
+import Product from "@/lib/models/Product";
+import ProductVariant from "@/lib/models/ProductVariant";
 
 interface ProductPageProps {
   params: Promise<{
@@ -40,7 +43,7 @@ interface CustomerReview {
   verified: boolean;
 }
 
-interface Product {
+interface ProductData {
   id: string;
   slug: string;
   brand: string;
@@ -56,29 +59,94 @@ interface Product {
 }
 
 interface RelatedProduct {
-  id: number;
+  id: string;
   name: string;
   image: string;
   price: number;
   originalPrice: number;
-  discount: string;
+  slug: string;
+  brand: string;
 }
 
 async function getProduct(slug: string) {
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-    const res = await fetch(`${baseUrl}/api/products/${slug}`, {
-      cache: "no-store",
-    });
+    await dbConnect();
 
-    if (!res.ok) {
+    const dbProduct = (await Product.findOne({ slug })
+      .populate("brand")
+      .populate("category")
+      .lean()) as any;
+
+    if (!dbProduct) {
       return null;
     }
 
-    return res.json();
+    // Fetch variants for this product
+    const variants = await ProductVariant.find({
+      product_id: dbProduct._id,
+    }).lean();
+
+    return { ...dbProduct, variants };
   } catch (error) {
-    console.error("[v0] Error fetching product:", error);
+    console.error("Error fetching product:", error);
     return null;
+  }
+}
+
+async function getRelatedProducts(
+  categoryId: string,
+  currentProductId: string,
+  limit = 6
+) {
+  try {
+    await dbConnect();
+
+    const relatedProducts = await Product.find({
+      category: categoryId,
+      _id: { $ne: currentProductId },
+    })
+      .populate("brand")
+      .limit(limit)
+      .lean();
+
+    // Fetch variants for each product to get pricing
+    const productsWithVariants = await Promise.all(
+      relatedProducts.map(async (product: any) => {
+        const variants = await ProductVariant.find({
+          product_id: product._id,
+        }).lean();
+
+        let price = product.base_price || product.mrp || 0;
+        let originalPrice = product.mrp || product.base_price || 0;
+
+        // Get price from first variant if available
+        if (
+          variants.length > 0 &&
+          variants[0].packs &&
+          variants[0].packs.length > 0
+        ) {
+          const firstPack = variants[0].packs[0];
+          originalPrice = firstPack.price || originalPrice;
+          const discountPercent = firstPack.discount_percent || 0;
+          price = originalPrice * (1 - discountPercent / 100);
+        }
+
+        return {
+          id: String(product._id),
+          name: product.name,
+          image: product.main_image || "/placeholder.svg",
+          price,
+          originalPrice,
+          slug: product.slug,
+          brand: product.brand?.name || "Unknown",
+        };
+      })
+    );
+
+    return productsWithVariants;
+  } catch (error) {
+    console.error("Error fetching related products:", error);
+    return [];
   }
 }
 
@@ -95,34 +163,34 @@ export default async function ProductPage({ params }: ProductPageProps) {
 
   if (dbProduct.variants && dbProduct.variants.length > 0) {
     dbProduct.variants.forEach((variant: any) => {
-      // Group variants by type
-      if (!variantsByType[variant.type]) {
-        variantsByType[variant.type] = [];
-      }
-      variantsByType[variant.type].push(variant);
+      // Convert Mongoose document to plain object
+      const plainVariant = JSON.parse(JSON.stringify(variant));
 
-      // Extract packs
-      if (variant.packs && variant.packs.length > 0) {
-        variant.packs.forEach((pack: any) => {
+      if (!variantsByType[plainVariant.type]) {
+        variantsByType[plainVariant.type] = [];
+      }
+      variantsByType[plainVariant.type].push(plainVariant);
+
+      if (plainVariant.packs && plainVariant.packs.length > 0) {
+        plainVariant.packs.forEach((pack: any) => {
           const originalPrice = pack.price || dbProduct.mrp || 0;
           const discountPercent = pack.discount_percent || 0;
           const salePrice = originalPrice * (1 - discountPercent / 100);
 
           packs.push({
-            name: pack.label || variant.label,
+            name: pack.label || plainVariant.label,
             discount: `${discountPercent}% off`,
             originalPrice,
             salePrice,
           });
         });
-      } else if (variant.price) {
-        // Single variant without packs
-        const originalPrice = variant.price;
-        const discountPercent = variant.discount_percent || 0;
+      } else if (plainVariant.price) {
+        const originalPrice = plainVariant.price;
+        const discountPercent = plainVariant.discount_percent || 0;
         const salePrice = originalPrice * (1 - discountPercent / 100);
 
         packs.push({
-          name: variant.label,
+          name: plainVariant.label,
           discount: `${discountPercent}% off`,
           originalPrice,
           salePrice,
@@ -131,7 +199,6 @@ export default async function ProductPage({ params }: ProductPageProps) {
     });
   }
 
-  // Fallback to base product price if no variants
   if (packs.length === 0) {
     packs.push({
       name: "Single Pack",
@@ -141,17 +208,16 @@ export default async function ProductPage({ params }: ProductPageProps) {
     });
   }
 
-  // Prepare images array
   const images = [dbProduct.main_image, ...(dbProduct.images || [])].filter(
-    Boolean
+    (img): img is string => Boolean(img)
   );
 
-  const product: Product = {
-    id: String(dbProduct._id), // ✅ Use MongoDB ObjectId
-    slug: resolvedParams.slug, // Keep slug for URL purposes
+  const product: ProductData = {
+    id: String(dbProduct._id),
+    slug: resolvedParams.slug,
     brand: dbProduct.brand?.name || "Unknown Brand",
     name: dbProduct.name,
-    rating: 4.5,
+    rating: dbProduct.rating || 0,
     reviews: 0,
     images:
       images.length > 0
@@ -181,23 +247,27 @@ export default async function ProductPage({ params }: ProductPageProps) {
     customerReviews: [],
   };
 
-  const relatedProducts: RelatedProduct[] = [];
+  const categoryId = dbProduct.category?._id || dbProduct.category;
+  const relatedProducts = categoryId
+    ? await getRelatedProducts(String(categoryId), String(dbProduct._id), 6)
+    : [];
 
   return (
     <div className="min-h-screen bg-white">
       <Header />
 
-      {/* Breadcrumb */}
       <div className="bg-gray-50/50 py-2">
         <div className="container mx-auto px-4">
-          <nav className="flex items-center gap-2 text-sm">
+          <nav className="flex items-center gap-2 text-sm overflow-x-auto whitespace-nowrap">
             <Link href="/" className="text-gray-600 hover:text-blue-600">
               Home
             </Link>
             <span className="text-gray-400">/</span>
             <span className="text-gray-600">{product.brand}</span>
             <span className="text-gray-400">/</span>
-            <span className="text-gray-900 font-medium">{product.name}</span>
+            <span className="text-gray-900 font-medium truncate">
+              {product.name}
+            </span>
           </nav>
         </div>
       </div>

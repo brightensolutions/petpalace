@@ -12,6 +12,12 @@ export interface IProduct extends Document {
   base_price?: number;
   mrp?: number;
   stock?: number;
+  rating?: number;
+  reviews?: number;
+  discount?: number;
+  foodType?: "veg" | "non-veg";
+  hsnCode?: string;
+  sku?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -67,6 +73,36 @@ const ProductSchema = new Schema<IProduct>(
     stock: {
       type: Number,
       default: 0,
+    },
+    rating: {
+      type: Number,
+      min: 0,
+      max: 5,
+      default: 0,
+    },
+    reviews: {
+      type: Number,
+      default: 0,
+    },
+    discount: {
+      type: Number,
+      min: 0,
+      max: 100,
+      default: 0,
+    },
+    foodType: {
+      type: String,
+      enum: ["veg", "non-veg"],
+    },
+    hsnCode: {
+      type: String,
+      trim: true,
+    },
+    sku: {
+      type: String,
+      trim: true,
+      unique: true,
+      sparse: true,
     },
   },
   {

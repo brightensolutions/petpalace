@@ -34,6 +34,7 @@ interface Pack {
   price: number;
   stock: number;
   discount: number;
+  sku: string; // Added SKU field for packs
 }
 interface GalleryImage {
   id: string;
@@ -52,6 +53,7 @@ interface Variant {
   imageFile?: File;
   imagePreviewUrl?: string;
   existingImageUrl?: string;
+  sku: string; // Added SKU field for variants
 }
 
 const PACK_OPTIONS = Array.from({ length: 10 }, (_, i) => `Pack of ${i + 1}`);
@@ -69,6 +71,9 @@ export default function EditProductPage() {
   const [desc, setDesc] = useState("");
   const [basePrice, setBasePrice] = useState<number>(0);
   const [mrpPrice, setMrpPrice] = useState<number>(0);
+  const [foodType, setFoodType] = useState<"" | "veg" | "non-veg">("");
+  const [hsnCode, setHsnCode] = useState("");
+  const [sku, setSku] = useState("");
   const [productStock, setProductStock] = useState<number>(0);
   const [additionalProductInfo, setAdditionalProductInfo] = useState("");
 
@@ -171,6 +176,9 @@ export default function EditProductPage() {
         setBasePrice(p.base_price ?? p.price ?? 0);
         setMrpPrice(p.mrp_price ?? p.mrp ?? 0);
         setProductStock(p.stock ?? 0);
+        setFoodType(p.foodType || "");
+        setHsnCode(p.hsnCode || "");
+        setSku(p.sku || "");
         setAdditionalProductInfo(p.additional_info || "");
 
         setExistingMainImageUrl(p.main_image || null);
@@ -206,11 +214,13 @@ export default function EditProductPage() {
             price: pk.price_per_unit ?? pk.price ?? 0,
             stock: pk.stock ?? 0,
             discount: pk.discount_percent ?? pk.discount ?? 0,
+            sku: pk.sku || "", // Added SKU field for packs
           })),
           price: v.price ?? 0,
           stock: v.stock ?? 0,
           discount: v.discount_percent ?? v.discount ?? 0,
           existingImageUrl: v.image || undefined,
+          sku: v.sku || "", // Added SKU field for variants
         }));
         setVariants(mappedVariants);
       } catch (e: any) {
@@ -408,7 +418,7 @@ export default function EditProductPage() {
   const addVariant = () =>
     setVariants((prev) => [
       ...prev,
-      { type: "custom", label: "", price: 0, stock: 0, discount: 0 },
+      { type: "custom", label: "", price: 0, stock: 0, discount: 0, sku: "" }, // Added SKU field for variants
     ]);
   const removeVariant = (index: number) => {
     setVariants((prev) => {
@@ -459,7 +469,13 @@ export default function EditProductPage() {
               ...v,
               packs: [
                 ...(v.packs || []),
-                { label: PACK_OPTIONS[0], price: 0, stock: 0, discount: 0 },
+                {
+                  label: PACK_OPTIONS[0],
+                  price: 0,
+                  stock: 0,
+                  discount: 0,
+                  sku: "",
+                }, // Added SKU field for packs
               ],
             }
           : v
@@ -496,6 +512,9 @@ export default function EditProductPage() {
     formData.append("price", basePrice.toString());
     formData.append("mrp", mrpPrice.toString());
     formData.append("stock", productStock.toString());
+    if (foodType) formData.append("foodType", foodType);
+    if (hsnCode) formData.append("hsnCode", hsnCode);
+    if (sku) formData.append("sku", sku);
     formData.append("additional_info", additionalProductInfo);
     if (mainImageFile) formData.append("mainImage", mainImageFile);
     galleryImages.forEach((img) => {
@@ -508,6 +527,7 @@ export default function EditProductPage() {
     variants.forEach((v, i) => {
       formData.append(`variants[${i}][type]`, v.type);
       formData.append(`variants[${i}][label]`, v.label);
+      formData.append(`variants[${i}][sku]`, v.sku); // Added SKU field for variants
       if (v.type === "weight") {
         formData.append(
           `variants[${i}][weight_value]`,
@@ -527,6 +547,7 @@ export default function EditProductPage() {
             `variants[${i}][packs][${pi}][discount_percent]`,
             p.discount.toString()
           );
+          formData.append(`variants[${i}][packs][${pi}][sku]`, p.sku); // Added SKU field for packs
         });
       } else {
         formData.append(`variants[${i}][price]`, v.price?.toString() || "0");
@@ -677,6 +698,44 @@ export default function EditProductPage() {
                   required
                 />
               </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="hsn-code">HSN Code (Optional)</Label>
+                <Input
+                  id="hsn-code"
+                  value={hsnCode}
+                  onChange={(e) => setHsnCode(e.target.value)}
+                  placeholder="e.g., 1234567890"
+                />
+              </div>
+              <div>
+                <Label htmlFor="sku">SKU (Optional)</Label>
+                <Input
+                  id="sku"
+                  value={sku}
+                  onChange={(e) => setSku(e.target.value)}
+                  placeholder="e.g., PROD-001"
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="food-type">Food Type</Label>
+              <Select
+                value={foodType}
+                onValueChange={(value: "" | "veg" | "non-veg") =>
+                  setFoodType(value)
+                }
+              >
+                <SelectTrigger id="food-type">
+                  <SelectValue placeholder="Select food type (optional)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">None</SelectItem>
+                  <SelectItem value="veg">Vegetarian</SelectItem>
+                  <SelectItem value="non-veg">Non-Vegetarian</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <Label htmlFor="additional-product-info">
@@ -1030,6 +1089,16 @@ export default function EditProductPage() {
                               }
                             />
                           </div>
+                          <div>
+                            <Label htmlFor={`pack-sku-${i}-${pi}`}>SKU</Label>
+                            <Input
+                              id={`pack-sku-${i}-${pi}`}
+                              value={pack.sku}
+                              onChange={(e) =>
+                                updatePack(i, pi, "sku", e.target.value)
+                              }
+                            />
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1070,6 +1139,16 @@ export default function EditProductPage() {
                         value={v.discount || ""}
                         onChange={(e) =>
                           updateVariant(i, "discount", +e.target.value)
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor={`variant-sku-${i}`}>SKU</Label>
+                      <Input
+                        id={`variant-sku-${i}`}
+                        value={v.sku}
+                        onChange={(e) =>
+                          updateVariant(i, "sku", e.target.value)
                         }
                       />
                     </div>

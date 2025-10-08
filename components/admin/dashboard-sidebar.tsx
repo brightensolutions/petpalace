@@ -12,11 +12,12 @@ import {
   Tag,
   Search,
   Image as ImageIcon,
-  Flame, // 🔥 Icon for trending
+  Flame,
   Video,
   FileText,
   Award,
   Star,
+  Heart,
 } from "lucide-react";
 
 import {
@@ -48,6 +49,7 @@ export function DashboardSidebar({
 
       {/* Sidebar Content */}
       <SidebarContent className="bg-gradient-to-b from-white via-orange-50 to-blue-50">
+        {/* Search Bar */}
         <SidebarGroup>
           <SidebarGroupContent className="relative p-2">
             <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 select-none opacity-50 text-gray-400" />
@@ -81,7 +83,7 @@ export function DashboardSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Management Section */}
+        {/* Inventory Management */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-orange-500 text-lg">
             Inventory Management
@@ -106,7 +108,7 @@ export function DashboardSidebar({
                     href="/admin/brands"
                     className="flex items-center gap-2 hover:text-orange-600 text-base"
                   >
-                    <Award className="text-orange-500" /> {/* New icon */}
+                    <Award className="text-orange-500" />
                     <span>Brands</span>
                   </Link>
                 </SidebarMenuButton>
@@ -139,18 +141,6 @@ export function DashboardSidebar({
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link
-                    href="/admin/users"
-                    className="flex items-center gap-2 hover:text-orange-600 text-base"
-                  >
-                    <Users className="text-orange-500" />
-                    <span>Users</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link
                     href="/admin/orders"
                     className="flex items-center gap-2 hover:text-orange-600 text-base"
                   >
@@ -163,7 +153,53 @@ export function DashboardSidebar({
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Content Management Section */}
+        {/* 👤 User Management */}
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-orange-500 text-lg">
+            User Management
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/admin/users"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <Users className="text-orange-500" />
+                    <span>Users</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/admin/carts"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <ShoppingCart className="text-orange-500" />
+                    <span>Cart</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/admin/wishlists"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <Heart className="text-orange-500" />
+                    <span>Wishlist</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Content Management */}
         <SidebarGroup>
           <SidebarGroupLabel className="text-orange-500 text-lg">
             Content Management
@@ -194,7 +230,6 @@ export function DashboardSidebar({
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* 🔥 Trending Categories Link */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link
@@ -206,6 +241,7 @@ export function DashboardSidebar({
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link
@@ -218,7 +254,6 @@ export function DashboardSidebar({
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* 🎬 Video Management Link */}
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link

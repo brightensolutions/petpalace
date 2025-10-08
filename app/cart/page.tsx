@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -24,6 +24,11 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import {
+  getCart,
+  updateCartItem,
+  removeFromCart,
+} from "@/lib/services/cart-service";
 
 interface CartItem {
   id: string;
@@ -60,28 +65,8 @@ interface Coupon {
 }
 
 export default function CartPage() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([
-    {
-      id: "1",
-      name: "Royal Canin Adult Dog Food - Chicken & Rice",
-      price: 1299,
-      originalPrice: 1499,
-      image: "/placeholder.svg?height=120&width=120&text=Dog+Food",
-      quantity: 2,
-      category: "Dog Food",
-      inStock: true,
-    },
-    {
-      id: "2",
-      name: "Interactive Puzzle Toy for Dogs",
-      price: 599,
-      image: "/placeholder.svg?height=120&width=120&text=Dog+Toy",
-      quantity: 1,
-      category: "Dog Toys",
-      inStock: true,
-    },
-  ]);
-
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
 
@@ -166,10 +151,38 @@ export default function CartPage() {
     },
   ];
 
-  const updateQuantity = (id: string, newQuantity: number) => {
+  useEffect(() => {
+    const loadCart = () => {
+      const cart = getCart();
+      const mappedItems = cart.map((item, index) => ({
+        id: `${item.productId}-${index}`,
+        name: item.name,
+        price: item.price,
+        originalPrice: undefined,
+        image: item.image || "/placeholder.svg",
+        quantity: item.quantity,
+        category: item.brand || "Product",
+        inStock: true,
+      }));
+      setCartItems(mappedItems);
+      setLoading(false);
+    };
+
+    loadCart();
+
+    window.addEventListener("cartUpdated", loadCart);
+    return () => window.removeEventListener("cartUpdated", loadCart);
+  }, []);
+
+  const updateQuantity = async (id: string, newQuantity: number) => {
+    const index = cartItems.findIndex((item) => item.id === id);
+    if (index === -1) return;
+
     if (newQuantity === 0) {
+      await removeFromCart(index);
       setCartItems(cartItems.filter((item) => item.id !== id));
     } else {
+      await updateCartItem(index, { quantity: newQuantity });
       setCartItems(
         cartItems.map((item) =>
           item.id === id ? { ...item, quantity: newQuantity } : item
@@ -178,8 +191,12 @@ export default function CartPage() {
     }
   };
 
-  const removeItem = (id: string) => {
-    setCartItems(cartItems.filter((item) => item.id !== id));
+  const removeItem = async (id: string) => {
+    const index = cartItems.findIndex((item) => item.id === id);
+    if (index !== -1) {
+      await removeFromCart(index);
+      setCartItems(cartItems.filter((item) => item.id !== id));
+    }
   };
 
   const addOfferToCart = (offer: OfferProduct) => {
@@ -239,7 +256,7 @@ export default function CartPage() {
   const total = subtotal + deliveryFee - promoDiscount;
 
   // Empty cart state
-  if (cartItems.length === 0) {
+  if (cartItems.length === 0 && !loading) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -296,6 +313,19 @@ export default function CartPage() {
               ))}
             </div>
           </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="container mx-auto px-4 py-16 text-center">
+          <p className="text-gray-600">Loading cart...</p>
         </div>
         <Footer />
       </div>

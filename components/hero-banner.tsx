@@ -49,9 +49,9 @@ export function HeroBanner() {
   if (slides.length === 0) return null; // Loading or empty state
 
   return (
-    <section className="relative overflow-hidden border-4 border-orange-500 rounded-xl">
+    <section className="relative overflow-hidden">
       {/* Responsive Hero Banner Height */}
-      <div className="relative h-[300px] sm:h-[400px] md:h-[500px] w-full rounded-lg overflow-hidden">
+      <div className="relative h-[300px] sm:h-[350px] md:h-[400px] lg:h-[450px] w-full overflow-hidden">
         <div className="relative w-full h-full">
           {slides.map((slide, index) => (
             <a

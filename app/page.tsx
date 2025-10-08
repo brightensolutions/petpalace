@@ -18,7 +18,7 @@ export default function HomePage() {
         <OffersSection />
         <CategoryShowcase />
         <FeaturedProducts />
-        <VideoShowcase />
+        {/* <VideoShowcase /> */}
         <ImageBanner />
         {/* <PetToysSection /> */}
         <BlogSection />

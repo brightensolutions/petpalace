@@ -3,7 +3,7 @@ import mongoose, { Schema, type Document, type Model } from "mongoose";
 export interface IWishlist extends Document {
   userId?: string;
   sessionId?: string;
-  productId: mongoose.Types.ObjectId; // Product reference
+  productId: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -20,7 +20,7 @@ const WishlistSchema = new Schema<IWishlist>(
     },
     productId: {
       type: Schema.Types.ObjectId,
-      ref: "Product", // <-- Reference to Product model
+      ref: "Product",
       required: true,
     },
   },
@@ -29,7 +29,6 @@ const WishlistSchema = new Schema<IWishlist>(
   }
 );
 
-// Compound indexes
 WishlistSchema.index(
   { userId: 1, productId: 1 },
   { unique: true, sparse: true }

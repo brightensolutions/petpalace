@@ -1,12 +1,23 @@
 "use client";
 
-import { Search, ShoppingCart, User, Menu, X, ChevronDown } from "lucide-react";
+import type React from "react";
+
+import {
+  Search,
+  ShoppingCart,
+  User,
+  Menu,
+  X,
+  ChevronDown,
+  Heart,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { getCartItemCount } from "@/lib/services/cart-service";
 
 interface Category {
   _id: string;
@@ -27,6 +38,11 @@ export function Header() {
 
   const [loading, setLoading] = useState(true);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const router = useRouter();
+
+  const [cartCount, setCartCount] = useState(0);
 
   const placeholders = useMemo(
     () => [
@@ -115,6 +131,26 @@ export function Header() {
     fetchTopbar();
   }, []);
 
+  useEffect(() => {
+    const updateCartCount = () => {
+      setCartCount(getCartItemCount());
+    };
+
+    updateCartCount();
+
+    // Listen for cart updates
+    window.addEventListener("cartUpdated", updateCartCount);
+    return () => window.removeEventListener("cartUpdated", updateCartCount);
+  }, []);
+
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+      setSearchQuery("");
+    }
+  };
+
   const topCategories = categories.filter(
     (cat) => !cat.parentId || cat.parentId === ""
   );
@@ -151,29 +187,35 @@ export function Header() {
 
           {/* Desktop Search */}
           <div className="hidden lg:flex flex-1 max-w-xl mx-6">
-            <div className="relative w-full group">
+            <form onSubmit={handleSearch} className="relative w-full group">
+              {/* Ensure black border: add explicit border classes and inline style as a fallback */}
               <Input
                 type="text"
                 placeholder={placeholderText}
-                className="pl-4 pr-12 h-12 bg-gray-50 border-0 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-400 focus:shadow-lg transition-all duration-200 text-gray-700 placeholder:text-gray-500"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-4 pr-12 h-12 bg-gray-50 border border-black rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-400 focus:shadow-lg transition-all duration-200 text-gray-700 placeholder:text-gray-500"
+                style={{ borderColor: "#000" }}
               />
               <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
                 <Button
+                  type="submit"
                   size="sm"
                   className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm"
                 >
                   <Search className="h-4 w-4" />
                 </Button>
               </div>
-            </div>
+            </form>
           </div>
 
           {/* Right Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             {/* Mobile Menu */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
               className="lg:hidden p-2 rounded-md border border-gray-200 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 transition-all"
+              aria-label="Toggle menu"
             >
               {menuOpen ? (
                 <X className="w-5 h-5" />
@@ -185,60 +227,70 @@ export function Header() {
             {/* Account */}
             {userExists ? (
               <Link href="/account">
-                <Button className="bg-gradient-to-r from-orange-500 to-blue-500 text-white px-3 py-1 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-10 flex items-center gap-1">
+                <Button className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-10 flex items-center gap-1">
                   <User className="w-4 h-4" />
                   <span className="hidden sm:inline">Account</span>
                 </Button>
               </Link>
             ) : (
               <Link href="/sign-in">
-                <Button className="bg-gradient-to-r from-orange-500 to-blue-500 text-white px-3 py-1 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-10 flex items-center gap-1">
+                <Button className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-10 flex items-center gap-1">
                   <User className="w-4 h-4" />
                   <span className="hidden sm:inline">Login / Sign Up</span>
                 </Button>
               </Link>
             )}
 
+            {/* Wishlist */}
+            <Link
+              href="/wishlist"
+              className="flex items-center gap-1 text-black hover:text-gray-700"
+            >
+              <Heart className="w-6 h-6" />
+              <span className="hidden sm:inline font-medium">Wishlist</span>
+            </Link>
+
             {/* Cart */}
-            <div className="relative">
-              <Link href="/cart">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="w-10 h-10 rounded-lg border-2 border-blue-300 hover:border-blue-500 bg-gradient-to-r from-gray-50 to-gray-100 hover:from-blue-50 hover:to-blue-100 transition-all duration-200 shadow-sm hover:shadow-md"
-                >
-                  <ShoppingCart className="w-4 h-4 text-gray-700 hover:text-blue-600" />
-                </Button>
-              </Link>
-              <Badge className="absolute -top-1 -right-1 h-4 w-4 rounded-full p-0 text-xs bg-gradient-to-r from-blue-500 to-blue-600 text-white flex items-center justify-center font-semibold shadow-lg">
-                2
-              </Badge>
-            </div>
+            <Link
+              href="/cart"
+              className="flex items-center gap-1 text-black hover:text-gray-700 relative"
+            >
+              <ShoppingCart className="w-6 h-6" />
+              <span className="hidden sm:inline font-medium">Cart</span>
+              {cartCount > 0 && (
+                <span className="absolute -top-2 -right-2 bg-orange-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                  {cartCount}
+                </span>
+              )}
+            </Link>
           </div>
         </div>
 
         {/* Mobile Search */}
         <div className="lg:hidden container mx-auto px-3 pb-3">
-          <div className="relative w-full">
+          <form onSubmit={handleSearch} className="relative w-full">
             <Input
               type="text"
               placeholder={placeholderText}
-              className="pl-4 pr-10 h-9 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-400 focus:shadow-md text-gray-700 placeholder:text-gray-500 text-sm"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-4 pr-10 h-9 bg-gray-50 border border-black rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-400 focus:shadow-md text-gray-700 placeholder:text-gray-500 text-sm"
+              style={{ borderColor: "#000" }}
             />
             <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
               <Button
+                type="submit"
                 size="sm"
                 className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm"
               >
                 <Search className="h-3 w-3" />
               </Button>
             </div>
-          </div>
+          </form>
         </div>
       </div>
 
-      {/* Desktop Mega Menu */}
-      <div className="hidden lg:block border-t border-gray-100 bg-gradient-to-r from-gray-50 to-white shadow-sm relative">
+      <div className="hidden lg:block border-t border-gray-100 bg-gradient-to-r from-orange-50 via-orange-100 to-orange-50 shadow-sm relative">
         <div className="container mx-auto px-6 relative">
           <nav className="flex items-center justify-center gap-6 py-2">
             {topCategories.map((parent) => {
@@ -248,36 +300,38 @@ export function Header() {
                 <div key={parent._id} className="relative group">
                   <Link
                     href={`/categories/${parent.slug}`}
-                    className="flex items-center text-gray-800 hover:text-blue-600 font-bold text-base px-3 py-2 gap-1 transition-all duration-150"
+                    className="flex items-center text-gray-800 hover:text-blue-600 font-bold text-base px-3 py-2 gap-1 transition-all duration-150 rounded-md hover:bg-orange-100"
                   >
                     {parent.name}
                     {hasDropdown && <ChevronDown className="w-4 h-4" />}
                   </Link>
 
                   {hasDropdown && (
-                    <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-1 bg-white shadow-lg rounded-md opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 z-50 p-4 flex gap-6 w-[max-content] overflow-x-auto flex-nowrap md:flex-wrap">
-                      {subParents.map((subParent) => {
-                        const subcats = getSubcategories(subParent._id);
-                        return (
-                          <div key={subParent._id} className="min-w-[150px]">
-                            <Link
-                              href={`/categories/${subParent.slug}`}
-                              className="font-semibold text-gray-800 hover:text-blue-600 block mb-2 transition-all duration-150"
-                            >
-                              {subParent.name}
-                            </Link>
-                            {subcats.map((sub) => (
+                    <div className="absolute top-full left-0 mt-1 bg-gradient-to-r from-orange-50 via-orange-100 to-orange-50 shadow-xl rounded-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 z-50 p-4 border border-gray-100 min-w-[400px]">
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+                        {subParents.map((subParent) => {
+                          const subcats = getSubcategories(subParent._id);
+                          return (
+                            <div key={subParent._id} className="min-w-[150px]">
                               <Link
-                                key={sub._id}
-                                href={`/categories/${sub.slug}`}
-                                className="text-gray-600 hover:text-blue-500 block mb-1 text-sm transition-all duration-150"
+                                href={`/categories/${subParent.slug}`}
+                                className="font-semibold text-gray-800 hover:text-blue-600 block mb-2 transition-all duration-150"
                               >
-                                {sub.name}
+                                {subParent.name}
                               </Link>
-                            ))}
-                          </div>
-                        );
-                      })}
+                              {subcats.map((sub) => (
+                                <Link
+                                  key={sub._id}
+                                  href={`/categories/${sub.slug}`}
+                                  className="text-gray-600 hover:text-blue-500 block mb-1 text-sm transition-all duration-150"
+                                >
+                                  {sub.name}
+                                </Link>
+                              ))}
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -287,15 +341,14 @@ export function Header() {
         </div>
       </div>
 
-      {/* Mobile Menu Drawer */}
       {menuOpen && (
-        <div className="lg:hidden border-t border-gray-200 bg-white shadow-md">
+        <div className="lg:hidden border-t border-gray-200 bg-gradient-to-b from-white to-orange-50/30 shadow-md max-h-[70vh] overflow-y-auto">
           <div className="p-4 space-y-2">
             {topCategories.map((parent) => (
               <div key={parent._id}>
                 <Link
                   href={`/categories/${parent.slug}`}
-                  className="block py-2 text-gray-800 font-semibold hover:text-blue-600 rounded-md px-2 flex justify-between items-center"
+                  className="block py-2 text-gray-800 font-semibold hover:text-blue-600 rounded-md px-2 flex justify-between items-center hover:bg-orange-50 transition-all"
                   onClick={() => setMenuOpen(false)}
                 >
                   {parent.name}
@@ -307,7 +360,7 @@ export function Header() {
                   <Link
                     key={sub._id}
                     href={`/categories/${sub.slug}`}
-                    className="block pl-6 py-1 text-gray-600 hover:text-blue-500 text-sm rounded-md px-2"
+                    className="block pl-6 py-1 text-gray-600 hover:text-blue-500 text-sm rounded-md px-2 hover:bg-blue-50 transition-all"
                     onClick={() => setMenuOpen(false)}
                   >
                     {sub.name}

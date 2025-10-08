@@ -1,8 +1,10 @@
 "use client";
 
+import type React from "react";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { MoreHorizontal, PlusCircle, Eye } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Download, Upload } from "lucide-react";
 import {
   Card,
   CardHeader,
@@ -42,7 +44,9 @@ interface Product {
   main_image?: string;
   base_price?: number;
   stock?: number;
-  category?: { name: string };
+  category?: { _id: string; name: string };
+  hsnCode?: string;
+  sku?: string;
 }
 
 export default function ManageProductsPage() {
@@ -52,30 +56,33 @@ export default function ManageProductsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [currentPage, setCurrentPage] = useState(1);
+  const [isImporting, setIsImporting] = useState(false);
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch("/api/admin/products");
-        const json = await res.json();
-        if (json.success) {
-          setProducts(json.data);
-        } else {
-          toast.error("Failed to load products");
-        }
-      } catch (error) {
-        toast.error("Error fetching products");
-      }
-    };
-
     fetchProducts();
   }, []);
+
+  const fetchProducts = async () => {
+    try {
+      const res = await fetch("/api/admin/products");
+      const json = await res.json();
+      if (json.success) {
+        setProducts(json.data);
+      } else {
+        toast.error("Failed to load products");
+      }
+    } catch (error) {
+      toast.error("Error fetching products");
+    }
+  };
 
   const filteredProducts = products.filter((p) => {
     const search = searchTerm.toLowerCase();
     return (
       p.name.toLowerCase().includes(search) ||
-      p.category?.name.toLowerCase().includes(search)
+      p.category?.name.toLowerCase().includes(search) ||
+      p.hsnCode?.toLowerCase().includes(search) ||
+      p.sku?.toLowerCase().includes(search)
     );
   });
 
@@ -109,6 +116,53 @@ export default function ManageProductsPage() {
       setCurrentPage((prev) => prev - 1);
     } else if (dir === "next" && currentPage < totalPages) {
       setCurrentPage((prev) => prev + 1);
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      const res = await fetch("/api/admin/products/export");
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `products-export-${Date.now()}.json`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+      toast.success("Products exported successfully!");
+    } catch (error) {
+      toast.error("Failed to export products");
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const res = await fetch("/api/admin/products/import", {
+        method: "POST",
+        body: formData,
+      });
+
+      const json = await res.json();
+      if (json.success) {
+        toast.success(json.message || "Products imported successfully!");
+        fetchProducts();
+      } else {
+        toast.error(json.message || "Failed to import products");
+      }
+    } catch (error) {
+      toast.error("Error importing products");
+    } finally {
+      setIsImporting(false);
+      e.target.value = "";
     }
   };
 
@@ -151,6 +205,30 @@ export default function ManageProductsPage() {
             </SelectContent>
           </Select>
           <Button
+            variant="outline"
+            className="border-blue-500 text-blue-600 hover:bg-blue-50 bg-transparent"
+            onClick={handleExport}
+          >
+            <Download className="h-4 w-4 mr-1" />
+            Export
+          </Button>
+          <Button
+            variant="outline"
+            className="border-green-500 text-green-600 hover:bg-green-50 bg-transparent"
+            disabled={isImporting}
+            onClick={() => document.getElementById("import-file")?.click()}
+          >
+            <Upload className="h-4 w-4 mr-1" />
+            {isImporting ? "Importing..." : "Import"}
+          </Button>
+          <input
+            id="import-file"
+            type="file"
+            accept=".json"
+            className="hidden"
+            onChange={handleImport}
+          />
+          <Button
             className="bg-orange-500 text-white hover:bg-orange-600"
             onClick={() => router.push("/admin/products/add")}
           >
@@ -168,6 +246,8 @@ export default function ManageProductsPage() {
                 <TableHead>Image</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
+                <TableHead>HSN Code</TableHead>
+                <TableHead>SKU</TableHead>
                 <TableHead>Base Price</TableHead>
                 <TableHead>Stock</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -189,6 +269,12 @@ export default function ManageProductsPage() {
                     </TableCell>
                     <TableCell className="text-gray-600">
                       {p.category?.name || "-"}
+                    </TableCell>
+                    <TableCell className="text-gray-600">
+                      {p.hsnCode || "-"}
+                    </TableCell>
+                    <TableCell className="text-gray-600">
+                      {p.sku || "-"}
                     </TableCell>
                     <TableCell>₹{p.base_price ?? 0}</TableCell>
                     <TableCell>
@@ -238,7 +324,7 @@ export default function ManageProductsPage() {
               ) : (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={8}
                     className="text-center text-gray-500 py-6"
                   >
                     No products found.
@@ -249,7 +335,6 @@ export default function ManageProductsPage() {
           </Table>
         </div>
 
-        {/* Pagination Controls */}
         <div className="flex justify-between items-center mt-6">
           <p className="text-sm text-gray-600">
             Page {currentPage} of {totalPages || 1}

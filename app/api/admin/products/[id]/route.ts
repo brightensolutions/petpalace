@@ -3,6 +3,8 @@ import connectDb from "@/lib/db/db";
 import Product from "@/lib/models/Product";
 import ProductVariant from "@/lib/models/ProductVariant";
 import mongoose from "mongoose";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
 
 // Helpers
 function toObjectId(id: string) {
@@ -11,6 +13,28 @@ function toObjectId(id: string) {
   } catch {
     return null;
   }
+}
+
+async function saveUploadedFile(file: File, prefix = ""): Promise<string> {
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  // Create unique filename
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 8);
+  const ext = file.name.split(".").pop() || "jpg";
+  const filename = `${prefix}${timestamp}-${randomStr}.${ext}`;
+
+  // Ensure public/products directory exists
+  const productsDir = join(process.cwd(), "public", "products");
+  await mkdir(productsDir, { recursive: true });
+
+  // Save file
+  const filepath = join(productsDir, filename);
+  await writeFile(filepath, buffer);
+
+  // Return relative path for database storage
+  return `/products/${filename}`;
 }
 
 export async function GET(
@@ -48,6 +72,9 @@ export async function GET(
       mrp: product.mrp,
       stock: product.stock ?? 0,
       additional_info: product.additional_info || "",
+      foodType: product.foodType || "",
+      hsnCode: product.hsnCode || "",
+      sku: product.sku || "",
 
       main_image: product.main_image || null,
       // edit page expects "gallery_images"; our schema uses "images"
@@ -71,9 +98,11 @@ export async function GET(
               price_per_unit: p.price ?? 0,
               stock: p.stock ?? 0,
               discount_percent: p.discount_percent ?? 0,
+              sku: p.sku || "",
             })),
             image:
               Array.isArray(v.images) && v.images[0] ? v.images[0] : undefined,
+            sku: v.sku || "",
           };
         }
         return {
@@ -84,6 +113,7 @@ export async function GET(
           discount_percent: v.discount_percent ?? 0,
           image:
             Array.isArray(v.images) && v.images[0] ? v.images[0] : undefined,
+          sku: v.sku || "",
         };
       }),
     };
@@ -121,18 +151,39 @@ export async function PUT(
     const base_price = Number(form.get("price") || 0);
     const mrp = Number(form.get("mrp") || 0);
     const stock = Number(form.get("stock") || 0);
+    const foodTypeRaw = form.get("foodType");
+    const foodType =
+      foodTypeRaw === "veg" || foodTypeRaw === "non-veg"
+        ? foodTypeRaw
+        : undefined;
+    const hsnCode = String(form.get("hsnCode") || "").trim() || undefined;
+    const sku = String(form.get("sku") || "").trim() || undefined;
 
     // Categories & brands (multiple values)
     const categories = form.getAll("categories").map(String);
     const brands = form.getAll("brands").map(String);
 
-    // Images
     const existingGalleryImages = form
       .getAll("existingGalleryImages")
       .map(String);
-    // We ignore new uploads in this implementation. If needed, integrate Vercel Blob later.
-    // const mainImageFile = form.get("mainImage") as File | null
-    // const galleryImageFiles = form.getAll("galleryImages") as File[]
+
+    // Handle main image upload
+    let main_image: string | undefined;
+    const mainImageFile = form.get("mainImage") as File | null;
+    if (mainImageFile && mainImageFile.size > 0) {
+      main_image = await saveUploadedFile(mainImageFile, "main-");
+    }
+
+    // Handle gallery image uploads
+    const galleryImageFiles = form.getAll("galleryImages") as File[];
+    const newGalleryImages: string[] = [];
+    for (const file of galleryImageFiles) {
+      if (file && file.size > 0) {
+        const path = await saveUploadedFile(file, "gallery-");
+        newGalleryImages.push(path);
+      }
+    }
+    const allGalleryImages = [...existingGalleryImages, ...newGalleryImages];
 
     // Build update payload
     const update: any = {
@@ -143,10 +194,16 @@ export async function PUT(
       base_price,
       mrp,
       stock,
-      // Keep existing main_image unless you wire uploads
-      // main_image: keep as is
-      images: existingGalleryImages, // preserve current gallery ordering
+      images: allGalleryImages,
+      foodType,
+      hsnCode,
+      sku,
     };
+
+    // Update main_image only if a new one was uploaded
+    if (main_image) {
+      update.main_image = main_image;
+    }
 
     // Single refs (store first if provided)
     if (categories.length > 0) update.category = categories[0];
@@ -180,10 +237,13 @@ export async function PUT(
       const get = (k: string) => form.get(`variants[${vi}][${k}]`);
       const type = String(get("type") || "custom");
       const label = String(get("label") || "");
+      const variantSku = String(get("sku") || "").trim() || undefined;
+
       const variantDoc: any = {
         product_id: id,
         type,
         label,
+        sku: variantSku,
       };
 
       if (type === "weight") {
@@ -203,11 +263,13 @@ export async function PUT(
           .map((pi) => {
             const getP = (k: string) =>
               form.get(`variants[${vi}][packs][${pi}][${k}]`);
+            const packSku = String(getP("sku") || "").trim() || undefined;
             return {
               label: String(getP("label") || "Pack"),
               price: Number(getP("price_per_unit") || 0),
               stock: Number(getP("stock") || 0),
               discount_percent: Number(getP("discount_percent") || 0),
+              sku: packSku,
             };
           });
       } else {
@@ -216,9 +278,18 @@ export async function PUT(
         variantDoc.discount_percent = Number(get("discount_percent") || 0);
       }
 
-      // Images for variant
+      const variantImageFile = form.get(
+        `variants[${vi}][image]`
+      ) as File | null;
       const existingVariantImage = form.get(`variants[${vi}][existing_image]`);
-      if (existingVariantImage) {
+
+      if (variantImageFile && variantImageFile.size > 0) {
+        const variantImagePath = await saveUploadedFile(
+          variantImageFile,
+          `variant-${vi}-`
+        );
+        variantDoc.images = [variantImagePath];
+      } else if (existingVariantImage) {
         variantDoc.images = [String(existingVariantImage)];
       }
 

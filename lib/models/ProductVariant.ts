@@ -7,6 +7,7 @@ const PackSchema = new Schema(
     discount_percent: { type: Number, default: 0 },
     stock: { type: Number, default: 0 },
     images: [{ type: String }],
+    sku: { type: String, trim: true },
   },
   { _id: false }
 );
@@ -27,6 +28,8 @@ const ProductVariantSchema = new Schema(
 
     // Packs only for weight variants
     packs: [PackSchema],
+
+    sku: { type: String, trim: true },
   },
   { timestamps: true }
 );

@@ -8,7 +8,7 @@ import { toast } from "sonner";
 interface Category {
   _id: string;
   name: string;
-  image?: string; // optional if you have an image field in DB
+  image?: string;
 }
 
 export function CategoryShowcase() {
@@ -41,35 +41,37 @@ export function CategoryShowcase() {
       <div className="w-full px-4 sm:px-6 lg:px-10">
         {/* Section Header */}
         <div className="mb-5 text-left">
-          <h2 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-1">
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1">
             Trending Add-To-Carts
           </h2>
-          <p className="text-gray-600 text-lg">Were you looking for these?</p>
+          <p className="text-gray-600 text-sm sm:text-base md:text-lg">
+            Were you looking for these?
+          </p>
         </div>
 
         {/* Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-8 gap-4">
+        <div className="grid grid-cols-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-3 sm:gap-4">
           {loading
-            ? Array.from({ length: 8 }).map((_, i) => (
+            ? Array.from({ length: 16 }).map((_, i) => (
                 <div
                   key={i}
                   className="flex flex-col items-center animate-pulse"
                 >
-                  <Card className="w-full border border-gray-200 rounded-2xl overflow-hidden shadow-sm h-28 sm:h-32 md:h-36">
+                  <Card className="w-full rounded-2xl overflow-hidden shadow-lg h-20 sm:h-24 md:h-28 bg-[theme('colors.orange.400')]">
                     <CardContent className="p-0 m-0">
-                      <div className="relative w-full h-full bg-gray-200 rounded-2xl"></div>
+                      <div className="relative w-full h-full bg-[theme('colors.orange.400')] rounded-2xl"></div>
                     </CardContent>
                   </Card>
-                  <div className="mt-2 h-4 w-3/4 bg-gray-200 rounded"></div>
+                  <div className="mt-2 h-3 sm:h-4 w-2/3 bg-gray-200 rounded"></div>
                 </div>
               ))
             : categories.map((category) => (
                 <div key={category._id} className="flex flex-col items-center">
-                  <Card className="w-full border border-gray-200 hover:border-orange-400 transition-all duration-300 rounded-2xl overflow-hidden shadow-sm hover:shadow-md group">
+                  <Card className="w-full rounded-2xl overflow-hidden shadow-lg bg-[theme('colors.orange.400')] hover:shadow-xl group">
                     <CardContent className="p-0 m-0">
-                      <div className="relative w-full aspect-square bg-gradient-to-br from-orange-50 to-blue-50">
+                      <div className="relative w-full aspect-square">
                         <Image
-                          src={category.image || "/categories/category.webp"} // fallback if no image
+                          src={category.image || "/categories/category.webp"}
                           alt={category.name}
                           fill
                           className="object-cover group-hover:scale-105 transition-transform duration-300 rounded-2xl"
@@ -77,7 +79,7 @@ export function CategoryShowcase() {
                       </div>
                     </CardContent>
                   </Card>
-                  <h3 className="mt-2 text-xl font-semibold text-gray-900 text-center group-hover:text-orange-600 transition-colors duration-300">
+                  <h3 className="mt-2 text-[10px] sm:text-xs md:text-sm lg:text-base font-semibold text-gray-900 text-center group-hover:text-orange-600 transition-colors duration-300">
                     {category.name}
                   </h3>
                 </div>

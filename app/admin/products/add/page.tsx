@@ -38,6 +38,7 @@ interface Pack {
   price: number;
   stock: number;
   discount: number;
+  sku: string;
 }
 
 interface GalleryImage {
@@ -56,6 +57,7 @@ interface Variant {
   discount?: number;
   imageFile?: File;
   imagePreviewUrl?: string;
+  sku: string;
 }
 
 const PACK_OPTIONS = Array.from({ length: 10 }, (_, i) => `Pack of ${i + 1}`);
@@ -71,7 +73,9 @@ export default function AddProductPage() {
   const [mrpPrice, setMrpPrice] = useState<number>(0);
   const [productStock, setProductStock] = useState<number>(0);
   const [additionalProductInfo, setAdditionalProductInfo] = useState("");
-
+  const [foodType, setFoodType] = useState<"veg" | "non-veg" | "">("");
+  const [hsnCode, setHsnCode] = useState("");
+  const [sku, setSku] = useState("");
   const [mainImageFile, setMainImageFile] = useState<File | null>(null);
   const [mainImagePreviewUrl, setMainImagePreviewUrl] = useState<string | null>(
     null
@@ -338,7 +342,7 @@ export default function AddProductPage() {
   const addVariant = () =>
     setVariants((prev) => [
       ...prev,
-      { type: "custom", label: "", price: 0, stock: 0, discount: 0 }, // Default to custom
+      { type: "custom", label: "", price: 0, stock: 0, discount: 0, sku: "" }, // Added sku field with empty default
     ]);
 
   const removeVariant = (index: number) => {
@@ -403,7 +407,13 @@ export default function AddProductPage() {
               ...v,
               packs: [
                 ...(v.packs || []),
-                { label: PACK_OPTIONS[0], price: 0, stock: 0, discount: 0 },
+                {
+                  label: PACK_OPTIONS[0],
+                  price: 0,
+                  stock: 0,
+                  discount: 0,
+                  sku: "",
+                }, // Added sku field with empty default
               ],
             }
           : v
@@ -444,6 +454,18 @@ export default function AddProductPage() {
     );
   };
 
+  // State to track current active tab
+  const [activeTab, setActiveTab] = useState("general");
+
+  // Function to handle Next button click
+  const handleNextTab = () => {
+    const tabs = ["general", "categorization", "images", "variants"];
+    const currentIndex = tabs.indexOf(activeTab);
+    if (currentIndex < tabs.length - 1) {
+      setActiveTab(tabs[currentIndex + 1]);
+    }
+  };
+
   // Submit
   const handleSubmit = async (e: React.FormEvent) => {
     console.log("handleSubmit triggered!");
@@ -456,6 +478,15 @@ export default function AddProductPage() {
     formData.append("mrp", mrpPrice.toString());
     formData.append("stock", productStock.toString());
     formData.append("additional_info", additionalProductInfo);
+    if (foodType) {
+      formData.append("foodType", foodType);
+    }
+    if (hsnCode) {
+      formData.append("hsnCode", hsnCode);
+    }
+    if (sku) {
+      formData.append("sku", sku);
+    }
 
     if (mainImageFile) formData.append("mainImage", mainImageFile);
     galleryImages.forEach((img) => formData.append("galleryImages", img.file)); // Append the actual File object
@@ -465,6 +496,9 @@ export default function AddProductPage() {
     variants.forEach((v, i) => {
       formData.append(`variants[${i}][type]`, v.type);
       formData.append(`variants[${i}][label]`, v.label);
+      if (v.sku) {
+        formData.append(`variants[${i}][sku]`, v.sku);
+      }
 
       if (v.type === "weight") {
         formData.append(
@@ -485,6 +519,9 @@ export default function AddProductPage() {
             `variants[${i}][packs][${pi}][discount_percent]`,
             p.discount.toString()
           );
+          if (p.sku) {
+            formData.append(`variants[${i}][packs][${pi}][sku]`, p.sku);
+          }
         });
       } else {
         formData.append(`variants[${i}][price]`, v.price?.toString() || "0");
@@ -529,7 +566,7 @@ export default function AddProductPage() {
         Add New Product
       </h1>
       <form onSubmit={handleSubmit} className="space-y-6">
-        <Tabs defaultValue="general" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="general" type="button">
               General
@@ -596,6 +633,44 @@ export default function AddProductPage() {
                   onChange={(e) => setProductStock(+e.target.value)}
                   required
                 />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="hsn-code">HSN Code (Optional)</Label>
+                  <Input
+                    id="hsn-code"
+                    value={hsnCode}
+                    onChange={(e) => setHsnCode(e.target.value)}
+                    placeholder="e.g., 1234567890"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="sku">SKU (Optional)</Label>
+                  <Input
+                    id="sku"
+                    value={sku}
+                    onChange={(e) => setSku(e.target.value)}
+                    placeholder="e.g., PROD-001"
+                  />
+                </div>
+              </div>
+              <div>
+                <Label htmlFor="food-type">Food Type (Optional)</Label>
+                <Select
+                  value={foodType}
+                  onValueChange={(value: "veg" | "non-veg" | "") =>
+                    setFoodType(value)
+                  }
+                >
+                  <SelectTrigger id="food-type">
+                    <SelectValue placeholder="Select food type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">None</SelectItem>
+                    <SelectItem value="veg">Vegetarian</SelectItem>
+                    <SelectItem value="non-veg">Non-Vegetarian</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <div>
@@ -879,7 +954,7 @@ export default function AddProductPage() {
                         >
                           <XIcon className="h-4 w-4" />
                         </Button>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3">
                           <div>
                             <Label htmlFor={`pack-label-${i}-${pi}`}>
                               Pack Label
@@ -944,6 +1019,18 @@ export default function AddProductPage() {
                               }
                             />
                           </div>
+                          <div>
+                            <Label htmlFor={`pack-sku-${i}-${pi}`}>SKU</Label>
+                            <Input
+                              id={`pack-sku-${i}-${pi}`}
+                              type="text"
+                              placeholder="SKU"
+                              value={pack.sku}
+                              onChange={(e) =>
+                                updatePack(i, pi, "sku", e.target.value)
+                              }
+                            />
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -951,7 +1038,7 @@ export default function AddProductPage() {
                 )}
 
                 {(v.type === "size" || v.type === "custom") && (
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div>
                       <Label htmlFor={`variant-price-${i}`}>Price</Label>
                       <Input
@@ -990,6 +1077,18 @@ export default function AddProductPage() {
                         }
                       />
                     </div>
+                    <div>
+                      <Label htmlFor={`variant-sku-${i}`}>SKU</Label>
+                      <Input
+                        id={`variant-sku-${i}`}
+                        type="text"
+                        placeholder="SKU"
+                        value={v.sku || ""}
+                        onChange={(e) =>
+                          updateVariant(i, "sku", e.target.value)
+                        }
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -1017,12 +1116,22 @@ export default function AddProductPage() {
             ))}
           </TabsContent>
         </Tabs>
-        <Button
-          type="submit"
-          className="bg-orange-500 text-white hover:bg-orange-600 w-full md:w-auto"
-        >
-          Add Product
-        </Button>
+        {activeTab !== "variants" ? (
+          <Button
+            type="button"
+            onClick={handleNextTab}
+            className="bg-orange-500 text-white hover:bg-orange-600 w-full md:w-auto"
+          >
+            Next
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            className="bg-orange-500 text-white hover:bg-orange-600 w-full md:w-auto"
+          >
+            Add Product
+          </Button>
+        )}
       </form>
     </div>
   );

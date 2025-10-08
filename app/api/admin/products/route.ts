@@ -2,13 +2,32 @@ import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
 import Product from "@/lib/models/Product";
 import Category from "@/lib/models/Category";
+import { writeFile, mkdir } from "fs/promises";
+import { join } from "path";
+
+async function saveUploadedFile(file: File, prefix = ""): Promise<string> {
+  const bytes = await file.arrayBuffer();
+  const buffer = Buffer.from(bytes);
+
+  const timestamp = Date.now();
+  const randomStr = Math.random().toString(36).substring(2, 8);
+  const ext = file.name.split(".").pop() || "jpg";
+  const filename = `${prefix}${timestamp}-${randomStr}.${ext}`;
+
+  const productsDir = join(process.cwd(), "public", "products");
+  await mkdir(productsDir, { recursive: true });
+
+  const filepath = join(productsDir, filename);
+  await writeFile(filepath, buffer);
+
+  return `/products/${filename}`;
+}
 
 export async function GET() {
   try {
     await dbConnect();
 
-    // Just return products; no category/brand populate in new schema
-    const products = await Product.find().lean();
+    const products = await Product.find().populate("category", "name").lean();
 
     return NextResponse.json({ success: true, data: products });
   } catch (err) {
@@ -26,7 +45,6 @@ export async function POST(request: Request) {
 
     const formData = await request.formData();
 
-    // Required basics
     const name = String(formData.get("name") || "").trim();
     const slug = String(formData.get("slug") || "").trim();
     if (!name || !slug) {
@@ -51,31 +69,39 @@ export async function POST(request: Request) {
       );
     }
 
-    // Compute next numeric id to satisfy Product schema
     const lastDoc = await Product.findOne({}, { id: 1, _id: 0 })
       .sort({ id: -1 })
       .lean<{ id?: number }>();
     const nextId = (lastDoc?.id ?? 0) + 1;
 
-    // New product fields
     const description = String(formData.get("description") || "");
     const base_price = Number(
       formData.get("price") || formData.get("base_price") || 0
     );
     const mrp = Number(formData.get("mrp") || 0);
     const stock = Number(formData.get("stock") || 0);
+    const foodTypeRaw = formData.get("foodType");
+    const foodType =
+      foodTypeRaw === "veg" || foodTypeRaw === "non-veg"
+        ? foodTypeRaw
+        : undefined;
+    const hsnCode = String(formData.get("hsnCode") || "").trim() || undefined;
+    const sku = String(formData.get("sku") || "").trim() || undefined;
 
-    // Images: store filenames (no upload backend configured yet)
     let main_image: string | undefined;
     const images: string[] = [];
 
-    const mainImage = formData.get("mainImage");
-    if (mainImage instanceof File && mainImage.name) {
-      main_image = mainImage.name;
+    const mainImageFile = formData.get("mainImage");
+    if (mainImageFile instanceof File && mainImageFile.size > 0) {
+      main_image = await saveUploadedFile(mainImageFile, "main-");
     }
+
     const galleryFiles = formData.getAll("galleryImages");
     for (const f of galleryFiles) {
-      if (f instanceof File && f.name) images.push(f.name);
+      if (f instanceof File && f.size > 0) {
+        const path = await saveUploadedFile(f, "gallery-");
+        images.push(path);
+      }
     }
 
     const categories = formData
@@ -86,12 +112,10 @@ export async function POST(request: Request) {
 
     console.log("[v0] Categories and brands:", { categories, brands });
 
-    let leafCategoryIds: string[] = [];
+    let leafCategoryId: string | undefined;
     if (categories.length > 0) {
-      // Fetch all categories to determine which are leaf nodes
       const allCategories = await Category.find().lean();
 
-      // Build a set of parent IDs (categories that have children)
       const parentIds = new Set<string>();
       allCategories.forEach((cat) => {
         if (cat.parentId) {
@@ -99,10 +123,13 @@ export async function POST(request: Request) {
         }
       });
 
-      // Filter to only include categories that are NOT parents (i.e., leaf nodes)
-      leafCategoryIds = categories.filter((catId) => !parentIds.has(catId));
+      const leafCategoryIds = categories.filter(
+        (catId) => !parentIds.has(catId)
+      );
 
-      console.log("[v0] Filtered leaf categories:", leafCategoryIds);
+      leafCategoryId = leafCategoryIds[0];
+
+      console.log("[v0] Selected leaf category:", leafCategoryId);
     }
 
     let product;
@@ -117,8 +144,11 @@ export async function POST(request: Request) {
         stock,
         main_image,
         images,
-        category: leafCategoryIds, // Store only leaf categories as array
-        brand: brands.length > 0 ? brands[0] : undefined, // Store first brand only (schema expects single ref)
+        category: leafCategoryId,
+        brand: brands.length > 0 ? brands[0] : undefined,
+        foodType,
+        hsnCode,
+        sku,
       });
     } catch (e: any) {
       if (
@@ -134,13 +164,13 @@ export async function POST(request: Request) {
       throw e;
     }
 
-    // Parse variants from bracketed form keys like variants[0][type], variants[0][packs][0][label], etc.
     type ParsedPack = {
       label?: string;
       price?: number;
       stock?: number;
       discount_percent?: number;
       images?: string[];
+      sku?: string;
     };
     type ParsedVariant = {
       type?: "weight" | "size" | "custom";
@@ -150,24 +180,13 @@ export async function POST(request: Request) {
       discount_percent?: number;
       images?: string[];
       packs?: Record<number, ParsedPack>;
+      sku?: string;
     };
 
     const variantMap = new Map<number, ParsedVariant>();
 
     formData.forEach((value, rawKey) => {
       if (!rawKey.startsWith("variants[")) return;
-
-      // Examples:
-      // variants[0][type]
-      // variants[0][label]
-      // variants[0][price]
-      // variants[0][stock]
-      // variants[0][discount_percent]
-      // variants[0][image]  (File)
-      // variants[0][packs][1][label]
-      // variants[0][packs][1][price_per_unit]
-      // variants[0][packs][1][stock]
-      // variants[0][packs][1][discount_percent]
 
       const match =
         /^variants\[(\d+)\](?:\[(packs)\]\[(\d+)\]\[(\w+)\]|\[(\w+)\])$/.exec(
@@ -189,7 +208,6 @@ export async function POST(request: Request) {
         variant.packs ||= {};
         variant.packs[packIdx] ||= {};
 
-        // Map incoming fields to schema
         if (field === "label") {
           variant.packs[packIdx].label = String(value);
         } else if (field === "price_per_unit") {
@@ -198,7 +216,13 @@ export async function POST(request: Request) {
           variant.packs[packIdx].stock = Number(value || 0);
         } else if (field === "discount_percent") {
           variant.packs[packIdx].discount_percent = Number(value || 0);
-        } else if (field === "image" && value instanceof File && value.name) {
+        } else if (field === "sku") {
+          variant.packs[packIdx].sku = String(value || "").trim() || undefined;
+        } else if (
+          field === "image" &&
+          value instanceof File &&
+          value.size > 0
+        ) {
           const fileName = value.name;
           const arr = variant.packs[packIdx].images || [];
           arr.push(fileName);
@@ -218,14 +242,18 @@ export async function POST(request: Request) {
           variant.stock = Number(value || 0);
         } else if (field === "discount_percent") {
           variant.discount_percent = Number(value || 0);
-        } else if (field === "image" && value instanceof File && value.name) {
+        } else if (field === "sku") {
+          variant.sku = String(value || "").trim() || undefined;
+        } else if (
+          field === "image" &&
+          value instanceof File &&
+          value.size > 0
+        ) {
           const fileName = value.name;
           const arr = variant.images || [];
           arr.push(fileName);
           variant.images = arr;
         }
-        // Note: UI may send `weight_value` for weight type; schema doesn't define it explicitly.
-        // We rely on `label` to capture user-visible weight (e.g. "1 kg").
       }
     });
 
@@ -243,10 +271,10 @@ export async function POST(request: Request) {
             type: v.type,
             label: v.label,
             images: v.images || [],
+            sku: v.sku,
           };
 
           if (v.type === "weight") {
-            // Packs for weight variants
             const packs: any[] = [];
             if (v.packs) {
               Object.keys(v.packs)
@@ -260,12 +288,12 @@ export async function POST(request: Request) {
                     stock: p.stock ?? 0,
                     discount_percent: p.discount_percent ?? 0,
                     images: p.images || [],
+                    sku: p.sku,
                   });
                 });
             }
             base.packs = packs;
           } else {
-            // Size/custom variants use price/stock/discount
             base.price = v.price ?? 0;
             base.stock = v.stock ?? 0;
             base.discount_percent = v.discount_percent ?? 0;
