@@ -1,7 +1,6 @@
 "use client";
 
 import type React from "react";
-
 import {
   Search,
   ShoppingCart,
@@ -132,13 +131,8 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    const updateCartCount = () => {
-      setCartCount(getCartItemCount());
-    };
-
+    const updateCartCount = () => setCartCount(getCartItemCount());
     updateCartCount();
-
-    // Listen for cart updates
     window.addEventListener("cartUpdated", updateCartCount);
     return () => window.removeEventListener("cartUpdated", updateCartCount);
   }, []);
@@ -158,18 +152,15 @@ export function Header() {
     categories.filter((cat) => cat.parentId === parentId);
 
   return (
-    <header className="sticky top-0 z-[9999] shadow-md">
-      {/* Topbar */}
+    <header className="sticky top-0 z-[9999]">
       {topbarContent && (
         <div className="bg-orange-500 text-white text-center py-2 px-4 text-sm font-medium">
           {topbarContent}
         </div>
       )}
 
-      {/* Main Header */}
       <div className="bg-white">
         <div className="container mx-auto px-3 md:px-6 py-3 flex items-center justify-between">
-          {/* Logo */}
           <div className="flex items-center w-28 sm:w-40 lg:w-64">
             <Link
               href="/"
@@ -185,23 +176,20 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Desktop Search */}
           <div className="hidden lg:flex flex-1 max-w-xl mx-6">
             <form onSubmit={handleSearch} className="relative w-full group">
-              {/* Ensure black border: add explicit border classes and inline style as a fallback */}
               <Input
                 type="text"
                 placeholder={placeholderText}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-4 pr-12 h-12 bg-gray-50 border border-black rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-400 focus:shadow-lg transition-all duration-200 text-gray-700 placeholder:text-gray-500"
-                style={{ borderColor: "#000" }}
+                className="pl-4 pr-12 h-12 bg-gray-50 border-2 border-gray-300 rounded-xl focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-200 focus:shadow-lg transition-all duration-200 text-gray-700 placeholder:text-gray-500"
               />
               <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
                 <Button
                   type="submit"
                   size="sm"
-                  className="h-8 w-8 p-0 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-sm"
+                  className="h-8 w-8 p-0 bg-orange-500 hover:bg-orange-600 text-white rounded-lg shadow-sm"
                 >
                   <Search className="h-4 w-4" />
                 </Button>
@@ -209,12 +197,10 @@ export function Header() {
             </form>
           </div>
 
-          {/* Right Actions */}
           <div className="flex items-center gap-4">
-            {/* Mobile Menu */}
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="lg:hidden p-2 rounded-md border border-gray-200 bg-gray-50 hover:bg-blue-50 hover:text-blue-700 transition-all"
+              className="lg:hidden p-2 rounded-md border border-gray-200 bg-gray-50 hover:bg-orange-50 hover:text-orange-600 transition-all"
               aria-label="Toggle menu"
             >
               {menuOpen ? (
@@ -224,7 +210,6 @@ export function Header() {
               )}
             </button>
 
-            {/* Account */}
             {userExists ? (
               <Link href="/account">
                 <Button className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded-lg font-semibold text-sm shadow-lg hover:shadow-xl transition-all duration-200 h-10 flex items-center gap-1">
@@ -241,7 +226,6 @@ export function Header() {
               </Link>
             )}
 
-            {/* Wishlist */}
             <Link
               href="/wishlist"
               className="flex items-center gap-1 text-black hover:text-gray-700"
@@ -250,7 +234,6 @@ export function Header() {
               <span className="hidden sm:inline font-medium">Wishlist</span>
             </Link>
 
-            {/* Cart */}
             <Link
               href="/cart"
               className="flex items-center gap-1 text-black hover:text-gray-700 relative"
@@ -274,14 +257,13 @@ export function Header() {
               placeholder={placeholderText}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-4 pr-10 h-9 bg-gray-50 border border-black rounded-lg focus:bg-white focus:ring-2 focus:ring-blue-400 focus:shadow-md text-gray-700 placeholder:text-gray-500 text-sm"
-              style={{ borderColor: "#000" }}
+              className="pl-4 pr-10 h-9 bg-gray-50 border-2 border-gray-300 rounded-lg focus:bg-white focus:border-orange-400 focus:ring-2 focus:ring-orange-200 focus:shadow-md text-gray-700 placeholder:text-gray-500 text-sm"
             />
             <div className="absolute inset-y-0 right-0 pr-2 flex items-center">
               <Button
                 type="submit"
                 size="sm"
-                className="h-7 w-7 p-0 bg-blue-600 hover:bg-blue-700 text-white rounded-md shadow-sm"
+                className="h-7 w-7 p-0 bg-orange-500 hover:bg-orange-600 text-white rounded-md shadow-sm"
               >
                 <Search className="h-3 w-3" />
               </Button>
@@ -290,7 +272,7 @@ export function Header() {
         </div>
       </div>
 
-      <div className="hidden lg:block border-t border-gray-100 bg-gradient-to-r from-orange-50 via-orange-100 to-orange-50 shadow-sm relative">
+      <div className="hidden lg:block bg-gradient-to-r from-orange-50 via-orange-100 to-orange-50 relative">
         <div className="container mx-auto px-6 relative">
           <nav className="flex items-center justify-center gap-6 py-2">
             {topCategories.map((parent) => {
@@ -300,22 +282,22 @@ export function Header() {
                 <div key={parent._id} className="relative group">
                   <Link
                     href={`/categories/${parent.slug}`}
-                    className="flex items-center text-gray-800 hover:text-blue-600 font-bold text-base px-3 py-2 gap-1 transition-all duration-150 rounded-md hover:bg-orange-100"
+                    className="flex items-center text-gray-800 hover:text-orange-600 font-bold text-lg px-3 py-2 gap-1 transition-all duration-150 rounded-md hover:bg-orange-100"
                   >
                     {parent.name}
                     {hasDropdown && <ChevronDown className="w-4 h-4" />}
                   </Link>
 
                   {hasDropdown && (
-                    <div className="absolute top-full left-0 mt-1 bg-gradient-to-r from-orange-50 via-orange-100 to-orange-50 shadow-xl rounded-lg opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 z-50 p-4 border border-gray-100 min-w-[400px]">
-                      <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4">
+                    <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-gradient-to-br from-orange-50 via-white to-orange-50 rounded-xl opacity-0 group-hover:opacity-100 invisible group-hover:visible transition-all duration-200 z-50 p-6 min-w-[600px] max-w-[900px]">
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-4">
                         {subParents.map((subParent) => {
                           const subcats = getSubcategories(subParent._id);
                           return (
-                            <div key={subParent._id} className="min-w-[150px]">
+                            <div key={subParent._id} className="min-w-[180px]">
                               <Link
                                 href={`/categories/${subParent.slug}`}
-                                className="font-semibold text-gray-800 hover:text-blue-600 block mb-2 transition-all duration-150"
+                                className="font-bold text-base text-gray-900 hover:text-orange-600 block mb-2 transition-all duration-150"
                               >
                                 {subParent.name}
                               </Link>
@@ -323,7 +305,7 @@ export function Header() {
                                 <Link
                                   key={sub._id}
                                   href={`/categories/${sub.slug}`}
-                                  className="text-gray-600 hover:text-blue-500 block mb-1 text-sm transition-all duration-150"
+                                  className="text-gray-700 hover:text-orange-600 hover:bg-orange-50 block mb-1 text-base transition-all duration-150 py-0.5 px-1.5 rounded-md"
                                 >
                                   {sub.name}
                                 </Link>
@@ -342,13 +324,13 @@ export function Header() {
       </div>
 
       {menuOpen && (
-        <div className="lg:hidden border-t border-gray-200 bg-gradient-to-b from-white to-orange-50/30 shadow-md max-h-[70vh] overflow-y-auto">
+        <div className="lg:hidden bg-gradient-to-b from-white to-orange-50/30 max-h-[70vh] overflow-y-auto">
           <div className="p-4 space-y-2">
             {topCategories.map((parent) => (
               <div key={parent._id}>
                 <Link
                   href={`/categories/${parent.slug}`}
-                  className="block py-2 text-gray-800 font-semibold hover:text-blue-600 rounded-md px-2 flex justify-between items-center hover:bg-orange-50 transition-all"
+                  className="block py-2 text-gray-800 font-semibold hover:text-orange-600 rounded-md px-2 flex justify-between items-center hover:bg-orange-50 transition-all"
                   onClick={() => setMenuOpen(false)}
                 >
                   {parent.name}
@@ -360,7 +342,7 @@ export function Header() {
                   <Link
                     key={sub._id}
                     href={`/categories/${sub.slug}`}
-                    className="block pl-6 py-1 text-gray-600 hover:text-blue-500 text-sm rounded-md px-2 hover:bg-blue-50 transition-all"
+                    className="block pl-6 py-1 text-gray-600 hover:text-orange-600 text-sm rounded-md px-2 hover:bg-orange-50 transition-all"
                     onClick={() => setMenuOpen(false)}
                   >
                     {sub.name}

@@ -88,7 +88,7 @@ export default async function SearchPage({
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       <Header />
 
       {/* Breadcrumb */}

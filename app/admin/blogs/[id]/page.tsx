@@ -1,12 +1,14 @@
 "use client";
 
+import type React from "react";
+
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import TiptapEditor from "@/components/tiptap-editor";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -141,12 +143,9 @@ export default function EditBlogPage() {
 
             <div>
               <Label htmlFor="content">Content</Label>
-              <Textarea
-                id="content"
-                rows={6}
+              <TiptapEditor
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
-                required
+                onChange={(value) => setContent(value)}
               />
             </div>
 
@@ -184,7 +183,7 @@ export default function EditBlogPage() {
               />
               {preview && (
                 <Image
-                  src={preview}
+                  src={preview || "/placeholder.svg"}
                   alt="Preview"
                   width={300}
                   height={150}
@@ -216,11 +215,9 @@ export default function EditBlogPage() {
 
             <div>
               <Label htmlFor="metaDescription">Meta Description</Label>
-              <Textarea
-                id="metaDescription"
-                rows={4}
+              <TiptapEditor
                 value={metaDescription}
-                onChange={(e) => setMetaDescription(e.target.value)}
+                onChange={(value) => setMetaDescription(value)}
               />
             </div>
 

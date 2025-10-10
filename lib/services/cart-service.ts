@@ -1,5 +1,3 @@
-import Cookies from "js-cookie";
-
 export interface CartItem {
   productId: string;
   variantId?: string;
@@ -14,24 +12,52 @@ export interface CartItem {
   foodType?: "veg" | "non-veg";
 }
 
+// Simple cookie utilities using native browser APIs
+const setCookie = (name: string, value: string, days = 7) => {
+  if (typeof window === "undefined") return;
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+};
+
+const getCookie = (name: string): string | null => {
+  if (typeof window === "undefined") return null;
+  const nameEQ = name + "=";
+  const ca = document.cookie.split(";");
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i];
+    while (c.charAt(0) === " ") c = c.substring(1, c.length);
+    if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+  }
+  return null;
+};
+
+const removeCookie = (name: string) => {
+  if (typeof window === "undefined") return;
+  document.cookie = `${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
+};
+
 // Check if user is authenticated
 export const isAuthenticated = (): boolean => {
   if (typeof window === "undefined") return false;
-  const token = localStorage.getItem("authToken") || Cookies.get("authToken");
+  const token =
+    localStorage.getItem("authToken") ||
+    getCookie("authToken") ||
+    getCookie("token");
   return !!token;
 };
 
 // Get user ID from storage
 export const getUserId = (): string | null => {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("userId") || Cookies.get("userId") || null;
+  return localStorage.getItem("userId") || getCookie("userId") || null;
 };
 
 // Get cart from cookies (for non-authenticated users)
 export const getCart = (): CartItem[] => {
   if (typeof window === "undefined") return [];
   try {
-    const cartData = Cookies.get("cart");
+    const cartData = getCookie("cart");
     return cartData ? JSON.parse(cartData) : [];
   } catch (error) {
     console.error("Error getting cart:", error);
@@ -53,21 +79,28 @@ export const getCartItemCount = (): number => {
 // Add item to cart
 export const addToCart = async (item: CartItem): Promise<CartItem[]> => {
   try {
+    console.log("[v0] Adding to cart:", item);
+
     // If user is authenticated, use API
     if (isAuthenticated()) {
+      const userId = getUserId();
+      console.log("[v0] User authenticated, userId:", userId);
+
       const response = await fetch("/api/cart/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(item),
+        body: JSON.stringify({ ...item, userId }),
       });
 
       if (!response.ok) {
+        console.error("[v0] Failed to add to cart via API");
         throw new Error("Failed to add item to cart");
       }
 
       const data = await response.json();
+      console.log("[v0] Cart updated via API:", data);
 
       // Dispatch event to update cart icon
       if (typeof window !== "undefined") {
@@ -97,7 +130,7 @@ export const addToCart = async (item: CartItem): Promise<CartItem[]> => {
     }
 
     // Save updated cart to cookies (expires in 7 days)
-    Cookies.set("cart", JSON.stringify(currentCart), { expires: 7 });
+    setCookie("cart", JSON.stringify(currentCart), 7);
 
     // Dispatch event to update cart icon
     if (typeof window !== "undefined") {
@@ -154,7 +187,7 @@ export const updateCartItem = async (
 
     if (index >= 0 && index < currentCart.length) {
       currentCart[index] = { ...currentCart[index], ...updates };
-      Cookies.set("cart", JSON.stringify(currentCart), { expires: 7 });
+      setCookie("cart", JSON.stringify(currentCart), 7);
 
       // Dispatch event to update cart icon
       if (typeof window !== "undefined") {
@@ -206,7 +239,7 @@ export const removeFromCart = async (index: number): Promise<CartItem[]> => {
     // For non-authenticated users, use cookies
     if (index >= 0 && index < currentCart.length) {
       currentCart.splice(index, 1);
-      Cookies.set("cart", JSON.stringify(currentCart), { expires: 7 });
+      setCookie("cart", JSON.stringify(currentCart), 7);
 
       // Dispatch event to update cart icon
       if (typeof window !== "undefined") {
@@ -243,7 +276,7 @@ export const clearCart = async (): Promise<CartItem[]> => {
     }
 
     // For non-authenticated users, use cookies
-    Cookies.remove("cart");
+    removeCookie("cart");
 
     // Dispatch event to update cart icon
     if (typeof window !== "undefined") {
@@ -277,7 +310,7 @@ export const syncCartToServer = async (): Promise<void> => {
     }
 
     // Clear local cart after successful sync
-    Cookies.remove("cart");
+    removeCookie("cart");
 
     // Dispatch event to update cart icon
     if (typeof window !== "undefined") {

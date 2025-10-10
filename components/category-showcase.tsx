@@ -37,14 +37,13 @@ export function CategoryShowcase() {
   }, []);
 
   return (
-    <section className="bg-white w-full pt-4 pb-4">
+    <section className="bg-white w-full py-10">
       <div className="w-full px-4 sm:px-6 lg:px-10">
-        {/* Section Header */}
-        <div className="mb-5 text-left">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1">
+        <div className="mb-5 text-center">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-2 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 bg-clip-text text-transparent">
             Trending Add-To-Carts
           </h2>
-          <p className="text-gray-600 text-sm sm:text-base md:text-lg">
+          <p className="text-gray-600 text-base sm:text-lg md:text-xl font-medium">
             Were you looking for these?
           </p>
         </div>

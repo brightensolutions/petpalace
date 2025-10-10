@@ -1,49 +1,36 @@
 import { type NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
 import UserCart from "@/lib/models/UserCart";
-import { getUserId } from "@/lib/services/cart-service";
 
-export async function PUT(req: NextRequest) {
+export async function GET(req: NextRequest) {
   try {
     await dbConnect();
 
-    const userId = getUserId();
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, error: "User ID required" },
+        { status: 400 }
+      );
     }
 
-    const { productId, variantId, packId, quantity } = await req.json();
+    console.log("[v0] Fetching cart for user:", userId);
 
     const cart = await UserCart.findOne({ userId });
 
     if (!cart) {
-      return NextResponse.json({ error: "Cart not found" }, { status: 404 });
+      console.log("[v0] No cart found, returning empty array");
+      return NextResponse.json({ success: true, items: [] });
     }
 
-    // Find and update the item
-    const itemIndex = cart.items.findIndex(
-      (item: any) =>
-        item.productId === productId &&
-        item.variantId === variantId &&
-        item.packId === packId
-    );
-
-    if (itemIndex === -1) {
-      return NextResponse.json(
-        { error: "Item not found in cart" },
-        { status: 404 }
-      );
-    }
-
-    cart.items[itemIndex].quantity = quantity;
-    await cart.save();
-
-    return NextResponse.json({ items: cart.items });
+    console.log("[v0] Cart found with", cart.items.length, "items");
+    return NextResponse.json({ success: true, items: cart.items });
   } catch (error) {
-    console.error("Error updating cart:", error);
+    console.error("[v0] Error getting cart:", error);
     return NextResponse.json(
-      { error: "Failed to update cart" },
+      { success: false, error: "Failed to get cart" },
       { status: 500 }
     );
   }

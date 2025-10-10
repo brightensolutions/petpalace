@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from "sonner";
 import {
   Minus,
   Plus,
@@ -28,6 +29,8 @@ import {
   getCart,
   updateCartItem,
   removeFromCart,
+  getUserId,
+  addToCart,
 } from "@/lib/services/cart-service";
 
 interface CartItem {
@@ -39,6 +42,8 @@ interface CartItem {
   quantity: number;
   category: string;
   inStock: boolean;
+  variantLabel?: string;
+  foodType?: "veg" | "non-veg";
 }
 
 interface OfferProduct {
@@ -52,16 +57,22 @@ interface OfferProduct {
   category: string;
 }
 
-interface Coupon {
-  id: string;
-  code: string;
-  title: string;
-  description: string;
-  discount: string;
-  minOrder: number;
-  validUntil: string;
-  bgColor: string;
-  textColor: string;
+interface Offer {
+  _id: string;
+  name: string;
+  couponCode: string;
+  type: "percentage" | "amount";
+  value: number;
+  status: string;
+  minCartValue?: number;
+  maxDiscount?: number;
+  expiryDate?: string;
+  description?: string;
+  buyXGetY?: {
+    enabled: boolean;
+    getQuantity: number;
+    getProducts?: string[];
+  };
 }
 
 export default function CartPage() {
@@ -69,109 +80,248 @@ export default function CartPage() {
   const [loading, setLoading] = useState(true);
   const [promoCode, setPromoCode] = useState("");
   const [appliedPromo, setAppliedPromo] = useState<string | null>(null);
-
-  // Offer products data
-  const offerProducts: OfferProduct[] = [
-    {
-      id: "offer1",
-      name: "Premium Dog Treats - Chicken Flavor",
-      price: 299,
-      originalPrice: 399,
-      image: "/placeholder.svg?height=200&width=200&text=Dog+Treats",
-      discount: 25,
-      rating: 4.5,
-      category: "Dog Treats",
-    },
-    {
-      id: "offer2",
-      name: "Stainless Steel Dog Bowl Set",
-      price: 599,
-      originalPrice: 799,
-      image: "/placeholder.svg?height=200&width=200&text=Dog+Bowl",
-      discount: 25,
-      rating: 4.7,
-      category: "Dog Accessories",
-    },
-    {
-      id: "offer3",
-      name: "Dog Leash & Collar Combo",
-      price: 899,
-      originalPrice: 1199,
-      image: "/placeholder.svg?height=200&width=200&text=Dog+Leash",
-      discount: 25,
-      rating: 4.6,
-      category: "Dog Accessories",
-    },
-    {
-      id: "offer4",
-      name: "Dog Grooming Kit",
-      price: 1299,
-      originalPrice: 1699,
-      image: "/placeholder.svg?height=200&width=200&text=Grooming+Kit",
-      discount: 24,
-      rating: 4.8,
-      category: "Dog Grooming",
-    },
-  ];
-
-  // Available coupons
-  const availableCoupons: Coupon[] = [
-    {
-      id: "coupon1",
-      code: "SAVE150",
-      title: "Flat ₹150 OFF",
-      description: "On orders above ₹999",
-      discount: "₹150",
-      minOrder: 999,
-      validUntil: "31 Dec 2024",
-      bgColor: "bg-gradient-to-r from-orange-100 to-orange-200",
-      textColor: "text-orange-800",
-    },
-    {
-      id: "coupon2",
-      code: "FIRST20",
-      title: "20% OFF",
-      description: "First time buyers",
-      discount: "20%",
-      minOrder: 499,
-      validUntil: "31 Dec 2024",
-      bgColor: "bg-gradient-to-r from-blue-100 to-blue-200",
-      textColor: "text-blue-800",
-    },
-    {
-      id: "coupon3",
-      code: "BULK25",
-      title: "25% OFF",
-      description: "On orders above ₹2499",
-      discount: "25%",
-      minOrder: 2499,
-      validUntil: "31 Dec 2024",
-      bgColor: "bg-gradient-to-r from-green-100 to-green-200",
-      textColor: "text-green-800",
-    },
-  ];
+  const [offers, setOffers] = useState<Offer[]>([]);
+  const [offersLoading, setOffersLoading] = useState(true);
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [appliedOffer, setAppliedOffer] = useState<Offer | null>(null);
+  const [showBuyXGetYModal, setShowBuyXGetYModal] = useState(false);
+  const [buyXGetYOffer, setBuyXGetYOffer] = useState<Offer | null>(null);
+  const [availableProducts, setAvailableProducts] = useState<OfferProduct[]>(
+    []
+  );
+  const [selectedFreeProducts, setSelectedFreeProducts] = useState<string[]>(
+    []
+  );
+  const [promoProducts, setPromoProducts] = useState<OfferProduct[]>([]);
+  const [promoProductsLoading, setPromoProductsLoading] = useState(true);
+  const [isUserAuthenticated, setIsUserAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
 
   useEffect(() => {
-    const loadCart = () => {
-      const cart = getCart();
-      const mappedItems = cart.map((item, index) => ({
-        id: `${item.productId}-${index}`,
-        name: item.name,
-        price: item.price,
-        originalPrice: undefined,
-        image: item.image || "/placeholder.svg",
-        quantity: item.quantity,
-        category: item.brand || "Product",
-        inStock: true,
-      }));
-      setCartItems(mappedItems);
-      setLoading(false);
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/users/me");
+        const data = await response.json();
+        setIsUserAuthenticated(data.authenticated);
+        console.log("[v0] Authentication status:", data.authenticated);
+      } catch (error) {
+        console.error("[v0] Error checking authentication:", error);
+        setIsUserAuthenticated(false);
+      } finally {
+        setAuthLoading(false);
+      }
     };
 
-    loadCart();
+    checkAuth();
+  }, []);
+
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        if (isUserAuthenticated) {
+          const userId = getUserId();
+          console.log("[v0] Loading cart from database for user:", userId);
+
+          const response = await fetch(`/api/cart?userId=${userId}`);
+          const data = await response.json();
+
+          if (!data.success || !data.items || data.items.length === 0) {
+            // Check if cookies have cart items
+            const cookieCart = getCart();
+            console.log(
+              "[v0] Database cart empty, checking cookies:",
+              cookieCart.length,
+              "items"
+            );
+
+            if (cookieCart.length > 0) {
+              // Sync cookie cart to database
+              console.log("[v0] Syncing cookie cart to database");
+              const syncResponse = await fetch("/api/cart/sync", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ items: cookieCart, userId }),
+              });
+
+              if (syncResponse.ok) {
+                // Reload cart from database after sync
+                const reloadResponse = await fetch(
+                  `/api/cart?userId=${userId}`
+                );
+                const reloadData = await reloadResponse.json();
+
+                if (reloadData.success && reloadData.items) {
+                  const mappedItems = reloadData.items.map(
+                    (item: any, index: number) => ({
+                      id: `${item.productId}-${item.variantId || ""}-${
+                        item.packId || ""
+                      }-${index}`,
+                      name: item.name,
+                      price: item.price,
+                      originalPrice: undefined,
+                      image: item.image || "/placeholder.svg",
+                      quantity: item.quantity,
+                      category: item.brand || "Product",
+                      inStock: true,
+                      variantLabel: item.variantLabel,
+                      foodType: item.foodType,
+                    })
+                  );
+                  setCartItems(mappedItems);
+                  console.log(
+                    "[v0] Cart synced and loaded from database:",
+                    mappedItems.length,
+                    "items"
+                  );
+                  return;
+                }
+              }
+
+              // If sync failed, use cookie cart
+              const mappedItems = cookieCart.map((item, index) => ({
+                id: `${item.productId}-${index}`,
+                name: item.name,
+                price: item.price,
+                originalPrice: undefined,
+                image: item.image || "/placeholder.svg",
+                quantity: item.quantity,
+                category: item.brand || "Product",
+                inStock: true,
+                variantLabel: item.variantLabel,
+                foodType: item.foodType,
+              }));
+              setCartItems(mappedItems);
+              console.log(
+                "[v0] Using cookie cart:",
+                mappedItems.length,
+                "items"
+              );
+              return;
+            }
+          }
+
+          if (data.success && data.items) {
+            const mappedItems = data.items.map((item: any, index: number) => ({
+              id: `${item.productId}-${item.variantId || ""}-${
+                item.packId || ""
+              }-${index}`,
+              name: item.name,
+              price: item.price,
+              originalPrice: undefined,
+              image: item.image || "/placeholder.svg",
+              quantity: item.quantity,
+              category: item.brand || "Product",
+              inStock: true,
+              variantLabel: item.variantLabel,
+              foodType: item.foodType,
+            }));
+            setCartItems(mappedItems);
+            console.log(
+              "[v0] Loaded cart from database:",
+              mappedItems.length,
+              "items"
+            );
+          }
+        } else {
+          const cart = getCart();
+          const mappedItems = cart.map((item, index) => ({
+            id: `${item.productId}-${index}`,
+            name: item.name,
+            price: item.price,
+            originalPrice: undefined,
+            image: item.image || "/placeholder.svg",
+            quantity: item.quantity,
+            category: item.brand || "Product",
+            inStock: true,
+            variantLabel: item.variantLabel,
+            foodType: item.foodType,
+          }));
+          setCartItems(mappedItems);
+          console.log(
+            "[v0] Loaded cart from cookies:",
+            mappedItems.length,
+            "items"
+          );
+        }
+      } catch (error) {
+        console.error("[v0] Error loading cart:", error);
+        const cart = getCart();
+        const mappedItems = cart.map((item, index) => ({
+          id: `${item.productId}-${index}`,
+          name: item.name,
+          price: item.price,
+          originalPrice: undefined,
+          image: item.image || "/placeholder.svg",
+          quantity: item.quantity,
+          category: item.brand || "Product",
+          inStock: true,
+          variantLabel: item.variantLabel,
+          foodType: item.foodType,
+        }));
+        setCartItems(mappedItems);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (!authLoading) {
+      loadCart();
+    }
 
     window.addEventListener("cartUpdated", loadCart);
     return () => window.removeEventListener("cartUpdated", loadCart);
+  }, [isUserAuthenticated, authLoading]);
+
+  useEffect(() => {
+    const fetchOffers = async () => {
+      try {
+        const response = await fetch("/api/offers");
+        const data = await response.json();
+        if (data.success) {
+          setOffers(data.data);
+        }
+      } catch (error) {
+        console.error("Error fetching offers:", error);
+      } finally {
+        setOffersLoading(false);
+      }
+    };
+
+    fetchOffers();
+  }, []);
+
+  useEffect(() => {
+    const fetchPromoProducts = async () => {
+      try {
+        const response = await fetch("/api/admin/products?limit=4");
+        const data = await response.json();
+        if (data.success) {
+          const mappedProducts: OfferProduct[] = data.data
+            .slice(0, 4)
+            .map((p: any) => ({
+              id: p._id,
+              name: p.name,
+              price: p.base_price || 0,
+              originalPrice: p.mrp || p.base_price || 0,
+              image: p.main_image || p.images?.[0] || "/placeholder.svg",
+              discount: p.mrp
+                ? Math.round(((p.mrp - p.base_price) / p.mrp) * 100)
+                : 0,
+              rating: 4.5,
+              category: p.category?.name || "Product",
+            }));
+          setPromoProducts(mappedProducts);
+        }
+      } catch (error) {
+        console.error("Error fetching promo products:", error);
+      } finally {
+        setPromoProductsLoading(false);
+      }
+    };
+
+    fetchPromoProducts();
   }, []);
 
   const updateQuantity = async (id: string, newQuantity: number) => {
@@ -199,32 +349,205 @@ export default function CartPage() {
     }
   };
 
-  const addOfferToCart = (offer: OfferProduct) => {
-    const newCartItem: CartItem = {
-      id: offer.id,
-      name: offer.name,
-      price: offer.price,
-      originalPrice: offer.originalPrice,
-      image: offer.image,
-      quantity: 1,
-      category: offer.category,
-      inStock: true,
-    };
-    setCartItems([...cartItems, newCartItem]);
-  };
+  const addOfferToCart = async (offer: OfferProduct) => {
+    try {
+      const cartItem = {
+        productId: offer.id,
+        quantity: 1,
+        price: offer.price,
+        name: offer.name,
+        image: offer.image,
+        brand: offer.category,
+      };
 
-  const applyPromoCode = () => {
-    const validCoupon = availableCoupons.find(
-      (coupon) => coupon.code === promoCode.toUpperCase()
-    );
-    if (validCoupon && subtotal >= validCoupon.minOrder) {
-      setAppliedPromo(promoCode.toUpperCase());
+      await addToCart(cartItem);
+
+      toast.success(`${offer.name} added to cart!`);
+
+      const updatedCart = getCart();
+      const mappedItems = updatedCart.map((item, index) => ({
+        id: `${item.productId}-${index}`,
+        name: item.name,
+        price: item.price,
+        originalPrice: undefined,
+        image: item.image || "/placeholder.svg",
+        quantity: item.quantity,
+        category: item.brand || "Product",
+        inStock: true,
+        variantLabel: item.variantLabel,
+        foodType: item.foodType,
+      }));
+      setCartItems(mappedItems);
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error("Failed to add product to cart");
     }
   };
 
-  const applyCoupon = (code: string) => {
+  const applyPromoCode = async () => {
+    if (!promoCode.trim()) return;
+
+    try {
+      const response = await fetch("/api/offers/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          couponCode: promoCode,
+          cartValue: subtotal,
+          productIds: cartItems.map((item) => item.id),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setAppliedPromo(data.data.couponCode);
+        setPromoDiscount(data.data.discount);
+        setAppliedOffer(data.data);
+
+        if (data.data.buyXGetY?.enabled) {
+          console.log("[v0] Buy X Get Y offer detected:", data.data.buyXGetY);
+          setBuyXGetYOffer(data.data);
+          fetchAvailableProducts(data.data);
+          setShowBuyXGetYModal(true);
+        }
+
+        toast.success(`Coupon ${data.data.couponCode} applied successfully!`);
+      } else {
+        toast.error(data.message || "Invalid coupon code");
+        setAppliedPromo(null);
+        setPromoDiscount(0);
+        setAppliedOffer(null);
+      }
+    } catch (error) {
+      console.error("Error applying promo code:", error);
+      toast.error("Failed to apply coupon code");
+    }
+  };
+
+  const applyCoupon = async (code: string) => {
     setPromoCode(code);
-    setAppliedPromo(code);
+
+    try {
+      const response = await fetch("/api/offers/validate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          couponCode: code,
+          cartValue: subtotal,
+          productIds: cartItems.map((item) => item.id),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setAppliedPromo(data.data.couponCode);
+        setPromoDiscount(data.data.discount);
+        setAppliedOffer(data.data);
+
+        if (data.data.buyXGetY?.enabled) {
+          console.log("[v0] Buy X Get Y offer detected:", data.data.buyXGetY);
+          setBuyXGetYOffer(data.data);
+          fetchAvailableProducts(data.data);
+          setShowBuyXGetYModal(true);
+        }
+
+        toast.success(`Coupon ${data.data.couponCode} applied successfully!`);
+      } else {
+        toast.error(data.message || "Invalid coupon code");
+        setAppliedPromo(null);
+        setPromoDiscount(0);
+        setAppliedOffer(null);
+      }
+    } catch (error) {
+      console.error("Error applying coupon:", error);
+      toast.error("Failed to apply coupon");
+    }
+  };
+
+  const fetchAvailableProducts = async (offer: Offer) => {
+    try {
+      console.log("[v0] Fetching available products for Buy X Get Y offer");
+      const response = await fetch("/api/admin/products");
+      const data = await response.json();
+
+      if (data.success) {
+        const mappedProducts: OfferProduct[] = data.data.map((p: any) => ({
+          id: p._id,
+          name: p.name,
+          price: p.base_price || 0,
+          originalPrice: p.mrp || p.base_price || 0,
+          image: p.main_image || p.images?.[0] || "/placeholder.svg",
+          discount: p.mrp
+            ? Math.round(((p.mrp - p.base_price) / p.mrp) * 100)
+            : 0,
+          rating: 4.5,
+          category: p.category?.name || "Product",
+        }));
+
+        if (
+          offer.buyXGetY?.getProducts &&
+          offer.buyXGetY.getProducts.length > 0
+        ) {
+          const filteredProducts = mappedProducts.filter((p) =>
+            offer.buyXGetY!.getProducts!.includes(p.id)
+          );
+          setAvailableProducts(filteredProducts);
+        } else {
+          setAvailableProducts(mappedProducts);
+        }
+
+        console.log("[v0] Loaded available products:", mappedProducts.length);
+      }
+    } catch (error) {
+      console.error("[v0] Error fetching available products:", error);
+    }
+  };
+
+  const toggleFreeProduct = (productId: string) => {
+    if (selectedFreeProducts.includes(productId)) {
+      setSelectedFreeProducts(
+        selectedFreeProducts.filter((id) => id !== productId)
+      );
+    } else {
+      if (
+        buyXGetYOffer &&
+        selectedFreeProducts.length < buyXGetYOffer.buyXGetY!.getQuantity
+      ) {
+        setSelectedFreeProducts([...selectedFreeProducts, productId]);
+      }
+    }
+  };
+
+  const addFreeProductsToCart = () => {
+    console.log("[v0] Adding free products to cart:", selectedFreeProducts);
+
+    const newCartItems = [...cartItems];
+
+    selectedFreeProducts.forEach((productId) => {
+      const product = availableProducts.find((p) => p.id === productId);
+      if (product) {
+        const freeItem: CartItem = {
+          id: `free-${product.id}-${Date.now()}`,
+          name: `${product.name} (FREE)`,
+          price: 0,
+          originalPrice: product.price,
+          image: product.image,
+          quantity: 1,
+          category: product.category,
+          inStock: true,
+        };
+        newCartItems.push(freeItem);
+      }
+    });
+
+    setCartItems(newCartItems);
+    setShowBuyXGetYModal(false);
+    setSelectedFreeProducts([]);
+    toast.success(
+      `Added ${selectedFreeProducts.length} free products to cart!`
+    );
   };
 
   const subtotal = cartItems.reduce(
@@ -239,23 +562,8 @@ export default function CartPage() {
   }, 0);
 
   const deliveryFee = subtotal >= 499 ? 0 : 99;
-
-  // Calculate promo discount
-  let promoDiscount = 0;
-  if (appliedPromo) {
-    const coupon = availableCoupons.find((c) => c.code === appliedPromo);
-    if (coupon) {
-      if (coupon.code === "SAVE150") promoDiscount = 150;
-      else if (coupon.code === "FIRST20")
-        promoDiscount = Math.floor(subtotal * 0.2);
-      else if (coupon.code === "BULK25")
-        promoDiscount = Math.floor(subtotal * 0.25);
-    }
-  }
-
   const total = subtotal + deliveryFee - promoDiscount;
 
-  // Empty cart state
   if (cartItems.length === 0 && !loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -319,7 +627,6 @@ export default function CartPage() {
     );
   }
 
-  // Loading state
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -332,7 +639,6 @@ export default function CartPage() {
     );
   }
 
-  // Cart with items
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -344,9 +650,7 @@ export default function CartPage() {
           </h1>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Main Content */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Cart Items */}
               <div className="space-y-4">
                 {cartItems.map((item) => (
                   <div
@@ -372,6 +676,32 @@ export default function CartPage() {
                             <p className="text-sm text-gray-500">
                               {item.category}
                             </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              {item.variantLabel && (
+                                <Badge variant="outline" className="text-xs">
+                                  {item.variantLabel}
+                                </Badge>
+                              )}
+                              {item.foodType && (
+                                <Badge
+                                  variant="outline"
+                                  className={`text-xs ${
+                                    item.foodType === "veg"
+                                      ? "border-green-500 text-green-700"
+                                      : "border-red-500 text-red-700"
+                                  }`}
+                                >
+                                  <span
+                                    className={`w-2 h-2 rounded-full mr-1 ${
+                                      item.foodType === "veg"
+                                        ? "bg-green-500"
+                                        : "bg-red-500"
+                                    }`}
+                                  />
+                                  {item.foodType === "veg" ? "Veg" : "Non-Veg"}
+                                </Badge>
+                              )}
+                            </div>
                             <div className="flex items-center gap-2 mt-2">
                               <span className="text-xl font-bold text-gray-900">
                                 ₹{item.price}
@@ -437,141 +767,174 @@ export default function CartPage() {
                 ))}
               </div>
 
-              {/* Frequently Bought Together */}
-              <Card>
-                <CardContent className="p-6">
-                  <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
-                    <Gift className="w-5 h-5 text-orange-600" />
-                    ABHI NAHI TO KABHI NAHI
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    {offerProducts.slice(0, 4).map((offer) => (
-                      <div
-                        key={offer.id}
-                        className="border border-gray-200 rounded-lg p-4 hover:border-orange-300 transition-colors"
-                      >
-                        <div className="flex gap-3">
-                          <Image
-                            src={offer.image || "/placeholder.svg"}
-                            alt={offer.name}
-                            width={80}
-                            height={80}
-                            className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
-                          />
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">
-                              {offer.name}
-                            </h3>
-                            <div className="flex items-center gap-1 mb-2">
-                              <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                              <span className="text-xs text-gray-600">
-                                {offer.rating}
-                              </span>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div>
-                                <span className="font-bold text-sm">
-                                  ₹{offer.price}
-                                </span>
-                                <span className="text-xs text-gray-500 line-through ml-1">
-                                  ₹{offer.originalPrice}
+              {!promoProductsLoading && promoProducts.length > 0 && (
+                <Card>
+                  <CardContent className="p-6">
+                    <h2 className="text-xl font-bold text-gray-900 mb-6 flex items-center gap-2">
+                      <Gift className="w-5 h-5 text-orange-600" />
+                      ABHI NAHI TO KABHI NAHI
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {promoProducts.slice(0, 4).map((offer) => (
+                        <div
+                          key={offer.id}
+                          className="border border-gray-200 rounded-lg p-4 hover:border-orange-300 transition-colors"
+                        >
+                          <div className="flex gap-3">
+                            <Image
+                              src={offer.image || "/placeholder.svg"}
+                              alt={offer.name}
+                              width={80}
+                              height={80}
+                              className="w-16 h-16 object-cover rounded-lg flex-shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-sm text-gray-900 mb-1 line-clamp-2">
+                                {offer.name}
+                              </h3>
+                              <div className="flex items-center gap-1 mb-2">
+                                <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                                <span className="text-xs text-gray-600">
+                                  {offer.rating}
                                 </span>
                               </div>
-                              <Button
-                                size="sm"
-                                onClick={() => addOfferToCart(offer)}
-                                className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-3 py-1 h-7"
-                              >
-                                Add
-                              </Button>
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <span className="font-bold text-sm">
+                                    ₹{offer.price}
+                                  </span>
+                                  <span className="text-xs text-gray-500 line-through ml-1">
+                                    ₹{offer.originalPrice}
+                                  </span>
+                                </div>
+                                <Button
+                                  size="sm"
+                                  onClick={() => addOfferToCart(offer)}
+                                  className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-3 py-1 h-7"
+                                >
+                                  Add
+                                </Button>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
 
-            {/* Sidebar */}
             <div className="lg:col-span-1 space-y-6">
-              {/* Available Coupons */}
               <Card>
                 <CardContent className="p-6">
                   <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
                     <Percent className="w-5 h-5 text-orange-600" />
                     Available Offers
                   </h2>
-                  <div className="space-y-3">
-                    {availableCoupons.map((coupon) => (
-                      <div
-                        key={coupon.id}
-                        className={`${
-                          coupon.bgColor
-                        } rounded-lg p-3 border border-gray-200 ${
-                          subtotal >= coupon.minOrder
-                            ? "opacity-100"
-                            : "opacity-50"
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <Tag className={`w-4 h-4 ${coupon.textColor}`} />
-                            <span
-                              className={`font-bold text-sm ${coupon.textColor}`}
-                            >
-                              {coupon.code}
-                            </span>
+                  {offersLoading ? (
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div
+                          key={i}
+                          className="bg-gray-100 rounded-lg p-3 animate-pulse h-24"
+                        ></div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {offers.slice(0, 5).map((offer) => {
+                        const isEligible =
+                          !offer.minCartValue || subtotal >= offer.minCartValue;
+                        const bgColor =
+                          offer.type === "percentage"
+                            ? "bg-gradient-to-r from-orange-100 to-orange-200"
+                            : offer.type === "amount"
+                            ? "bg-gradient-to-r from-blue-100 to-blue-200"
+                            : "bg-gradient-to-r from-green-100 to-green-200";
+                        const textColor =
+                          offer.type === "percentage"
+                            ? "text-orange-800"
+                            : offer.type === "amount"
+                            ? "text-blue-800"
+                            : "text-green-800";
+
+                        return (
+                          <div
+                            key={offer._id}
+                            className={`${bgColor} rounded-lg p-3 border border-gray-200 ${
+                              isEligible ? "opacity-100" : "opacity-50"
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                <Tag className={`w-4 h-4 ${textColor}`} />
+                                <span
+                                  className={`font-bold text-sm ${textColor}`}
+                                >
+                                  {offer.couponCode}
+                                </span>
+                              </div>
+                              <Badge
+                                className={`${textColor} bg-white/50 text-xs`}
+                              >
+                                {offer.type === "percentage"
+                                  ? `${offer.value}%`
+                                  : offer.type === "amount"
+                                  ? `₹${offer.value}`
+                                  : "Buy X Get Y"}
+                              </Badge>
+                            </div>
+                            <p className={`text-xs ${textColor} mb-2`}>
+                              {offer.description || offer.name}
+                              {offer.minCartValue &&
+                                ` (Min: ₹${offer.minCartValue})`}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              {offer.expiryDate && (
+                                <span
+                                  className={`text-xs ${textColor} opacity-75`}
+                                >
+                                  Valid till{" "}
+                                  {new Date(
+                                    offer.expiryDate
+                                  ).toLocaleDateString()}
+                                </span>
+                              )}
+                              {isEligible ? (
+                                <Button
+                                  size="sm"
+                                  onClick={() => applyCoupon(offer.couponCode)}
+                                  className="bg-white text-orange-600 hover:bg-gray-50 text-xs px-3 py-1 h-6"
+                                  disabled={appliedPromo === offer.couponCode}
+                                >
+                                  {appliedPromo === offer.couponCode
+                                    ? "Applied"
+                                    : "Apply"}
+                                </Button>
+                              ) : (
+                                <span
+                                  className={`text-xs ${textColor} opacity-75`}
+                                >
+                                  Add ₹{(offer.minCartValue || 0) - subtotal}{" "}
+                                  more
+                                </span>
+                              )}
+                            </div>
                           </div>
-                          <Badge
-                            className={`${coupon.textColor} bg-white/50 text-xs`}
-                          >
-                            {coupon.discount}
-                          </Badge>
-                        </div>
-                        <p className={`text-xs ${coupon.textColor} mb-2`}>
-                          {coupon.description}
-                        </p>
-                        <div className="flex items-center justify-between">
-                          <span
-                            className={`text-xs ${coupon.textColor} opacity-75`}
-                          >
-                            Valid till {coupon.validUntil}
-                          </span>
-                          {subtotal >= coupon.minOrder ? (
-                            <Button
-                              size="sm"
-                              onClick={() => applyCoupon(coupon.code)}
-                              className="bg-white text-orange-600 hover:bg-gray-50 text-xs px-3 py-1 h-6"
-                              disabled={appliedPromo === coupon.code}
-                            >
-                              {appliedPromo === coupon.code
-                                ? "Applied"
-                                : "Apply"}
-                            </Button>
-                          ) : (
-                            <span
-                              className={`text-xs ${coupon.textColor} opacity-75`}
-                            >
-                              Add ₹{coupon.minOrder - subtotal} more
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
 
-              {/* Order Summary */}
               <Card>
                 <CardContent className="p-6">
                   <h2 className="text-xl font-bold text-gray-900 mb-6">
                     Order Summary
                   </h2>
 
-                  {/* Promo Code Input */}
                   <div className="mb-6">
                     <div className="flex gap-2">
                       <Input
@@ -636,12 +999,20 @@ export default function CartPage() {
                     </div>
                   </div>
 
-                  <Link href="/checkout">
-                    <Button className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 mb-4">
-                      <ShoppingBag className="w-5 h-5 mr-2" />
-                      Proceed to Checkout
-                    </Button>
-                  </Link>
+                  <Button
+                    onClick={() => {
+                      if (!isUserAuthenticated) {
+                        toast.error("Please login to continue");
+                        window.location.href = "/sign-in?redirect=/checkout";
+                      } else {
+                        window.location.href = "/checkout";
+                      }
+                    }}
+                    className="w-full h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold text-lg rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 mb-4"
+                  >
+                    <ShoppingBag className="w-5 h-5 mr-2" />
+                    Proceed to Checkout
+                  </Button>
 
                   <Link href="/">
                     <Button
@@ -654,7 +1025,6 @@ export default function CartPage() {
                 </CardContent>
               </Card>
 
-              {/* Trust Indicators */}
               <Card>
                 <CardContent className="p-6">
                   <div className="space-y-4">
@@ -690,72 +1060,110 @@ export default function CartPage() {
         </div>
       </div>
 
-      {/* Limited Time Offer Section */}
-      {/* <div className="bg-gradient-to-r from-orange-50 to-orange-100 py-12 mt-12">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h2 className="text-3xl font-extrabold text-orange-600 mb-4">
-              Don't Miss Out!
-            </h2>
-            <p className="text-gray-700 text-lg">
-              Grab these limited-time offers before they're gone.
-            </p>
-          </div>
-          <div className="overflow-x-auto">
-            <div className="flex gap-6 w-max px-2">
-              {offerProducts.map((offer) => (
-                <div
-                  key={offer.id}
-                  className="bg-white border border-gray-200 rounded-2xl shadow-sm w-64 min-w-[16rem] p-4 flex-shrink-0 hover:shadow-lg transition-shadow"
+      {showBuyXGetYModal && buyXGetYOffer && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">
+                    Select Your Free Products
+                  </h2>
+                  <p className="text-gray-600 mt-1">
+                    Choose {buyXGetYOffer.buyXGetY!.getQuantity} products to get
+                    for free!
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setShowBuyXGetYModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
                 >
-                  <div className="relative">
-                    <Image
-                      src={offer.image || "/placeholder.svg"}
-                      alt={offer.name}
-                      width={300}
-                      height={200}
-                      className="w-full h-40 object-cover rounded-xl"
-                    />
-                    <Badge className="absolute top-2 left-2 bg-red-500 text-white text-xs font-bold">
-                      {offer.discount}% OFF
-                    </Badge>
-                  </div>
-                  <div className="mt-4">
-                    <h3 className="text-lg font-semibold mb-1 line-clamp-2">
-                      {offer.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-2">
-                      {offer.category}
-                    </p>
-                    <div className="flex items-center gap-1 mb-3">
-                      <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                      <span className="text-sm text-gray-600">
-                        {offer.rating}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <span className="font-bold text-lg text-orange-600">
-                          ₹{offer.price}
-                        </span>
-                        <span className="text-sm text-gray-500 line-through ml-2">
-                          ₹{offer.originalPrice}
+                  ✕
+                </Button>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {availableProducts.map((product) => {
+                  const isSelected = selectedFreeProducts.includes(product.id);
+                  const canSelect =
+                    isSelected ||
+                    selectedFreeProducts.length <
+                      buyXGetYOffer.buyXGetY!.getQuantity;
+
+                  return (
+                    <div
+                      key={product.id}
+                      onClick={() => canSelect && toggleFreeProduct(product.id)}
+                      className={`border-2 rounded-xl p-4 cursor-pointer transition-all ${
+                        isSelected
+                          ? "border-orange-500 bg-orange-50"
+                          : canSelect
+                          ? "border-gray-200 hover:border-orange-300"
+                          : "border-gray-200 opacity-50 cursor-not-allowed"
+                      }`}
+                    >
+                      <div className="relative">
+                        <Image
+                          src={product.image || "/placeholder.svg"}
+                          alt={product.name}
+                          width={200}
+                          height={200}
+                          className="w-full h-40 object-cover rounded-lg mb-3"
+                        />
+                        {isSelected && (
+                          <div className="absolute top-2 right-2 bg-orange-500 text-white rounded-full w-8 h-8 flex items-center justify-center">
+                            <Check className="w-5 h-5" />
+                          </div>
+                        )}
+                      </div>
+                      <h3 className="font-semibold text-sm text-gray-900 mb-2 line-clamp-2">
+                        {product.name}
+                      </h3>
+                      <div className="flex items-center gap-1 mb-2">
+                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                        <span className="text-sm text-gray-600">
+                          {product.rating}
                         </span>
                       </div>
-                      <Button
-                        onClick={() => addOfferToCart(offer)}
-                        className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 text-sm"
-                      >
-                        Add to Cart
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <span className="font-bold text-lg text-gray-900">
+                          FREE
+                        </span>
+                        <span className="text-sm text-gray-500 line-through">
+                          ₹{product.price}
+                        </span>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              ))}
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-gray-200 bg-gray-50">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-gray-600">
+                  Selected: {selectedFreeProducts.length} /{" "}
+                  {buyXGetYOffer.buyXGetY!.getQuantity}
+                </p>
+                <Button
+                  onClick={addFreeProductsToCart}
+                  disabled={
+                    selectedFreeProducts.length !==
+                    buyXGetYOffer.buyXGetY!.getQuantity
+                  }
+                  className="bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-8 py-3 rounded-xl font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Add to Cart
+                </Button>
+              </div>
             </div>
           </div>
         </div>
-      </div> */}
+      )}
 
       <Footer />
     </div>

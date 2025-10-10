@@ -247,6 +247,9 @@ export default function SearchClient({
   const [selectedVariants, setSelectedVariants] = useState<
     Record<string, string>
   >({});
+  const [selectedPacks, setSelectedPacks] = useState<Record<string, number>>(
+    {}
+  );
 
   const priceRanges = [
     { id: "10-300", label: "₹10 - ₹300", min: 10, max: 300 },
@@ -333,6 +336,7 @@ export default function SearchClient({
     setSelectedFoodType("all");
     setSortBy("featured");
     setSelectedVariants({});
+    setSelectedPacks({});
   };
 
   const hasActiveFilters =
@@ -390,7 +394,7 @@ export default function SearchClient({
       <div className="lg:col-span-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-3 sm:p-4 mb-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
               <Sheet>
                 <SheetTrigger asChild>
                   <Button
@@ -435,64 +439,75 @@ export default function SearchClient({
                 </SheetContent>
               </Sheet>
 
-              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 shadow-sm border border-gray-200">
-                  <button
-                    onClick={() => setSelectedFoodType("all")}
-                    className={`px-2 py-1 text-[10px] sm:text-xs font-semibold rounded transition-all ${
-                      selectedFoodType === "all"
-                        ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-sm"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    All
-                  </button>
-                  <button
-                    onClick={() => setSelectedFoodType("veg")}
-                    className={`px-2 py-1 text-[10px] sm:text-xs font-semibold rounded transition-all flex items-center gap-1 ${
-                      selectedFoodType === "veg"
-                        ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full border border-current flex items-center justify-center">
-                      <span className="w-1 h-1 rounded-full bg-current"></span>
-                    </span>
-                    Veg
-                  </button>
-                  <button
-                    onClick={() => setSelectedFoodType("non-veg")}
-                    className={`px-2 py-1 text-[10px] sm:text-xs font-semibold rounded transition-all flex items-center gap-1 ${
-                      selectedFoodType === "non-veg"
-                        ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm"
-                        : "text-gray-600 hover:bg-gray-50"
-                    }`}
-                  >
-                    <span className="w-2 h-2 rounded-full border border-current flex items-center justify-center">
-                      <span className="w-1 h-1 rounded-full bg-current"></span>
-                    </span>
-                    Non-Veg
-                  </button>
-                </div>
+              <div className="flex items-center gap-2 text-xs sm:text-sm">
+                <span className="text-gray-600">Showing</span>
+                <span className="font-bold text-orange-600 text-sm sm:text-base">
+                  {filteredAndSortedProducts.length}
+                </span>
+                <span className="text-gray-600">of</span>
+                <span className="font-semibold text-gray-900">
+                  {products.length}
+                </span>
+              </div>
+            </div>
 
-                <div className="flex items-center gap-2">
-                  <Label
-                    htmlFor="sort"
-                    className="text-xs sm:text-sm text-gray-600 font-medium whitespace-nowrap"
-                  >
-                    Sort:
-                  </Label>
-                  <select
-                    id="sort"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white font-medium"
-                  >
-                    <option value="featured">Featured</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                  </select>
-                </div>
+            <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+              <div className="flex items-center gap-1 bg-white rounded-lg p-0.5 shadow-sm border border-gray-200">
+                <button
+                  onClick={() => setSelectedFoodType("all")}
+                  className={`px-2 py-1 text-[10px] sm:text-xs font-semibold rounded transition-all ${
+                    selectedFoodType === "all"
+                      ? "bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  All
+                </button>
+                <button
+                  onClick={() => setSelectedFoodType("veg")}
+                  className={`px-2 py-1 text-[10px] sm:text-xs font-semibold rounded transition-all flex items-center gap-1 ${
+                    selectedFoodType === "veg"
+                      ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full border border-current flex items-center justify-center">
+                    <span className="w-1 h-1 rounded-full bg-current"></span>
+                  </span>
+                  Veg
+                </button>
+                <button
+                  onClick={() => setSelectedFoodType("non-veg")}
+                  className={`px-2 py-1 text-[10px] sm:text-xs font-semibold rounded transition-all flex items-center gap-1 ${
+                    selectedFoodType === "non-veg"
+                      ? "bg-gradient-to-r from-red-500 to-red-600 text-white shadow-sm"
+                      : "text-gray-600 hover:bg-gray-50"
+                  }`}
+                >
+                  <span className="w-2 h-2 rounded-full border border-current flex items-center justify-center">
+                    <span className="w-1 h-1 rounded-full bg-current"></span>
+                  </span>
+                  Non-Veg
+                </button>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Label
+                  htmlFor="sort"
+                  className="text-xs sm:text-sm text-gray-600 font-medium whitespace-nowrap"
+                >
+                  Sort:
+                </Label>
+                <select
+                  id="sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="text-xs sm:text-sm border border-gray-300 rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 bg-white font-medium"
+                >
+                  <option value="featured">Featured</option>
+                  <option value="price-low">Price: Low to High</option>
+                  <option value="price-high">Price: High to Low</option>
+                </select>
               </div>
             </div>
           </div>
@@ -531,6 +546,8 @@ export default function SearchClient({
               const originalMRP = p.mrp ?? p.base_price ?? 0;
               let displayPrice = p.base_price ?? p.mrp ?? 0;
               let selectedVariantLabel = "";
+              const selectedPackIndex = selectedPacks[p._id] ?? 0;
+              let availablePacks: any[] = [];
 
               if (selectedVariantId && p.variants) {
                 const variant = p.variants.find(
@@ -543,7 +560,13 @@ export default function SearchClient({
                     variant.packs &&
                     variant.packs.length > 0
                   ) {
-                    displayPrice = variant.packs[0].price;
+                    availablePacks = variant.packs;
+                    const selectedPack =
+                      variant.packs[selectedPackIndex] || variant.packs[0];
+                    const packPrice = selectedPack.price || 0;
+                    const packDiscount = selectedPack.discount_percent || 0;
+                    displayPrice = packPrice * (1 - packDiscount / 100);
+                    selectedVariantLabel = `${variant.label} - ${selectedPack.label}`;
                   } else if (variant.price) {
                     displayPrice = variant.price;
                   }
@@ -646,45 +669,96 @@ export default function SearchClient({
                       </Link>
 
                       {p.variants && p.variants.length > 0 && (
-                        <div className="grid grid-cols-3 gap-1 mb-3">
-                          {p.variants.slice(0, 9).map((variant: any) => {
-                            const isSelected =
-                              selectedVariants[p._id] === variant._id;
-                            const variantDiscount =
-                              variant.discount || discount;
-                            return (
-                              <button
-                                key={variant._id}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setSelectedVariants((prev) => ({
-                                    ...prev,
-                                    [p._id]: isSelected ? "" : variant._id,
-                                  }));
-                                }}
-                                className={`relative text-[9px] sm:text-[10px] px-1 py-1.5 rounded transition-all font-bold ${
-                                  isSelected
-                                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md"
-                                    : "bg-white text-gray-700 border border-gray-300 hover:border-green-500"
-                                }`}
-                              >
-                                <div className="text-center leading-tight">
-                                  {variant.label}
-                                </div>
-                                {variantDiscount > 0 && (
-                                  <div
-                                    className={`text-[8px] mt-0.5 ${
-                                      isSelected
-                                        ? "text-white"
-                                        : "text-green-600"
-                                    } font-bold`}
-                                  >
-                                    {variantDiscount}%
+                        <div className="space-y-2 mb-3">
+                          <div className="grid grid-cols-3 gap-1">
+                            {p.variants.slice(0, 9).map((variant: any) => {
+                              const isSelected =
+                                selectedVariants[p._id] === variant._id;
+                              const variantDiscount =
+                                variant.discount_percent || discount;
+                              return (
+                                <button
+                                  key={variant._id}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setSelectedVariants((prev) => ({
+                                      ...prev,
+                                      [p._id]: isSelected ? "" : variant._id,
+                                    }));
+                                    setSelectedPacks((prev) => ({
+                                      ...prev,
+                                      [p._id]: 0,
+                                    }));
+                                  }}
+                                  className={`relative text-[9px] sm:text-[10px] px-1 py-1.5 rounded transition-all font-bold ${
+                                    isSelected
+                                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
+                                      : "bg-white text-gray-700 border border-gray-300 hover:border-blue-500"
+                                  }`}
+                                >
+                                  <div className="text-center leading-tight">
+                                    {variant.label}
                                   </div>
-                                )}
-                              </button>
-                            );
-                          })}
+                                  {variantDiscount > 0 && (
+                                    <div
+                                      className={`text-[8px] mt-0.5 ${
+                                        isSelected
+                                          ? "text-white"
+                                          : "text-green-600"
+                                      } font-bold`}
+                                    >
+                                      {variantDiscount}%
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {availablePacks.length > 0 && (
+                            <div className="grid grid-cols-3 gap-1">
+                              {availablePacks.map(
+                                (pack: any, packIndex: number) => {
+                                  const isPackSelected =
+                                    selectedPackIndex === packIndex;
+                                  const packDiscount =
+                                    pack.discount_percent || 0;
+                                  return (
+                                    <button
+                                      key={packIndex}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setSelectedPacks((prev) => ({
+                                          ...prev,
+                                          [p._id]: packIndex,
+                                        }));
+                                      }}
+                                      className={`relative text-[9px] sm:text-[10px] px-1 py-1.5 rounded transition-all font-bold ${
+                                        isPackSelected
+                                          ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md"
+                                          : "bg-white text-gray-700 border border-gray-300 hover:border-green-500"
+                                      }`}
+                                    >
+                                      <div className="text-center leading-tight">
+                                        {pack.label}
+                                      </div>
+                                      {packDiscount > 0 && (
+                                        <div
+                                          className={`text-[8px] mt-0.5 ${
+                                            isPackSelected
+                                              ? "text-white"
+                                              : "text-green-600"
+                                          } font-bold`}
+                                        >
+                                          {packDiscount}%
+                                        </div>
+                                      )}
+                                    </button>
+                                  );
+                                }
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -692,7 +766,7 @@ export default function SearchClient({
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex flex-col">
                             <span className="text-lg sm:text-xl font-bold text-gray-900">
-                              ₹{formatINR(displayPrice)}
+                              ₹{formatINR(Math.round(displayPrice))}
                             </span>
                             {originalMRP > displayPrice && (
                               <div className="flex items-center gap-1">

@@ -238,6 +238,9 @@ export default function CategoryClient({
   const [selectedVariants, setSelectedVariants] = useState<
     Record<string, string>
   >({});
+  const [selectedPacks, setSelectedPacks] = useState<Record<string, number>>(
+    {}
+  );
 
   const priceRanges = [
     { id: "10-300", label: "₹10 - ₹300", min: 10, max: 300 },
@@ -319,6 +322,7 @@ export default function CategoryClient({
     setSortBy("featured");
     setSelectedFoodType("all");
     setSelectedVariants({});
+    setSelectedPacks({});
   };
 
   const hasActiveFilters =
@@ -410,7 +414,8 @@ export default function CategoryClient({
                 <span className="text-gray-600">of</span>
                 <span className="font-semibold text-gray-900">
                   {products.length}
-                </span>
+                </span>{" "}
+                Products
               </div>
             </div>
 
@@ -509,6 +514,8 @@ export default function CategoryClient({
               const originalMRP = p.mrp ?? p.base_price ?? 0;
               let displayPrice = p.base_price ?? p.mrp ?? 0;
               let selectedVariantLabel = "";
+              const selectedPackIndex = selectedPacks[p._id] ?? 0;
+              let availablePacks: any[] = [];
 
               if (selectedVariantId && p.variants) {
                 const variant = p.variants.find(
@@ -521,7 +528,13 @@ export default function CategoryClient({
                     variant.packs &&
                     variant.packs.length > 0
                   ) {
-                    displayPrice = variant.packs[0].price;
+                    availablePacks = variant.packs;
+                    const selectedPack =
+                      variant.packs[selectedPackIndex] || variant.packs[0];
+                    const packPrice = selectedPack.price || 0;
+                    const packDiscount = selectedPack.discount_percent || 0;
+                    displayPrice = packPrice * (1 - packDiscount / 100);
+                    selectedVariantLabel = `${variant.label} - ${selectedPack.label}`;
                   } else if (variant.price) {
                     displayPrice = variant.price;
                   }
@@ -624,45 +637,96 @@ export default function CategoryClient({
                       </Link>
 
                       {p.variants && p.variants.length > 0 && (
-                        <div className="grid grid-cols-3 gap-1 mb-3">
-                          {p.variants.slice(0, 9).map((variant: any) => {
-                            const isSelected =
-                              selectedVariants[p._id] === variant._id;
-                            const variantDiscount =
-                              variant.discount || discount;
-                            return (
-                              <button
-                                key={variant._id}
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  setSelectedVariants((prev) => ({
-                                    ...prev,
-                                    [p._id]: isSelected ? "" : variant._id,
-                                  }));
-                                }}
-                                className={`relative text-[9px] sm:text-[10px] px-1 py-1.5 rounded transition-all font-bold ${
-                                  isSelected
-                                    ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md"
-                                    : "bg-white text-gray-700 border border-gray-300 hover:border-green-500"
-                                }`}
-                              >
-                                <div className="text-center leading-tight">
-                                  {variant.label}
-                                </div>
-                                {variantDiscount > 0 && (
-                                  <div
-                                    className={`text-[8px] mt-0.5 ${
-                                      isSelected
-                                        ? "text-white"
-                                        : "text-green-600"
-                                    } font-bold`}
-                                  >
-                                    {variantDiscount}%
+                        <div className="space-y-2 mb-3">
+                          <div className="grid grid-cols-3 gap-1">
+                            {p.variants.slice(0, 9).map((variant: any) => {
+                              const isSelected =
+                                selectedVariants[p._id] === variant._id;
+                              const variantDiscount =
+                                variant.discount_percent || discount;
+                              return (
+                                <button
+                                  key={variant._id}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    setSelectedVariants((prev) => ({
+                                      ...prev,
+                                      [p._id]: isSelected ? "" : variant._id,
+                                    }));
+                                    setSelectedPacks((prev) => ({
+                                      ...prev,
+                                      [p._id]: 0,
+                                    }));
+                                  }}
+                                  className={`relative text-[9px] sm:text-[10px] px-1 py-1.5 rounded transition-all font-bold ${
+                                    isSelected
+                                      ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
+                                      : "bg-white text-gray-700 border border-gray-300 hover:border-blue-500"
+                                  }`}
+                                >
+                                  <div className="text-center leading-tight">
+                                    {variant.label}
                                   </div>
-                                )}
-                              </button>
-                            );
-                          })}
+                                  {variantDiscount > 0 && (
+                                    <div
+                                      className={`text-[8px] mt-0.5 ${
+                                        isSelected
+                                          ? "text-white"
+                                          : "text-green-600"
+                                      } font-bold`}
+                                    >
+                                      {variantDiscount}%
+                                    </div>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {availablePacks.length > 0 && (
+                            <div className="grid grid-cols-3 gap-1">
+                              {availablePacks.map(
+                                (pack: any, packIndex: number) => {
+                                  const isPackSelected =
+                                    selectedPackIndex === packIndex;
+                                  const packDiscount =
+                                    pack.discount_percent || 0;
+                                  return (
+                                    <button
+                                      key={packIndex}
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        setSelectedPacks((prev) => ({
+                                          ...prev,
+                                          [p._id]: packIndex,
+                                        }));
+                                      }}
+                                      className={`relative text-[9px] sm:text-[10px] px-1 py-1.5 rounded transition-all font-bold ${
+                                        isPackSelected
+                                          ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md"
+                                          : "bg-white text-gray-700 border border-gray-300 hover:border-green-500"
+                                      }`}
+                                    >
+                                      <div className="text-center leading-tight">
+                                        {pack.label}
+                                      </div>
+                                      {packDiscount > 0 && (
+                                        <div
+                                          className={`text-[8px] mt-0.5 ${
+                                            isPackSelected
+                                              ? "text-white"
+                                              : "text-green-600"
+                                          } font-bold`}
+                                        >
+                                          {packDiscount}%
+                                        </div>
+                                      )}
+                                    </button>
+                                  );
+                                }
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -670,7 +734,7 @@ export default function CategoryClient({
                         <div className="flex items-center justify-between gap-2">
                           <div className="flex flex-col">
                             <span className="text-lg sm:text-xl font-bold text-gray-900">
-                              ₹{formatINR(displayPrice)}
+                              ₹{formatINR(Math.round(displayPrice))}
                             </span>
                             {originalMRP > displayPrice && (
                               <div className="flex items-center gap-1">

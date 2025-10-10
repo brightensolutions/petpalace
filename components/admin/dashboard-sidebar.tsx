@@ -245,6 +245,30 @@ export function DashboardSidebar({
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link
+                    href="/admin/best-sellers"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <Star className="text-orange-500" />
+                    <span>Best Seller</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
+                    href="/admin/abhi-nahi-to-kabhi-nahi-products"
+                    className="flex items-center gap-2 hover:text-orange-600 text-base"
+                  >
+                    <Tag className="text-orange-500" />
+                    <span>Abhi Nahi to Kabhi Nahi Products</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link
                     href="/admin/reviews"
                     className="flex items-center gap-2 hover:text-orange-600 text-base"
                   >

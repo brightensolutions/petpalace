@@ -72,7 +72,7 @@ export function HeroBanner() {
                 style={{ objectFit: "cover" }}
                 priority={index === 0}
               />
-              <div className="absolute inset-0 bg-black/10"></div>
+              {/* <div className="absolute inset-0 bg-black/10"></div> */}
             </a>
           ))}
         </div>

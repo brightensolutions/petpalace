@@ -1,13 +1,24 @@
 "use client";
 
 import { Card, CardContent } from "./ui/card";
-import { Copy, Check } from "lucide-react";
-import { Button } from "./ui/button";
+import { Copy, Check, Gift } from "lucide-react";
 import { useState, useEffect } from "react";
+import { Swiper, SwiperSlide } from "swiper/react";
+import "swiper/css";
+
+interface Offer {
+  _id: string;
+  name: string;
+  couponCode: string;
+  type: "percentage" | "amount";
+  description?: string;
+  value: number;
+}
 
 export function OffersSection() {
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [offers, setOffers] = useState<Offer[]>([]);
 
   const copyToClipboard = (code: string) => {
     navigator.clipboard.writeText(code);
@@ -15,91 +26,55 @@ export function OffersSection() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
-  const offers = [
-    {
-      id: 1,
-      name: "MEGA SALE",
-      discount: "60% OFF",
-      promoCode: "MEGA60",
-      bgGradient: "from-orange-100 to-orange-50",
-      textColor: "text-orange-900",
-      borderColor: "border-orange-500",
-      codeBarGradient: "from-orange-500 to-orange-600",
-    },
-    {
-      id: 2,
-      name: "BUY 2 GET 1",
-      discount: "FREE",
-      promoCode: "BUY2GET1",
-      bgGradient: "from-blue-100 to-blue-50",
-      textColor: "text-blue-900",
-      borderColor: "border-blue-500",
-      codeBarGradient: "from-blue-500 to-blue-600",
-    },
-    {
-      id: 3,
-      name: "FIRST ORDER",
-      discount: "25% OFF",
-      promoCode: "WELCOME25",
-      bgGradient: "from-orange-100 to-orange-50",
-      textColor: "text-orange-900",
-      borderColor: "border-orange-500",
-      codeBarGradient: "from-orange-500 to-orange-600",
-    },
-    {
-      id: 4,
-      name: "HEALTH CARE",
-      discount: "40% OFF",
-      promoCode: "HEALTH40",
-      bgGradient: "from-blue-100 to-blue-50",
-      textColor: "text-blue-900",
-      borderColor: "border-blue-500",
-      codeBarGradient: "from-blue-500 to-blue-600",
-    },
-    {
-      id: 5,
-      name: "PREMIUM PETS",
-      discount: "30% OFF",
-      promoCode: "PREMIUM30",
-      bgGradient: "from-orange-100 to-orange-50",
-      textColor: "text-orange-900",
-      borderColor: "border-orange-500",
-      codeBarGradient: "from-orange-500 to-orange-600",
-    },
-    {
-      id: 6,
-      name: "TOP RATED",
-      discount: "35% OFF",
-      promoCode: "TOPRATED35",
-      bgGradient: "from-blue-100 to-blue-50",
-      textColor: "text-blue-900",
-      borderColor: "border-blue-500",
-      codeBarGradient: "from-blue-500 to-blue-600",
-    },
-  ];
-
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 1000);
-    return () => clearTimeout(timer);
+    const fetchOffers = async () => {
+      try {
+        const response = await fetch("/api/offers");
+        const data = await response.json();
+        if (data.success) {
+          setOffers(data.data.slice(0, 6));
+        }
+      } catch (error) {
+        console.error("Error fetching offers:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOffers();
   }, []);
+
+  const getThemeColors = (index: number) => {
+    // Alternate: even = orange, odd = blue
+    return index % 2 === 0
+      ? {
+          border: "border-orange-200",
+          hover: "hover:border-orange-400",
+          icon: "from-orange-400 to-orange-500",
+        }
+      : {
+          border: "border-blue-200",
+          hover: "hover:border-blue-400",
+          icon: "from-blue-400 to-blue-500",
+        };
+  };
 
   if (loading) {
     return (
-      <section className="py-8 bg-white w-full">
+      <section className="py-24 bg-gradient-to-b from-orange-50 to-white w-full">
         <div className="w-full px-4 sm:px-6 lg:px-10">
           <div className="mb-4 sm:mb-6">
-            <div className="h-6 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
-            <div className="h-4 w-64 bg-gray-200 rounded animate-pulse"></div>
+            <div className="h-8 w-64 bg-gray-200 rounded animate-pulse mb-2"></div>
+            <div className="h-5 w-96 bg-gray-200 rounded animate-pulse"></div>
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <Card
                 key={i}
-                className="border-4 border-gray-300 shadow-lg rounded-3xl overflow-hidden animate-pulse"
+                className="border-2 border-gray-300 shadow-md rounded-2xl overflow-hidden animate-pulse"
               >
-                <CardContent className="p-0">
-                  <div className="h-24 bg-gray-200 w-full rounded-3xl"></div>
-                  <div className="h-3 w-2/3 bg-gray-300 rounded mx-auto mt-2"></div>
+                <CardContent className="p-4">
+                  <div className="h-16 bg-gray-200 w-full rounded"></div>
                 </CardContent>
               </Card>
             ))}
@@ -110,67 +85,110 @@ export function OffersSection() {
   }
 
   return (
-    <section className="py-8 bg-white w-full">
+    <section className="py-24 bg-gradient-to-b from-orange-50 to-white w-full">
       <div className="w-full px-4 sm:px-6 lg:px-10">
-        <div className="mb-4 sm:mb-6">
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">
-            Exclusive Pet Deals & Offers
+        <div className="mb-6 sm:mb-8 text-center">
+          <h2 className="text-3xl sm:text-3xl lg:text-5xl font-extrabold mb-2 bg-gradient-to-r from-orange-600 via-orange-500 to-orange-600 bg-clip-text text-transparent">
+            Exclusive Offers & Deals
           </h2>
-          <p className="text-gray-600 text-xs sm:text-sm md:text-base">
-            Save big on premium pet products with our special discount codes
+          <p className="text-gray-600 text-sm sm:text-base md:text-lg font-medium">
+            Save big with our special discount codes - Limited time only!
           </p>
         </div>
 
-        <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          {offers.map((offer) => (
-            <Card
-              key={offer.id}
-              className={`border-4 ${offer.borderColor} hover:border-opacity-90 transition-all duration-300 shadow-lg rounded-3xl overflow-hidden group`}
-            >
-              <CardContent className="p-0">
-                {/* Main Card Area */}
-                <div
-                  className={`w-full bg-gradient-to-br ${offer.bgGradient} flex flex-col justify-center relative 
-                    h-20 sm:h-24 lg:h-32 px-2 sm:px-3 py-1 sm:py-2 lg:py-4`}
-                >
-                  <div className="text-center">
-                    <div
-                      className={`text-[9px] sm:text-xs lg:text-base font-bold ${offer.textColor} tracking-wide`}
-                    >
-                      {offer.name}
-                    </div>
-                    <div
-                      className={`text-[10px] sm:text-sm lg:text-2xl font-bold ${offer.textColor} leading-tight`}
-                    >
-                      {offer.discount}
-                    </div>
-                  </div>
-                  <div className="absolute top-1 right-1 sm:top-2 sm:right-2 lg:top-3 lg:right-3 w-6 h-6 sm:w-10 sm:h-10 lg:w-12 lg:h-12 bg-white/30 rounded-full"></div>
-                </div>
+        {/* Desktop Grid */}
+        <div className="hidden sm:grid grid-cols-2 lg:grid-cols-6 gap-4 sm:gap-5">
+          {offers.map((offer, index) => {
+            const discountText =
+              offer.type === "percentage"
+                ? `Extra ${offer.value}% off`
+                : `Extra ₹${offer.value} off`;
+            const theme = getThemeColors(index);
 
-                {/* Promo Code Bar */}
-                <div
-                  className={`bg-gradient-to-r ${offer.codeBarGradient} px-2 py-1 flex items-center justify-between cursor-pointer hover:opacity-90 transition-opacity`}
-                  onClick={() => copyToClipboard(offer.promoCode)}
-                >
-                  <span className="text-white font-medium text-[9px] sm:text-xs lg:text-sm">
-                    Use: {offer.promoCode}
-                  </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-4 w-4 sm:h-5 sm:w-5 lg:h-5 lg:w-5 p-0 hover:bg-white/20 text-white"
+            return (
+              <Card
+                key={offer._id}
+                className={`border-2 ${theme.border} ${theme.hover} hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white group`}
+              >
+                <CardContent className="p-3">
+                  <div className="flex flex-col sm:flex-1 gap-1">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className={`flex-shrink-0 w-8 h-8 bg-gradient-to-br ${theme.icon} rounded-lg flex items-center justify-center shadow-md`}
+                      >
+                        <Gift className="w-4 h-4 text-white" />
+                      </div>
+                      <span className="text-sm font-bold text-gray-900 truncate">
+                        {offer.couponCode}
+                      </span>
+                      <button
+                        onClick={() => copyToClipboard(offer.couponCode)}
+                        className="text-xs border border-orange-500 px-2 py-1 rounded-md hover:bg-orange-500 hover:text-white transition"
+                      >
+                        {copiedCode === offer.couponCode ? (
+                          <Check className="w-3 h-3 inline" />
+                        ) : (
+                          <Copy className="w-3 h-3 inline" />
+                        )}
+                      </button>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">
+                      {discountText} {offer.description || offer.name}
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+
+        {/* Mobile Carousel */}
+        <div className="sm:hidden">
+          <Swiper spaceBetween={12} slidesPerView={1.5}>
+            {offers.map((offer, index) => {
+              const discountText =
+                offer.type === "percentage"
+                  ? `Extra ${offer.value}% off`
+                  : `Extra ₹${offer.value} off`;
+              const theme = getThemeColors(index);
+
+              return (
+                <SwiperSlide key={offer._id}>
+                  <Card
+                    className={`border-2 ${theme.border} ${theme.hover} hover:shadow-xl transition-all duration-300 rounded-2xl overflow-hidden bg-white group`}
                   >
-                    {copiedCode === offer.promoCode ? (
-                      <Check className="w-3 h-3" />
-                    ) : (
-                      <Copy className="w-3 h-3" />
-                    )}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    <CardContent className="p-3">
+                      <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                          <div
+                            className={`flex-shrink-0 w-8 h-8 bg-gradient-to-br ${theme.icon} rounded-lg flex items-center justify-center shadow-md`}
+                          >
+                            <Gift className="w-4 h-4 text-white" />
+                          </div>
+                          <span className="text-sm font-bold text-gray-900 truncate">
+                            {offer.couponCode}
+                          </span>
+                          <button
+                            onClick={() => copyToClipboard(offer.couponCode)}
+                            className="text-xs border border-orange-500 px-2 py-1 rounded-md hover:bg-orange-500 hover:text-white transition"
+                          >
+                            {copiedCode === offer.couponCode ? (
+                              <Check className="w-3 h-3 inline" />
+                            ) : (
+                              <Copy className="w-3 h-3 inline" />
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-xs text-gray-600 mt-1">
+                          {discountText} {offer.description || offer.name}
+                        </p>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </SwiperSlide>
+              );
+            })}
+          </Swiper>
         </div>
       </div>
     </section>

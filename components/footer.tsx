@@ -57,8 +57,8 @@ export function Footer() {
                 icon: Truck,
                 title: "Free Delivery",
                 desc: "On orders above Rs.499",
-                color: "text-blue-600",
-                bgColor: "bg-blue-100",
+                color: "text-[#3b82f6]", // themed blue
+                bgColor: "bg-[#dbeafe]", // themed blue background
               },
               {
                 icon: Shield,
@@ -71,8 +71,8 @@ export function Footer() {
                 icon: Clock,
                 title: "24/7 Support",
                 desc: "Always here to help",
-                color: "text-blue-600",
-                bgColor: "bg-blue-100",
+                color: "text-[#3b82f6]",
+                bgColor: "bg-[#dbeafe]",
               },
               {
                 icon: Award,
@@ -130,12 +130,12 @@ export function Footer() {
                 {[
                   {
                     icon: Facebook,
-                    color: "hover:bg-blue-600",
+                    color: "hover:bg-[#3b82f6]",
                     label: "Facebook",
                   },
                   {
                     icon: Twitter,
-                    color: "hover:bg-blue-500",
+                    color: "hover:bg-[#3b82f6]",
                     label: "Twitter",
                   },
                   {
@@ -205,7 +205,7 @@ export function Footer() {
                   <li key={category._id}>
                     <a
                       href={`/categories/${category.slug || category._id}`}
-                      className="flex items-center gap-2 text-sm sm:text-base text-gray-600 hover:text-orange-600 transition-colors duration-200 hover:translate-x-1 transform group"
+                      className="flex items-center gap-2 text-sm sm:text-base text-gray-600 hover:text-[#3b82f6] transition-colors duration-200 hover:translate-x-1 transform group"
                     >
                       {category.name}
                     </a>
@@ -230,8 +230,8 @@ export function Footer() {
                   icon: Phone,
                   text: "1800-123-4567",
                   subtext: "Toll-free support",
-                  color: "text-blue-600",
-                  bgColor: "bg-blue-100",
+                  color: "text-[#3b82f6]",
+                  bgColor: "bg-[#dbeafe]",
                 },
                 {
                   icon: Mail,
@@ -244,8 +244,8 @@ export function Footer() {
                   icon: MapPin,
                   text: "Surat, Gujarat",
                   subtext: "Serving nationwide",
-                  color: "text-blue-600",
-                  bgColor: "bg-blue-100",
+                  color: "text-[#3b82f6]",
+                  bgColor: "bg-[#dbeafe]",
                 },
               ].map((contact, index) => (
                 <div

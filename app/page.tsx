@@ -2,6 +2,7 @@ import { Header } from "@/components/header";
 import { HeroBanner } from "@/components/hero-banner";
 import { OffersSection } from "@/components/offers-section";
 import { CategoryShowcase } from "@/components/category-showcase";
+import { BrandShowcase } from "@/components/brand-showcase";
 import { FeaturedProducts } from "@/components/featured-products";
 import { VideoShowcase } from "@/components/video-showcase";
 import { ImageBanner } from "@/components/image-banner";
@@ -18,8 +19,9 @@ export default function HomePage() {
         <OffersSection />
         <CategoryShowcase />
         <FeaturedProducts />
+        <BrandShowcase />
         {/* <VideoShowcase /> */}
-        <ImageBanner />
+        {/* <ImageBanner /> */}
         {/* <PetToysSection /> */}
         <BlogSection />
       </main>

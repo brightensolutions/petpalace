@@ -6,10 +6,17 @@ export async function GET() {
   try {
     await dbConnect();
     const brands = await Brand.find().sort({ name: 1 });
-    return NextResponse.json(brands);
+
+    return NextResponse.json({
+      success: true,
+      data: brands,
+    });
   } catch (err) {
     const errorMsg =
       err instanceof Error ? err.message : "An unknown error occurred";
-    return NextResponse.json({ error: errorMsg }, { status: 500 });
+    return NextResponse.json(
+      { success: false, error: errorMsg },
+      { status: 500 }
+    );
   }
 }

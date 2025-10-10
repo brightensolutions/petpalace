@@ -5,18 +5,14 @@ import type React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import dynamic from "next/dynamic";
 import { toast } from "sonner";
 
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-
-// dynamic import Editor
-const Editor = dynamic(() => import("@/components/ui/editor"), { ssr: false });
+import TiptapEditor from "@/components/tiptap-editor";
 
 export default function AddBlogPage() {
   const router = useRouter();
@@ -29,7 +25,7 @@ export default function AddBlogPage() {
   const [active, setActive] = useState(true);
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
-  const [category, setCategory] = useState(""); // state for category
+  const [category, setCategory] = useState("");
 
   // SEO
   const [metaTitle, setMetaTitle] = useState("");
@@ -53,10 +49,10 @@ export default function AddBlogPage() {
     formData.append("metaTitle", metaTitle);
     formData.append("metaDescription", metaDescription);
     formData.append("slug", slug);
-    formData.append("category", category); // append category
+    formData.append("category", category);
     if (thumbnail) {
       formData.append("thumbnail", thumbnail);
-      formData.append("image", thumbnail); // append 'image' alias for stricter APIs
+      formData.append("image", thumbnail);
     }
 
     try {
@@ -82,7 +78,7 @@ export default function AddBlogPage() {
         href="/admin/blogs"
         className="text-sm text-blue-600 hover:underline inline-block mb-4"
       >
-        ← Back to All Blogs
+        {"← Back to All Blogs"}
       </Link>
 
       <h1 className="text-3xl font-bold mb-6 text-orange-600">Add Blog</h1>
@@ -111,11 +107,7 @@ export default function AddBlogPage() {
             </div>
             <div>
               <Label>Content</Label>
-              <Editor
-                content={content}
-                onChange={setContent}
-                placeholder="Write your blog content..."
-              />
+              <TiptapEditor value={content} onChange={setContent} />
             </div>
             <div>
               <Label htmlFor="author">Author</Label>
@@ -164,8 +156,7 @@ export default function AddBlogPage() {
                 placeholder="e.g. Tech"
                 required
               />
-            </div>{" "}
-            {/* add Category field */}
+            </div>
             <div className="pt-2 flex justify-end">
               <Button
                 type="button"
@@ -190,10 +181,9 @@ export default function AddBlogPage() {
 
             <div>
               <Label htmlFor="metaDescription">Meta Description</Label>
-              <Textarea
-                id="metaDescription"
+              <TiptapEditor
                 value={metaDescription}
-                onChange={(e) => setMetaDescription(e.target.value)}
+                onChange={setMetaDescription}
               />
             </div>
 
