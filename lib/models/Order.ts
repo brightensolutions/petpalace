@@ -34,7 +34,7 @@ const OrderAddressSchema = new Schema({
 const OrderSchema = new Schema(
   {
     userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    orderNumber: { type: String, required: true, unique: true },
+    orderNumber: { type: String, unique: true },
     items: [OrderItemSchema],
     pets: [OrderPetSchema],
     address: OrderAddressSchema,

@@ -2,14 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Header from "@/components/header"; // Assuming you have this component
-import Footer from "@/components/footer"; // Assuming you have this component
+import Header from "@/components/header";
+import Footer from "@/components/footer";
 import { AddressModal } from "@/components/address-modal";
-// import { toast } from "@/components/ui/use-toast"; // Uncomment if you use shadcn/ui toast
-
 import {
   UserCog,
   MapPin,
@@ -29,16 +27,12 @@ import {
   XCircle,
   Phone,
   Package,
-  TrendingUp,
-  ShoppingBag,
-  Wallet,
-  Gift,
 } from "lucide-react";
 import Image from "next/image";
 
-// Define interfaces for better type safety
 interface Order {
   id: string;
+  _id: string;
   date: string;
   status: "delivered" | "shipped" | "processing" | "cancelled";
   total: number;
@@ -56,11 +50,11 @@ interface WishlistItem {
 }
 
 interface Address {
-  _id?: string; // Optional for new addresses, required for updates from DB
+  _id?: string;
   name: string;
   phone: string;
   company?: string;
-  address: string; // This will be line1 + line2 combined from modal
+  address: string;
   city: string;
   state: string;
   pincode: string;
@@ -69,118 +63,106 @@ interface Address {
   isDefault: boolean;
 }
 
-interface Transaction {
-  id: string;
-  date: string;
-  type: "credit" | "debit";
-  amount: number;
-  description: string;
-  status: "completed" | "pending" | "failed";
-}
-
-// Define a more complete User interface based on your data structure
 interface UserData {
   _id: string;
   name: string;
   email: string;
-  number?: string; // Assuming mobile number
+  number?: string;
   avatar?: string;
   totalOrders?: number;
   totalSpent?: number;
   loyaltyPoints?: number;
   walletBalance?: number;
-  addresses: Address[]; // This is crucial for addresses from DB
-  // Add other user properties as they come from your /api/users/me endpoint
-}
-
-interface WishlistItem {
-  _id: string;
-  name: string;
-  category?: string;
-  price: number;
-  image: string;
+  addresses: Address[];
 }
 
 export default function UserDashboard() {
   const [user, setUser] = useState<UserData | null>(null);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
-  const [editingAddress, setEditingAddress] = useState<Address | null>(null); // State to hold address being edited
-  const [loading, setLoading] = useState(true); // Keep loading state for initial fetch
-  const [activeSection, setActiveSection] = useState("orders"); // Default active section
+  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState("orders");
 
-  // Fetch user data on component mount
   useEffect(() => {
     const fetchUser = async () => {
       setLoading(true);
       try {
         const res = await fetch("/api/users/me", {
-          credentials: "include", // required to send cookies
+          credentials: "include",
         });
         const data = await res.json();
         if (data.authenticated) {
-          // Ensure addresses array exists, even if empty
           setUser({ ...data.user, addresses: data.user.addresses || [] });
         } else {
-          // Handle unauthenticated user, e.g., redirect to login
           console.warn("User not authenticated. Redirecting to sign-in.");
-          // window.location.href = "/sign-in"; // Uncomment to redirect
         }
       } catch (error) {
         console.error("Failed to fetch user:", error);
-        // Optionally show an error toast
       } finally {
         setLoading(false);
       }
     };
+
+    const fetchOrders = async () => {
+      try {
+        const res = await fetch("/api/users/orders", {
+          credentials: "include",
+        });
+        const data = await res.json();
+
+        if (res.ok && data.orders) {
+          const mappedOrders = data.orders.map((order: any) => ({
+            _id: order._id,
+            id: order.orderNumber,
+            date: new Date(order.createdAt).toLocaleDateString(),
+            status: order.orderStatus,
+            total: order.total,
+            items: order.items.length,
+            image:
+              order.items[0]?.image ||
+              "/placeholder.svg?height=100&width=100&text=Order",
+            trackingId: order.orderNumber,
+          }));
+          setOrders(mappedOrders);
+        }
+      } catch (error) {
+        console.error("Failed to fetch orders:", error);
+      }
+    };
+
     const fetchWishlist = async () => {
       try {
-        console.log("[v0] Fetching wishlist from /api/users/wishlist");
         const res = await fetch("/api/users/wishlist", {
           credentials: "include",
         });
-
-        console.log("[v0] Response status:", res.status);
-        console.log("[v0] Response ok:", res.ok);
-
         const data = await res.json();
-        console.log("[v0] Response data:", data);
-
         if (res.ok) {
-          console.log("[v0] Wishlist data received:", data);
-          console.log("[v0] Wishlist array:", data.wishlist);
-          console.log("[v0] Wishlist length:", data.wishlist?.length);
           setWishlistItems(data.wishlist || []);
-          console.log("[v0] State updated with wishlist items");
-        } else {
-          console.warn("[v0] Wishlist fetch failed:", data.error);
-          setWishlistItems([]);
         }
       } catch (err) {
-        console.error("[v0] Failed to fetch wishlist:", err);
-        setWishlistItems([]);
+        console.error("Failed to fetch wishlist:", err);
       }
     };
+
     fetchUser();
+    fetchOrders();
     fetchWishlist();
   }, []);
 
-  // Show loading indicator or skeleton until user data is fetched
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <p>Loading user data...</p>{" "}
-        {/* Replace with a proper skeleton loader */}
+        <p>Loading user data...</p>
       </div>
     );
   }
 
-  // If user is null after loading, it means they are not authenticated or an error occurred
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <p>Please log in to view your dashboard.</p>
-        {/* Optionally, add a login button */}
         <Button onClick={() => (window.location.href = "/sign-in")}>
           Go to Login
         </Button>
@@ -188,111 +170,46 @@ export default function UserDashboard() {
     );
   }
 
-  // Mock data for sections not directly managed by the AddressModal
-  const orders: Order[] = [
-    {
-      id: "ORD001",
-      date: "2024-01-15",
-      status: "delivered",
-      total: 2599,
-      items: 3,
-      image: "/placeholder.svg?height=60&width=60&text=Order",
-      trackingId: "TRK123456789",
-    },
-    {
-      id: "ORD002",
-      date: "2024-01-10",
-      status: "shipped",
-      total: 1299,
-      items: 2,
-      image: "/placeholder.svg?height=60&width=60&text=Order",
-      trackingId: "TRK987654321",
-    },
-    {
-      id: "ORD003",
-      date: "2024-01-05",
-      status: "processing",
-      total: 899,
-      items: 1,
-      image: "/placeholder.svg?height=60&width=60&text=Order",
-    },
-    {
-      id: "ORD004",
-      date: "2023-12-28",
-      status: "cancelled",
-      total: 1599,
-      items: 2,
-      image: "/placeholder.svg?height=60&width=60&text=Order",
-    },
-  ];
-
-  // const wishlistItems = [
-  //   {
-  //     id: 1,
-  //     name: "Organic Chicken Dog Treats",
-  //     category: "Dog Treats",
-  //     price: 299,
-  //     image: "/images/products/chicken-treat.jpg",
-  //   },
-  //   {
-  //     id: 2,
-  //     name: "Catnip Toy Mouse",
-  //     category: "Cat Toys",
-  //     price: 149,
-  //     image: "/images/products/catnip-toy.jpg",
-  //   },
-  // ];
-
   const handleLogout = async () => {
     try {
       await fetch("/api/users/logout", {
         method: "POST",
-        credentials: "include", // required to send cookies
+        credentials: "include",
       });
-      window.location.href = "/sign-in"; // redirect after logout
+      window.location.href = "/sign-in";
     } catch (error) {
       console.error("Logout failed:", error);
-      // Optionally show an error toast
     }
   };
 
-  // Function to handle saving an address (from AddressModal)
   const handleAddressSave = (savedAddress: Address) => {
     setUser((prevUser) => {
       if (!prevUser) return null;
 
       let updatedAddresses: Address[];
-
-      // Check if the savedAddress already exists (by _id)
       const existingAddressIndex = prevUser.addresses.findIndex(
         (addr) => addr._id === savedAddress._id
       );
 
       if (existingAddressIndex !== -1) {
-        // Update existing address
         updatedAddresses = prevUser.addresses.map((addr, index) =>
           index === existingAddressIndex ? savedAddress : addr
         );
       } else {
-        // Add new address
         updatedAddresses = [...prevUser.addresses, savedAddress];
       }
 
-      // Handle isDefault logic: if the savedAddress is default, make others non-default
       if (savedAddress.isDefault) {
         updatedAddresses = updatedAddresses.map((addr) => ({
           ...addr,
-          isDefault: addr._id === savedAddress._id, // Only the saved one is default
+          isDefault: addr._id === savedAddress._id,
         }));
       }
 
       return { ...prevUser, addresses: updatedAddresses };
     });
-    // Optionally show a success toast
-    // toast({ title: "Address saved successfully!" });
   };
 
-  // Function to handle deleting an address
   const handleDeleteAddress = async (addressId: string) => {
     if (!user) return;
     if (!confirm("Are you sure you want to delete this address?")) return;
@@ -316,26 +233,21 @@ export default function UserDashboard() {
             ),
           };
         });
-        // toast({ title: "Address deleted successfully!" });
       } else {
-        console.error("API Error:", data);
         alert(data.error || "Failed to delete address");
-        // toast({ title: "Failed to delete address", variant: "destructive" });
       }
     } catch (error) {
       console.error("Error deleting address:", error);
       alert("Error deleting address");
-      // toast({ title: "Error deleting address", variant: "destructive" });
     }
   };
 
-  // Function to handle setting an address as default
   const handleSetDefaultAddress = async (addressId: string) => {
     if (!user) return;
 
     try {
       const res = await fetch(`/api/users/addresses/set-default`, {
-        method: "PUT", // Or POST, depending on your API
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ addressId }),
@@ -347,20 +259,16 @@ export default function UserDashboard() {
           if (!prevUser) return null;
           const updatedAddresses = prevUser.addresses.map((addr) => ({
             ...addr,
-            isDefault: addr._id === addressId, // Set this one as default, others as false
+            isDefault: addr._id === addressId,
           }));
           return { ...prevUser, addresses: updatedAddresses };
         });
-        // toast({ title: "Default address updated!" });
       } else {
-        console.error("API Error:", data);
         alert(data.error || "Failed to set default address");
-        // toast({ title: "Failed to set default address", variant: "destructive" });
       }
     } catch (error) {
       console.error("Error setting default address:", error);
       alert("Error setting default address");
-      // toast({ title: "Error setting default address", variant: "destructive" });
     }
   };
 
@@ -405,115 +313,6 @@ export default function UserDashboard() {
 
   const renderContent = () => {
     switch (activeSection) {
-      case "overview":
-        return (
-          <div className="space-y-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
-                      <ShoppingBag className="w-6 h-6 text-blue-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Total Orders</p>
-                      <p className="text-2xl font-bold">
-                        {user.totalOrders || 0}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
-                      <TrendingUp className="w-6 h-6 text-green-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Total Spent</p>
-                      <p className="text-2xl font-bold">
-                        ₹{(user.totalSpent || 0).toLocaleString()}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
-                      <Coins className="w-6 h-6 text-orange-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600">Loyalty Points</p>
-                      <p className="text-2xl font-bold">
-                        {user.loyaltyPoints || 0}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-            {/* Recent Orders */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Recent Orders</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {orders.slice(0, 3).map((order) => (
-                    <div
-                      key={order.id}
-                      className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg"
-                    >
-                      <Image
-                        src={order.image || "/placeholder.svg"}
-                        alt="Order"
-                        width={60}
-                        height={60}
-                        className="rounded-lg"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="font-semibold">#{order.id}</span>
-                          <Badge className={getStatusColor(order.status)}>
-                            {getStatusIcon(order.status)}
-                            <span className="ml-1 capitalize">
-                              {order.status}
-                            </span>
-                          </Badge>
-                        </div>
-                        <p className="text-sm text-gray-600">
-                          {order.items} items • {order.date}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">₹{order.total}</p>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="mt-2 bg-transparent"
-                        >
-                          <Eye className="w-4 h-4 mr-1" />
-                          View
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                <Button
-                  variant="outline"
-                  className="w-full mt-4 bg-transparent"
-                  onClick={() => setActiveSection("orders")}
-                >
-                  View All Orders
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        );
       case "orders":
         return (
           <div className="space-y-6">
@@ -529,82 +328,98 @@ export default function UserDashboard() {
                 </Button>
               </div>
             </div>
-            <div className="space-y-4">
-              {orders.map((order) => (
-                <Card key={order.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <Image
-                        src={order.image || "/placeholder.svg"}
-                        alt="Order"
-                        width={80}
-                        height={80}
-                        className="rounded-lg"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <span className="font-bold text-lg">#{order.id}</span>
-                          <Badge className={getStatusColor(order.status)}>
-                            {getStatusIcon(order.status)}
-                            <span className="ml-1 capitalize">
-                              {order.status}
+            {orders.length > 0 ? (
+              <div className="space-y-4">
+                {orders.map((order) => (
+                  <Card key={order._id}>
+                    <CardContent className="p-6">
+                      <div className="flex items-start gap-4">
+                        <Image
+                          src={order.image || "/placeholder.svg"}
+                          alt="Order"
+                          width={80}
+                          height={80}
+                          className="rounded-lg"
+                        />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-bold text-lg">
+                              #{order.id}
                             </span>
-                          </Badge>
-                        </div>
-                        <p className="text-gray-600 mb-1">
-                          Order Date: {order.date}
-                        </p>
-                        <p className="text-gray-600 mb-2">
-                          {order.items} items
-                        </p>
-                        {order.trackingId && (
-                          <p className="text-sm text-blue-600">
-                            Tracking ID: {order.trackingId}
+                            <Badge className={getStatusColor(order.status)}>
+                              {getStatusIcon(order.status)}
+                              <span className="ml-1 capitalize">
+                                {order.status}
+                              </span>
+                            </Badge>
+                          </div>
+                          <p className="text-gray-600 mb-1">
+                            Order Date: {order.date}
                           </p>
-                        )}
-                      </div>
-                      <div className="text-right">
-                        <p className="text-2xl font-bold mb-2">
-                          ₹{order.total}
-                        </p>
-                        <div className="space-y-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full bg-transparent"
-                          >
-                            <Eye className="w-4 h-4 mr-1" />
-                            View Details
-                          </Button>
-                          {order.status === "delivered" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full bg-transparent"
-                            >
-                              <Star className="w-4 h-4 mr-1" />
-                              Rate & Review
-                            </Button>
-                          )}
-                          {order.status === "shipped" && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="w-full bg-transparent"
-                            >
-                              <Truck className="w-4 h-4 mr-1" />
-                              Track Order
-                            </Button>
+                          <p className="text-gray-600 mb-2">
+                            {order.items} items
+                          </p>
+                          {order.trackingId && (
+                            <p className="text-sm text-blue-600">
+                              Tracking ID: {order.trackingId}
+                            </p>
                           )}
                         </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold mb-2">
+                            ₹{order.total}
+                          </p>
+                          <div className="space-y-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="w-full bg-transparent"
+                            >
+                              <Eye className="w-4 h-4 mr-1" />
+                              View Details
+                            </Button>
+                            {order.status === "delivered" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full bg-transparent"
+                              >
+                                <Star className="w-4 h-4 mr-1" />
+                                Rate & Review
+                              </Button>
+                            )}
+                            {order.status === "shipped" && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full bg-transparent"
+                              >
+                                <Truck className="w-4 h-4 mr-1" />
+                                Track Order
+                              </Button>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Package className="w-16 h-16 mx-auto text-gray-400 mb-4" />
+                <p className="text-gray-500 mb-4">No orders yet</p>
+                <Button
+                  onClick={() => (window.location.href = "/")}
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  Start Shopping
+                </Button>
+              </div>
+            )}
           </div>
         );
+
       case "wishlist":
         return (
           <div className="space-y-6">
@@ -623,7 +438,7 @@ export default function UserDashboard() {
                     <CardContent className="p-4">
                       <div className="flex gap-4">
                         <img
-                          src={item.image}
+                          src={item.image || "/placeholder.svg"}
                           alt={item.name}
                           className="w-24 h-24 object-cover rounded-lg"
                         />
@@ -652,11 +467,13 @@ export default function UserDashboard() {
               </div>
             ) : (
               <div className="text-center py-12">
+                <Heart className="w-16 h-16 mx-auto text-gray-400 mb-4" />
                 <p className="text-gray-500">Your wishlist is empty.</p>
               </div>
             )}
           </div>
         );
+
       case "addresses":
         return (
           <div className="space-y-6">
@@ -665,7 +482,7 @@ export default function UserDashboard() {
               <Button
                 className="bg-orange-500 hover:bg-orange-600"
                 onClick={() => {
-                  setEditingAddress(null); // Clear any address being edited
+                  setEditingAddress(null);
                   setShowAddressModal(true);
                 }}
               >
@@ -695,7 +512,10 @@ export default function UserDashboard() {
                       <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => handleEditAddressClick(address)} // Pass the address to edit
+                        onClick={() => {
+                          setEditingAddress(address);
+                          setShowAddressModal(true);
+                        }}
                       >
                         <Edit className="w-4 h-4" />
                       </Button>
@@ -742,12 +562,11 @@ export default function UserDashboard() {
             </div>
           </div>
         );
+
       case "wallet":
         return (
           <div className="space-y-6">
             <h2 className="text-2xl font-bold">Petpalace Points</h2>
-
-            {/* Loyalty Points Card */}
             <Card className="bg-gradient-to-r from-orange-500 to-orange-600 text-white">
               <CardContent className="p-6">
                 <div className="flex items-center gap-4">
@@ -766,79 +585,12 @@ export default function UserDashboard() {
                 </Button>
               </CardContent>
             </Card>
-
-            {/* Points History */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Points History</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {[
-                    {
-                      date: "2024-01-15",
-                      points: 250,
-                      type: "earned",
-                      desc: "Order #ORD001",
-                    },
-                    {
-                      date: "2024-01-10",
-                      points: 500,
-                      type: "redeemed",
-                      desc: "Discount on Order #ORD002",
-                    },
-                    {
-                      date: "2024-01-05",
-                      points: 100,
-                      type: "earned",
-                      desc: "Product Review",
-                    },
-                  ].map((item, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg"
-                    >
-                      <div
-                        className={`w-10 h-10 rounded-lg flex items-center justify-center ${
-                          item.type === "earned" ? "bg-green-100" : "bg-red-100"
-                        }`}
-                      >
-                        <Coins
-                          className={`w-5 h-5 ${
-                            item.type === "earned"
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium">{item.desc}</p>
-                        <p className="text-sm text-gray-600">{item.date}</p>
-                      </div>
-                      <div className="text-right">
-                        <p
-                          className={`font-bold ${
-                            item.type === "earned"
-                              ? "text-green-600"
-                              : "text-red-600"
-                          }`}
-                        >
-                          {item.type === "earned" ? "+" : "-"}
-                          {item.points} pts
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
           </div>
         );
 
       case "profile":
         return (
           <div className="space-y-6">
-            {/* Contact Info Section */}
             <Card>
               <CardContent className="p-6">
                 <h2 className="text-xl font-bold mb-4">Contact Information</h2>
@@ -856,7 +608,6 @@ export default function UserDashboard() {
                 </div>
               </CardContent>
             </Card>
-            {/* Address Section */}
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center justify-between mb-4">
@@ -873,11 +624,11 @@ export default function UserDashboard() {
             </Card>
           </div>
         );
+
       case "contact":
         return (
           <div className="bg-white rounded-xl shadow-md p-6 md:p-10">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              {/* Left Column – Contact Info */}
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold">Contact Information</h2>
                 <p className="text-gray-600">
@@ -885,7 +636,6 @@ export default function UserDashboard() {
                   answer some of your common queries. In case you still haven't
                   found your answer, here's how you can contact us:
                 </p>
-
                 <div className="space-y-2 text-sm text-gray-800">
                   <p>
                     <strong>Call us at:</strong> 011-40845122
@@ -904,8 +654,6 @@ export default function UserDashboard() {
                   </p>
                 </div>
               </div>
-
-              {/* Right Column – Contact Form */}
               <div className="space-y-4">
                 <h2 className="text-2xl font-bold">Send us a Message</h2>
                 <form className="space-y-4">
@@ -931,7 +679,6 @@ export default function UserDashboard() {
                       />
                     </div>
                   </div>
-
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -954,7 +701,6 @@ export default function UserDashboard() {
                       />
                     </div>
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Subject
@@ -965,7 +711,6 @@ export default function UserDashboard() {
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
                     />
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Message
@@ -976,7 +721,6 @@ export default function UserDashboard() {
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-orange-500"
                     ></textarea>
                   </div>
-
                   <div className="text-right">
                     <Button
                       type="submit"
@@ -996,23 +740,12 @@ export default function UserDashboard() {
     }
   };
 
-  const handleEditAddressClick = (address: Address) => {
-    setEditingAddress(address); // Set the address to be edited
-    setShowAddressModal(true);
-  };
-
-  const handleAddressModalClose = () => {
-    setShowAddressModal(false);
-    setEditingAddress(null); // Clear editing address on close
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="container mx-auto px-4 py-8">
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Sidebar */}
             <div className="lg:col-span-1">
               <Card className="sticky top-4">
                 <CardContent className="p-6">
@@ -1020,8 +753,7 @@ export default function UserDashboard() {
                     <Avatar className="w-12 h-12">
                       <AvatarImage src={user.avatar || "/placeholder.svg"} />
                       <AvatarFallback className="bg-orange-100 text-orange-600 flex items-center justify-center">
-                        {/* Assuming PawPrint is imported */}
-                        {/* <PawPrint className="w-5 h-5" /> */}
+                        {user.name?.[0] || "U"}
                       </AvatarFallback>
                     </Avatar>
                     <div>
@@ -1067,16 +799,18 @@ export default function UserDashboard() {
                 </CardContent>
               </Card>
             </div>
-            {/* Main Content */}
             <div className="lg:col-span-3">{renderContent()}</div>
           </div>
         </div>
       </div>
       <AddressModal
         isOpen={showAddressModal}
-        onClose={handleAddressModalClose}
+        onClose={() => {
+          setShowAddressModal(false);
+          setEditingAddress(null);
+        }}
         onSave={handleAddressSave}
-        initialAddress={editingAddress} // Pass the address to be edited
+        initialAddress={editingAddress}
       />
       <Footer />
     </div>

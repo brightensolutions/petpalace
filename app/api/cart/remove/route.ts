@@ -1,43 +1,40 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
 import UserCart from "@/lib/models/UserCart";
-import { getUserId } from "@/lib/services/cart-service";
 
-export async function DELETE(req: NextRequest) {
+export async function DELETE(req: Request) {
   try {
+    const body = await req.json();
+    const { userId, productId, variantId, packId } = body || {};
+
+    if (!userId || !productId) {
+      return NextResponse.json(
+        { success: false, message: "Missing userId or productId" },
+        { status: 400 }
+      );
+    }
+
     await dbConnect();
-
-    const userId = getUserId();
-
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const { productId, variantId, packId } = await req.json();
-
     const cart = await UserCart.findOne({ userId });
+    if (!cart) return NextResponse.json({ success: true, items: [] });
 
-    if (!cart) {
-      return NextResponse.json({ error: "Cart not found" }, { status: 404 });
-    }
-
-    // Remove the item
-    cart.items = cart.items.filter(
-      (item: any) =>
-        !(
-          item.productId === productId &&
-          item.variantId === variantId &&
-          item.packId === packId
-        )
+    const idx = cart.items.findIndex(
+      (i: any) =>
+        i.productId === productId &&
+        (i.variantId || null) === (variantId || null) &&
+        (i.packId || null) === (packId || null)
     );
 
-    await cart.save();
+    if (idx > -1) {
+      cart.items.splice(idx, 1);
+      await cart.save();
+    }
 
-    return NextResponse.json({ items: cart.items });
-  } catch (error) {
-    console.error("Error removing from cart:", error);
+    return NextResponse.json({ success: true, items: cart.items });
+  } catch (err) {
+    console.error("[v0] DELETE /api/cart/remove error:", err);
     return NextResponse.json(
-      { error: "Failed to remove item" },
+      { success: false, message: "Failed to remove item" },
       { status: 500 }
     );
   }

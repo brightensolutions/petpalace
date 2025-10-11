@@ -1,53 +1,70 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
 import UserCart from "@/lib/models/UserCart";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
+    const body = await req.json();
+    const {
+      userId,
+      productId,
+      variantId,
+      packId,
+      quantity = 1,
+      price,
+      name,
+      image,
+      brand,
+      variantLabel,
+      sku,
+      foodType,
+    } = body || {};
+
+    if (!userId || !productId || !name || typeof price !== "number") {
+      return NextResponse.json(
+        { success: false, message: "Missing required fields" },
+        { status: 400 }
+      );
+    }
+
     await dbConnect();
 
-    const body = await req.json();
-    const { userId, ...item } = body;
+    const cart =
+      (await UserCart.findOne({ userId })) ||
+      (await UserCart.create({ userId, items: [] }));
 
-    console.log("[v0] Cart add API - userId:", userId);
-    console.log("[v0] Cart add API - item:", item);
-
-    if (!userId) {
-      return NextResponse.json({ error: "User ID required" }, { status: 400 });
-    }
-
-    let cart = await UserCart.findOne({ userId });
-
-    if (!cart) {
-      console.log("[v0] Creating new cart for user:", userId);
-      cart = new UserCart({ userId, items: [] });
-    }
-
-    const existingItemIndex = cart.items.findIndex(
-      (cartItem: any) =>
-        cartItem.productId === item.productId &&
-        cartItem.variantId === item.variantId &&
-        cartItem.packId === item.packId
+    const idx = cart.items.findIndex(
+      (i: any) =>
+        i.productId === productId &&
+        (i.variantId || null) === (variantId || null) &&
+        (i.packId || null) === (packId || null)
     );
 
-    if (existingItemIndex !== -1) {
-      // Update quantity if item exists
-      cart.items[existingItemIndex].quantity += item.quantity;
-      console.log("[v0] Updated existing item quantity");
+    if (idx > -1) {
+      cart.items[idx].quantity += quantity;
     } else {
-      // Add new item
-      cart.items.push(item);
-      console.log("[v0] Added new item to cart");
+      cart.items.push({
+        productId,
+        variantId,
+        packId,
+        quantity,
+        price,
+        name,
+        image,
+        brand,
+        variantLabel,
+        sku,
+        foodType,
+      });
     }
 
     await cart.save();
-    console.log("[v0] Cart saved to database");
 
     return NextResponse.json({ success: true, items: cart.items });
-  } catch (error) {
-    console.error("[v0] Error adding to cart:", error);
+  } catch (err) {
+    console.error("[v0] POST /api/cart/add error:", err);
     return NextResponse.json(
-      { error: "Failed to add item to cart" },
+      { success: false, message: "Failed to add to cart" },
       { status: 500 }
     );
   }

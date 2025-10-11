@@ -113,35 +113,31 @@ export default function CheckoutPage() {
 
     const loadCheckoutData = async () => {
       try {
-        const userId = getUserId();
-        console.log("[v0] Loading checkout data for user:", userId);
+        console.log("[v0] Loading checkout data for authenticated user");
 
-        if (!userId) {
-          router.push("/sign-in?redirect=/checkout");
-          return;
-        }
-
-        const userResponse = await fetch(`/api/users/${userId}`);
+        const userResponse = await fetch("/api/users/me");
         const userData = await userResponse.json();
 
-        if (userData.success) {
-          setUser(userData.data);
-          setEmail(userData.data.email || "");
-          setPhone(userData.data.number || "");
+        console.log("[v0] User data response:", userData);
 
-          if (userData.data.addresses && userData.data.addresses.length > 0) {
-            const defaultAddr = userData.data.addresses.find(
+        if (userData.authenticated && userData.user) {
+          setUser(userData.user);
+          setEmail(userData.user.email || "");
+          setPhone(userData.user.number || "");
+
+          if (userData.user.addresses && userData.user.addresses.length > 0) {
+            const defaultAddr = userData.user.addresses.find(
               (a: Address) => a.isDefault
             );
             setSelectedAddress(
-              defaultAddr?._id || userData.data.addresses[0]._id
+              defaultAddr?._id || userData.user.addresses[0]._id
             );
           } else {
             setShowAddressForm(true);
           }
 
-          if (userData.data.pets && userData.data.pets.length > 0) {
-            const existingPets = userData.data.pets.map((p: any) => ({
+          if (userData.user.pets && userData.user.pets.length > 0) {
+            const existingPets = userData.user.pets.map((p: any) => ({
               name: p.name,
               type: p.type,
               breed: p.breed || "",
@@ -152,24 +148,104 @@ export default function CheckoutPage() {
             }));
             setPets(existingPets);
           }
+        } else {
+          console.error("[v0] User not authenticated or data missing");
+          toast.error("Failed to load user data. Please login again.");
+          router.push("/sign-in?redirect=/checkout");
+          return;
         }
 
-        const cart = getCart();
-        const mappedItems = cart.map((item, index) => ({
-          id: `${item.productId}-${index}`,
-          name: item.name,
-          price: item.price,
-          originalPrice: undefined,
-          image: item.image || "/placeholder.svg",
-          quantity: item.quantity,
-          category: item.brand || "Product",
-          variant: item.variantLabel,
-          variantLabel: item.variantLabel,
-          foodType: item.foodType,
-        }));
-        setCartItems(mappedItems);
+        const userId = getUserId();
+        console.log("[v0] Loading cart for userId:", userId);
+
+        if (userId && !userId.startsWith("guest_")) {
+          // Authenticated user: load from database
+          try {
+            const cartResponse = await fetch(
+              `/api/cart?userId=${encodeURIComponent(userId)}`,
+              {
+                cache: "no-store",
+              }
+            );
+            const cartData = await cartResponse.json();
+
+            console.log("[v0] Cart data from database:", cartData);
+
+            if (
+              cartData.success &&
+              Array.isArray(cartData.items) &&
+              cartData.items.length > 0
+            ) {
+              const mappedItems = cartData.items.map(
+                (item: any, index: number) => ({
+                  id: `${item.productId}-${item.variantId || ""}-${
+                    item.packId || ""
+                  }-${index}`,
+                  name: item.name || item.productName || "Product",
+                  price: item.price || 0,
+                  originalPrice: item.originalPrice,
+                  image: item.image || item.productImage || "/placeholder.svg",
+                  quantity: item.quantity || 1,
+                  category: item.brand || item.category || "Product",
+                  variant: item.variantLabel || item.variant,
+                  variantLabel: item.variantLabel || item.variant,
+                  foodType: item.foodType,
+                })
+              );
+              setCartItems(mappedItems);
+              console.log(
+                "[v0] Loaded cart items from database:",
+                mappedItems.length
+              );
+            } else {
+              console.log("[v0] No items in database cart");
+              setCartItems([]);
+            }
+          } catch (error) {
+            console.error("[v0] Error loading cart from database:", error);
+            // Fallback to cookies if database fails
+            const cookieCart = getCart();
+            const mappedItems = cookieCart.map((item, index) => ({
+              id: `${item.productId}-${index}`,
+              name: item.name,
+              price: item.price,
+              originalPrice: undefined,
+              image: item.image || "/placeholder.svg",
+              quantity: item.quantity,
+              category: item.brand || "Product",
+              variant: item.variantLabel,
+              variantLabel: item.variantLabel,
+              foodType: item.foodType,
+            }));
+            setCartItems(mappedItems);
+            console.log(
+              "[v0] Loaded cart items from cookies (fallback):",
+              mappedItems.length
+            );
+          }
+        } else {
+          // Guest user: load from cookies
+          const cart = getCart();
+          const mappedItems = cart.map((item, index) => ({
+            id: `${item.productId}-${index}`,
+            name: item.name,
+            price: item.price,
+            originalPrice: undefined,
+            image: item.image || "/placeholder.svg",
+            quantity: item.quantity,
+            category: item.brand || "Product",
+            variant: item.variantLabel,
+            variantLabel: item.variantLabel,
+            foodType: item.foodType,
+          }));
+          setCartItems(mappedItems);
+          console.log(
+            "[v0] Loaded cart items from cookies:",
+            mappedItems.length
+          );
+        }
       } catch (error) {
-        console.error("Error loading checkout data:", error);
+        console.error("[v0] Error loading checkout data:", error);
         toast.error("Failed to load checkout data");
       } finally {
         setLoading(false);
@@ -318,25 +394,59 @@ export default function CheckoutPage() {
         couponCode: isPromoApplied ? promoCode : undefined,
       };
 
+      console.log("[v0] Placing order with data:", orderData);
+
       const response = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
       });
 
+      console.log("[v0] Order API response status:", response.status);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("[v0] Order API error response:", errorText);
+        throw new Error(`Failed to place order: ${response.status}`);
+      }
+
       const data = await response.json();
+      console.log("[v0] Order API response data:", data);
 
       if (data.success) {
         toast.success("Order placed successfully!");
-        // Clear cart
-        localStorage.removeItem("cart");
-        router.push(`/orders/${data.data._id}`);
+
+        try {
+          // Clear cart from database for authenticated users
+          if (userId && !userId.startsWith("guest_")) {
+            await fetch("/api/cart/clear", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ userId }),
+            });
+          }
+          // Clear cart from cookies and localStorage
+          document.cookie =
+            "cart=; path=/; expires=Thu, 01 Jan 1970 00:00:01 GMT";
+          localStorage.removeItem("cart");
+          localStorage.removeItem("cartCount");
+          // Dispatch cart updated event to update header
+          window.dispatchEvent(
+            new CustomEvent("cartUpdated", { detail: { count: 0 } })
+          );
+        } catch (error) {
+          console.error("[v0] Error clearing cart:", error);
+        }
+
+        router.push(
+          `/order-success?orderId=${data.data._id}&orderNumber=${data.data.orderNumber}`
+        );
       } else {
         toast.error(data.message || "Failed to place order");
       }
-    } catch (error) {
-      console.error("Error placing order:", error);
-      toast.error("Failed to place order");
+    } catch (error: any) {
+      console.error("[v0] Error placing order:", error);
+      toast.error(error.message || "Failed to place order. Please try again.");
     } finally {
       setPlacing(false);
     }

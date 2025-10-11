@@ -1,36 +1,53 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
 import UserCart from "@/lib/models/UserCart";
 
-export async function GET(req: NextRequest) {
+export async function PUT(req: Request) {
   try {
-    await dbConnect();
+    const body = await req.json();
+    const { userId, productId, variantId, packId, quantity, ...rest } = body;
 
-    const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-
-    if (!userId) {
+    if (!userId || !productId) {
       return NextResponse.json(
-        { success: false, error: "User ID required" },
+        { success: false, message: "Missing userId or productId" },
         { status: 400 }
       );
     }
 
-    console.log("[v0] Fetching cart for user:", userId);
-
+    await dbConnect();
     const cart = await UserCart.findOne({ userId });
-
     if (!cart) {
-      console.log("[v0] No cart found, returning empty array");
       return NextResponse.json({ success: true, items: [] });
     }
 
-    console.log("[v0] Cart found with", cart.items.length, "items");
+    const idx = cart.items.findIndex(
+      (i: any) =>
+        i.productId === productId &&
+        (i.variantId || null) === (variantId || null) &&
+        (i.packId || null) === (packId || null)
+    );
+
+    if (idx === -1) {
+      return NextResponse.json({ success: true, items: cart.items });
+    }
+
+    if (typeof quantity === "number") {
+      if (quantity <= 0) {
+        cart.items.splice(idx, 1);
+      } else {
+        cart.items[idx].quantity = quantity;
+      }
+    }
+
+    // Optionally allow updating other fields (price/name etc.) if present
+    Object.assign(cart.items[idx] || {}, rest);
+
+    await cart.save();
     return NextResponse.json({ success: true, items: cart.items });
-  } catch (error) {
-    console.error("[v0] Error getting cart:", error);
+  } catch (err) {
+    console.error("[v0] PUT /api/cart/update error:", err);
     return NextResponse.json(
-      { success: false, error: "Failed to get cart" },
+      { success: false, message: "Failed to update cart item" },
       { status: 500 }
     );
   }

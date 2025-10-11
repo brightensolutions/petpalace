@@ -1,50 +1,78 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
-import UserCart from "@/lib/models/UserCart";
-import { getUserId } from "@/lib/services/cart-service";
+import UserCart, { type ICartItem } from "@/lib/models/UserCart";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   try {
+    const body = await req.json();
+    const { userId, items } = body || {};
+
+    if (!userId || !Array.isArray(items)) {
+      return NextResponse.json(
+        { success: false, message: "Missing userId or items" },
+        { status: 400 }
+      );
+    }
+
     await dbConnect();
 
-    const userId = getUserId();
+    const cart =
+      (await UserCart.findOne({ userId })) ||
+      (await UserCart.create({ userId, items: [] }));
 
-    if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    // Merge by productId+variantId+packId
+    const keyOf = (i: ICartItem) =>
+      `${i.productId}::${i.variantId || ""}::${i.packId || ""}`;
+
+    const map = new Map<string, ICartItem>();
+    const existingItems: ICartItem[] = (cart.items as any[]).map((it: any) =>
+      typeof it?.toObject === "function" ? it.toObject() : it
+    );
+    for (const it of existingItems) {
+      map.set(keyOf(it), it);
     }
 
-    const { items } = await req.json();
-
-    // Find or create user cart
-    let cart = await UserCart.findOne({ userId });
-
-    if (!cart) {
-      cart = new UserCart({ userId, items: [] });
-    }
-
-    // Merge local cart items with server cart
-    for (const item of items) {
-      const existingItemIndex = cart.items.findIndex(
-        (cartItem: any) =>
-          cartItem.productId === item.productId &&
-          cartItem.variantId === item.variantId &&
-          cartItem.packId === item.packId
-      );
-
-      if (existingItemIndex !== -1) {
-        // Update quantity if item exists
-        cart.items[existingItemIndex].quantity += item.quantity;
+    // incoming
+    for (const it of items as ICartItem[]) {
+      const k = keyOf(it);
+      const existing = map.get(k);
+      if (existing) {
+        existing.quantity += it.quantity || 1;
+        // Keep earliest non-zero price/name/image etc.
+        existing.price = existing.price || it.price;
+        existing.name = existing.name || it.name;
+        existing.image = existing.image || it.image;
+        existing.brand = existing.brand || it.brand;
+        existing.variantLabel = existing.variantLabel || it.variantLabel;
+        existing.sku = existing.sku || it.sku;
+        existing.foodType = existing.foodType || it.foodType;
+        map.set(k, existing);
       } else {
-        // Add new item
-        cart.items.push(item);
+        map.set(k, {
+          productId: it.productId,
+          variantId: it.variantId,
+          packId: it.packId,
+          quantity: Math.max(1, it.quantity || 1),
+          price: it.price,
+          name: it.name,
+          image: it.image,
+          brand: it.brand,
+          variantLabel: it.variantLabel,
+          sku: it.sku,
+          foodType: it.foodType,
+        });
       }
     }
 
+    cart.items = Array.from(map.values());
     await cart.save();
 
-    return NextResponse.json({ items: cart.items });
-  } catch (error) {
-    console.error("Error syncing cart:", error);
-    return NextResponse.json({ error: "Failed to sync cart" }, { status: 500 });
+    return NextResponse.json({ success: true, items: cart.items });
+  } catch (err) {
+    console.error("[v0] POST /api/cart/sync error:", err);
+    return NextResponse.json(
+      { success: false, message: "Failed to sync cart" },
+      { status: 500 }
+    );
   }
 }

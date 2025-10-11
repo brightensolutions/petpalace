@@ -1,27 +1,29 @@
 import { type NextRequest, NextResponse } from "next/server";
 import dbConnect from "@/lib/db/db";
 import UserCart from "@/lib/models/UserCart";
-import { getUserId } from "@/lib/services/cart-service";
 
 export async function GET(req: NextRequest) {
   try {
-    await dbConnect();
-
-    const userId = getUserId();
-
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId") || null;
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json(
+        { success: false, message: "Missing userId" },
+        { status: 400 }
+      );
     }
 
+    await dbConnect();
     const cart = await UserCart.findOne({ userId });
-
-    if (!cart) {
-      return NextResponse.json({ items: [] });
-    }
-
-    return NextResponse.json({ items: cart.items });
-  } catch (error) {
-    console.error("Error getting cart:", error);
-    return NextResponse.json({ error: "Failed to get cart" }, { status: 500 });
+    return NextResponse.json({
+      success: true,
+      items: cart?.items || [],
+    });
+  } catch (err) {
+    console.error("[v0] GET /api/cart error:", err);
+    return NextResponse.json(
+      { success: false, message: "Failed to load cart" },
+      { status: 500 }
+    );
   }
 }
