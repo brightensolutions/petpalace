@@ -230,11 +230,11 @@ function FilterContent({
 }
 
 export default function SearchClient({
-  products,
-  brands,
-  allParentCategories,
-  productCategories,
-  searchQuery,
+  products = [], // Add default empty array
+  brands = [], // Add default empty array
+  allParentCategories = [], // Add default empty array
+  productCategories = [], // Add default empty array
+  searchQuery = "", // Add default empty string
 }: any) {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [selectedBrands, setSelectedBrands] = useState<string[]>([]);
@@ -260,6 +260,11 @@ export default function SearchClient({
   ];
 
   const filteredAndSortedProducts = useMemo(() => {
+    if (!Array.isArray(products)) {
+      console.error("[v0] SearchClient: products is not an array", products);
+      return [];
+    }
+
     let filtered = [...products];
 
     // Filter by categories
@@ -669,7 +674,7 @@ export default function SearchClient({
                       </Link>
 
                       {p.variants && p.variants.length > 0 && (
-                        <div className="space-y-2 mb-3">
+                        <div className="space-y-1.5 mb-3">
                           <div className="grid grid-cols-3 gap-1">
                             {p.variants.slice(0, 9).map((variant: any) => {
                               const isSelected =
@@ -690,7 +695,7 @@ export default function SearchClient({
                                       [p._id]: 0,
                                     }));
                                   }}
-                                  className={`relative text-[9px] sm:text-[10px] px-1 py-1.5 rounded transition-all font-bold ${
+                                  className={`relative text-[8px] sm:text-[9px] px-0.5 py-1 rounded transition-all font-bold ${
                                     isSelected
                                       ? "bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-md"
                                       : "bg-white text-gray-700 border border-gray-300 hover:border-blue-500"
@@ -701,7 +706,7 @@ export default function SearchClient({
                                   </div>
                                   {variantDiscount > 0 && (
                                     <div
-                                      className={`text-[8px] mt-0.5 ${
+                                      className={`text-[7px] mt-0.5 ${
                                         isSelected
                                           ? "text-white"
                                           : "text-green-600"
@@ -733,7 +738,7 @@ export default function SearchClient({
                                           [p._id]: packIndex,
                                         }));
                                       }}
-                                      className={`relative text-[9px] sm:text-[10px] px-1 py-1.5 rounded transition-all font-bold ${
+                                      className={`relative text-[8px] sm:text-[9px] px-0.5 py-1 rounded transition-all font-bold ${
                                         isPackSelected
                                           ? "bg-gradient-to-r from-green-500 to-green-600 text-white shadow-md"
                                           : "bg-white text-gray-700 border border-gray-300 hover:border-green-500"
@@ -744,7 +749,7 @@ export default function SearchClient({
                                       </div>
                                       {packDiscount > 0 && (
                                         <div
-                                          className={`text-[8px] mt-0.5 ${
+                                          className={`text-[7px] mt-0.5 ${
                                             isPackSelected
                                               ? "text-white"
                                               : "text-green-600"

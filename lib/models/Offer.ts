@@ -77,7 +77,7 @@ const OfferSchema = new Schema<IOffer>(
 );
 
 // Index for faster coupon code lookups
-OfferSchema.index({ couponCode: 1 });
+// OfferSchema.index({ couponCode: 1 });
 OfferSchema.index({ status: 1 });
 OfferSchema.index({ expiryDate: 1 });
 
