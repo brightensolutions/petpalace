@@ -1,16 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Heart, Search, User, Package } from "lucide-react";
-import Image from "next/image";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Search, Heart, User, Package } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -19,9 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import Image from "next/image";
 
 interface WishlistItem {
   wishlistId: string;
@@ -36,7 +27,6 @@ interface WishlistItem {
 }
 
 export default function AdminWishlistPage() {
-  const router = useRouter();
   const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -60,7 +50,6 @@ export default function AdminWishlistPage() {
       setTotal(data.pagination?.total || 0);
     } catch (error) {
       console.error("Error fetching wishlist items:", error);
-      toast.error("Error loading wishlist data.");
     } finally {
       setLoading(false);
     }
@@ -72,139 +61,134 @@ export default function AdminWishlistPage() {
   };
 
   return (
-    <Card className="mt-6">
-      <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4">
-        <div className="grid gap-1 pt-6">
-          <CardTitle className="text-2xl font-bold text-blue-700 flex items-center gap-2">
-            <Heart className="h-6 w-6 text-red-500" />
-            Wishlists
-          </CardTitle>
-          <CardDescription className="text-gray-500">
-            View all wishlist items across users ({total} items)
-          </CardDescription>
+    <div className="container mx-auto py-6 px-4">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Wishlist Management
+          </h1>
+          <p className="text-gray-600 mt-1">
+            View all wishlist items across all users ({total} items)
+          </p>
         </div>
+        <Heart className="h-8 w-8 text-red-500" />
+      </div>
 
-        {/* Search bar */}
-        <div className="relative w-full sm:w-72">
+      {/* Search */}
+      <div className="mb-6">
+        <div className="relative max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
           <Input
-            placeholder="Search by user or product..."
+            placeholder="Search by user email or product name..."
             value={search}
             onChange={(e) => handleSearch(e.target.value)}
-            className="pl-9"
+            className="pl-10"
           />
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
+      {/* Wishlist Items Table */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Product</TableHead>
+              <TableHead>User</TableHead>
+              <TableHead>Price</TableHead>
+              <TableHead>Added</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
               <TableRow>
-                <TableHead>Product</TableHead>
-                <TableHead>User</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Added On</TableHead>
+                <TableCell colSpan={4} className="text-center py-8">
+                  Loading wishlist items...
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="text-center text-gray-500 py-6"
-                  >
-                    Loading wishlist items...
-                  </TableCell>
-                </TableRow>
-              ) : wishlistItems.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={4}
-                    className="text-center text-gray-500 py-6"
-                  >
-                    <Heart className="h-10 w-10 text-gray-300 mx-auto mb-2" />
-                    No wishlist items found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                wishlistItems.map((item, index) => (
-                  <TableRow key={`${item.wishlistId}-${index}`}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        {item.productImage ? (
-                          <Image
-                            src={item.productImage}
-                            alt={item.productName}
-                            width={48}
-                            height={48}
-                            className="rounded object-cover"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
-                            <Package className="h-6 w-6 text-gray-400" />
-                          </div>
-                        )}
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {item.productName}
-                          </p>
+            ) : wishlistItems.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center py-8">
+                  <Heart className="h-12 w-12 text-gray-300 mx-auto mb-2" />
+                  <p className="text-gray-500">No wishlist items found</p>
+                </TableCell>
+              </TableRow>
+            ) : (
+              wishlistItems.map((item, index) => (
+                <TableRow key={`${item.wishlistId}-${index}`}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      {item.productImage ? (
+                        <Image
+                          src={item.productImage || "/placeholder.svg"}
+                          alt={item.productName}
+                          width={48}
+                          height={48}
+                          className="rounded object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gray-100 rounded flex items-center justify-center">
+                          <Package className="h-6 w-6 text-gray-400" />
                         </div>
+                      )}
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {item.productName}
+                        </p>
                       </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-gray-400" />
-                        <div>
-                          <p className="font-medium text-gray-900">
-                            {item.userName}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            {item.userEmail}
-                          </p>
-                        </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <User className="h-4 w-4 text-gray-400" />
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {item.userName}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          {item.userEmail}
+                        </p>
                       </div>
-                    </TableCell>
-                    <TableCell className="font-semibold text-gray-800">
-                      ₹{item.productPrice.toFixed(2)}
-                    </TableCell>
-                    <TableCell className="text-gray-600 text-sm">
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-semibold text-gray-900">
+                      ₹{(item.productPrice ?? 0).toFixed(2)}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-gray-500">
                       {new Date(item.addedAt).toLocaleDateString()}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex justify-between items-center mt-6">
-            <p className="text-sm text-gray-600">
-              Page {page} of {totalPages}
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page === 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={page === totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2 mt-6">
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-gray-600">
+            Page {page} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }

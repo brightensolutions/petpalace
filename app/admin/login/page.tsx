@@ -151,7 +151,7 @@ export default function AdminLoginPage() {
               </div>
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
+              {/* <div className="flex items-center space-x-2">
                 <Checkbox
                   id="remember"
                   checked={rememberMe}
@@ -166,8 +166,8 @@ export default function AdminLoginPage() {
                 >
                   Remember me
                 </Label>
-              </div>
-              <button
+              </div> */}
+              {/* <button
                 type="button"
                 className="text-sm text-orange-500 hover:text-orange-600 font-medium"
                 onClick={() =>
@@ -178,7 +178,7 @@ export default function AdminLoginPage() {
                 }
               >
                 Forgot password?
-              </button>
+              </button> */}
             </div>
             <Button
               type="submit"
@@ -212,7 +212,7 @@ export default function AdminLoginPage() {
               dashboard. Monitor sales, update inventory, and ensure happy pets
               and owners.
             </p>
-            <div className="grid grid-cols-3 gap-4 max-w-xs mx-auto">
+            {/* <div className="grid grid-cols-3 gap-4 max-w-xs mx-auto">
               <div className="bg-white/10 p-4 rounded-lg backdrop-blur-sm">
                 <div className="text-2xl font-bold text-orange-100">500+</div>
                 <div className="text-xs text-white/70">Products</div>
@@ -225,7 +225,7 @@ export default function AdminLoginPage() {
                 <div className="text-2xl font-bold text-orange-100">99%</div>
                 <div className="text-xs text-white/70">Happy Pets</div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>

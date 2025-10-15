@@ -88,6 +88,8 @@ interface RelatedProduct {
   originalPrice: number;
   slug: string;
   brand: string;
+  rating?: number;
+  reviews?: number;
 }
 
 interface ProductClientProps {
@@ -375,7 +377,7 @@ export default function ProductClient({
         description: `${product.name} has been added to your wishlist`,
       });
     } else {
-      toast.info("Removed from Wishlist", {
+      toast.success("Removed from Wishlist", {
         description: `${product.name} has been removed from your wishlist`,
       });
     }
@@ -532,37 +534,25 @@ export default function ProductClient({
             {product.variantsByType &&
               Object.keys(product.variantsByType).length > 0 && (
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm sm:text-base">
-                    <span>
-                      {selectedVariantType === "weight" ? "⚖️" : "📏"}
-                    </span>{" "}
+                  <h3 className="font-bold text-gray-900 mb-3 flex items-center gap-2 text-sm sm:text-base">
                     {selectedVariantType === "weight" ? "Weight" : "Size"}{" "}
                     Options
                   </h3>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
                     {product.variantsByType[selectedVariantType]?.map(
                       (variant: any, index: number) => (
                         <button
                           key={index}
                           onClick={() => handleVariantChange(index)}
-                          className={`relative p-2 sm:p-3 rounded-xl border-2 text-left transition-colors ${
+                          className={`relative p-1.5 sm:p-2 rounded-lg border-2 text-left transition-colors ${
                             selectedVariant === index
                               ? "border-blue-500 bg-blue-50"
                               : "border-gray-200 hover:border-gray-300"
                           }`}
                         >
-                          <div className="font-medium text-gray-900 text-sm sm:text-base">
+                          <div className="font-medium text-gray-900 text-xs sm:text-sm">
                             {variant.label}
                           </div>
-                          {variant.stock > 0 ? (
-                            <div className="text-xs text-green-600 mt-1">
-                              In Stock
-                            </div>
-                          ) : (
-                            <div className="text-xs text-red-600 mt-1">
-                              Out of Stock
-                            </div>
-                          )}
                         </button>
                       )
                     )}
@@ -572,23 +562,23 @@ export default function ProductClient({
 
             <div>
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm sm:text-base">
-                <span>📦</span> Pack Options
+                Pack Options
               </h3>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-1.5 sm:gap-2">
                 {availablePacks.map((pack, index) => (
                   <button
                     key={index}
                     onClick={() => setSelectedPack(index)}
-                    className={`relative p-2 sm:p-3 rounded-xl border-2 text-left transition-colors ${
+                    className={`relative p-1.5 sm:p-2 rounded-lg border-2 text-left transition-colors ${
                       selectedPack === index
                         ? "border-blue-500 bg-blue-50"
                         : "border-gray-200 hover:border-gray-300"
                     }`}
                   >
-                    <div className="font-medium text-gray-900 text-sm sm:text-base">
+                    <div className="font-medium text-gray-900 text-xs sm:text-sm">
                       {pack.name}
                     </div>
-                    <Badge className="absolute top-2 right-2 bg-green-500 text-white text-xs">
+                    <Badge className="absolute top-1 right-1 bg-green-500 text-white text-[10px] px-1 py-0">
                       {pack.discount}
                     </Badge>
                   </button>
@@ -598,7 +588,7 @@ export default function ProductClient({
 
             <div>
               <h3 className="font-semibold text-gray-900 mb-3 flex items-center gap-2 text-sm sm:text-base">
-                <span>🎁</span> Offers
+                Offers
               </h3>
               <div className="space-y-2 sm:space-y-3">
                 {product.offers.map((offer, index) => (
@@ -981,46 +971,75 @@ export default function ProductClient({
             Handpicked for you
           </h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 sm:gap-4 lg:gap-6">
-            {relatedProducts.map((relatedProduct) => (
-              <Link
-                key={relatedProduct.id}
-                href={`/products/${relatedProduct.slug}`}
-                className="group"
-              >
-                <Card className="hover:shadow-lg transition-shadow duration-300 border-0">
-                  <CardContent className="p-0">
-                    <div className="relative bg-white rounded-t-xl overflow-hidden">
-                      <Image
-                        src={relatedProduct.image || "/placeholder.svg"}
-                        alt={relatedProduct.name}
-                        width={200}
-                        height={200}
-                        className="w-full h-32 sm:h-40 lg:h-48 object-contain group-hover:scale-105 transition-transform duration-300"
-                      />
-                    </div>
-                    <div className="p-3 sm:p-4 space-y-2">
-                      <p className="text-xs text-gray-500 uppercase tracking-wide">
-                        {relatedProduct.brand}
-                      </p>
-                      <h3 className="font-medium text-gray-900 text-xs sm:text-sm line-clamp-2 group-hover:text-blue-600 transition-colors min-h-[2.5rem]">
-                        {relatedProduct.name}
-                      </h3>
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-base sm:text-lg font-bold text-gray-900">
-                          ₹{relatedProduct.price}
-                        </span>
-                        {relatedProduct.originalPrice >
-                          relatedProduct.price && (
-                          <span className="text-xs sm:text-sm text-gray-400 line-through">
-                            ₹{relatedProduct.originalPrice}
-                          </span>
+            {relatedProducts.map((relatedProduct) => {
+              const discountPercent =
+                relatedProduct.originalPrice > relatedProduct.price
+                  ? Math.round(
+                      ((relatedProduct.originalPrice - relatedProduct.price) /
+                        relatedProduct.originalPrice) *
+                        100
+                    )
+                  : 0;
+
+              return (
+                <Link
+                  key={relatedProduct.id}
+                  href={`/products/${relatedProduct.slug}`}
+                  className="group"
+                >
+                  <Card className="hover:shadow-lg transition-shadow duration-300 border-0">
+                    <CardContent className="p-0">
+                      <div className="relative bg-white rounded-t-xl overflow-hidden">
+                        <Image
+                          src={relatedProduct.image || "/placeholder.svg"}
+                          alt={relatedProduct.name}
+                          width={200}
+                          height={200}
+                          className="w-full h-32 sm:h-40 lg:h-48 object-contain group-hover:scale-105 transition-transform duration-300"
+                        />
+                        {discountPercent > 0 && (
+                          <Badge className="absolute top-2 right-2 bg-red-500 text-white text-xs font-bold">
+                            {discountPercent}% OFF
+                          </Badge>
                         )}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </Link>
-            ))}
+                      <div className="p-3 sm:p-4 space-y-2">
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">
+                          {relatedProduct.brand}
+                        </p>
+                        <h3 className="font-medium text-gray-900 text-xs sm:text-sm line-clamp-2 group-hover:text-blue-600 transition-colors min-h-[2.5rem]">
+                          {relatedProduct.name}
+                        </h3>
+                        {relatedProduct.rating && relatedProduct.rating > 0 && (
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3 text-yellow-400 fill-current" />
+                            <span className="text-xs font-semibold text-gray-900">
+                              {relatedProduct.rating}
+                            </span>
+                            {relatedProduct.reviews && (
+                              <span className="text-xs text-gray-500">
+                                ({relatedProduct.reviews})
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-base sm:text-lg font-bold text-gray-900">
+                            ₹{relatedProduct.price}
+                          </span>
+                          {relatedProduct.originalPrice >
+                            relatedProduct.price && (
+                            <span className="text-xs sm:text-sm text-gray-400 line-through">
+                              ₹{relatedProduct.originalPrice}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </section>

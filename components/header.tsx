@@ -227,7 +227,7 @@ export function Header() {
             )}
 
             <Link
-              href="/wishlist"
+              href="/account"
               className="flex items-center gap-1 text-black hover:text-gray-700"
             >
               <Heart className="w-6 h-6" />

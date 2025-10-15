@@ -1,34 +1,89 @@
-// /app/api/users/wishlist/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import connectDb from "@/lib/db/db";
-import mongoose from "mongoose";
+import { NextResponse } from "next/server";
+import dbConnect from "@/lib/db/db";
 import Wishlist from "@/lib/models/Wishlist";
-import Product from "@/lib/models/Product"; // ✅ MUST import Product before populate
+import User from "@/lib/models/User";
+import Product from "@/lib/models/Product";
 
-export async function GET(req: NextRequest) {
+export async function GET(request: Request) {
   try {
-    console.log("[wishlist] Connecting to database...");
-    await connectDb();
-    console.log("[wishlist] Database connected");
+    await dbConnect();
 
-    // Replace this with your actual auth/session logic
-    const userId = "68b7d011461e5bd4e12ef825";
+    const { searchParams } = new URL(request.url);
+    const page = Number.parseInt(searchParams.get("page") || "1");
+    const limit = Number.parseInt(searchParams.get("limit") || "10");
+    const search = searchParams.get("search") || "";
 
-    // Fetch wishlist items for the user and populate product details
-    const wishlist = await Wishlist.find({ userId })
-      .populate({
-        path: "productId", // matches field in Wishlist schema
-        model: "Product", // matches mongoose.model name
-        select: "name slug main_image base_price mrp category",
-      })
+    const skip = (page - 1) * limit;
+
+    let query: any = {};
+
+    if (search) {
+      const users = await User.find({
+        $or: [
+          { email: { $regex: search, $options: "i" } },
+          { name: { $regex: search, $options: "i" } },
+        ],
+      }).select("_id");
+
+      const products = await Product.find({
+        name: { $regex: search, $options: "i" },
+      }).select("_id");
+
+      query = {
+        $or: [
+          { userId: { $in: users.map((u) => String(u._id)) } },
+          { productId: { $in: products.map((p) => p._id) } },
+        ],
+      };
+    }
+
+    const wishlists = await Wishlist.find(query)
+      .populate("productId", "name main_image base_price mrp")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
 
-    console.log("[wishlist] Fetched items:", wishlist.length);
-    return NextResponse.json({ wishlist });
-  } catch (error: any) {
-    console.error("[wishlist] Error:", error.message);
+    const total = await Wishlist.countDocuments(query);
+
+    const userIds = [
+      ...new Set(wishlists.map((w: any) => w.userId).filter(Boolean)),
+    ];
+    const users = await User.find({ _id: { $in: userIds } })
+      .select("_id name email")
+      .lean();
+    const userMap = new Map(users.map((user) => [String(user._id), user]));
+
+    const wishlistItems = wishlists.map((wishlist: any) => {
+      const user = wishlist.userId ? userMap.get(wishlist.userId) : null;
+      return {
+        wishlistId: String(wishlist._id),
+        userId: wishlist.userId || "Guest",
+        sessionId: wishlist.sessionId || null,
+        userName: user?.name || "Guest User",
+        userEmail: user?.email || "N/A",
+        productId: String(wishlist.productId._id),
+        productName: wishlist.productId.name,
+        productImage: wishlist.productId.main_image,
+        productPrice:
+          wishlist.productId.base_price || wishlist.productId.mrp || 0,
+        addedAt: wishlist.createdAt,
+      };
+    });
+
+    return NextResponse.json({
+      items: wishlistItems,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    });
+  } catch (error) {
+    console.error("Error fetching wishlists:", error);
     return NextResponse.json(
-      { error: "Unable to fetch wishlist", details: error.message },
+      { error: "Failed to fetch wishlists" },
       { status: 500 }
     );
   }

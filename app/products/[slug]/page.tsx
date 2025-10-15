@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import dbConnect from "@/lib/db/db";
 import Product from "@/lib/models/Product";
 import ProductVariant from "@/lib/models/ProductVariant";
+import OfferModel from "@/lib/models/Offer";
 
 interface ProductPageProps {
   params: Promise<{
@@ -18,13 +19,6 @@ interface Pack {
   discount: string;
   originalPrice: number;
   salePrice: number;
-}
-
-interface Offer {
-  title: string;
-  code: string;
-  bgColor: string;
-  textColor: string;
 }
 
 interface Feature {
@@ -53,7 +47,7 @@ interface ProductData {
   images: string[];
   packs: Pack[];
   variantsByType: { [key: string]: any[] };
-  offers: Offer[];
+  offers: any[];
   features: Feature[];
   customerReviews: CustomerReview[];
 }
@@ -90,6 +84,46 @@ async function getProduct(slug: string) {
   } catch (error) {
     console.error("Error fetching product:", error);
     return null;
+  }
+}
+
+async function getProductOffers(productId: string) {
+  try {
+    await dbConnect();
+
+    const now = new Date();
+
+    // Fetch active offers that are either global or applicable to this product
+    const offers = await OfferModel.find({
+      status: "active",
+      $or: [
+        { applicableProducts: { $size: 0 } }, // Global offers (empty array)
+        { applicableProducts: { $exists: false } }, // Global offers (field doesn't exist)
+        { applicableProducts: productId }, // Product-specific offers
+      ],
+      // $or: [{ startDate: { $exists: false } }, { startDate: { $lte: now } }],
+      // $or: [{ expiryDate: { $exists: false } }, { expiryDate: { $gte: now } }],
+    })
+      .limit(5)
+      .lean();
+
+    return offers.map((offer: any) => ({
+      title:
+        offer.description ||
+        `${
+          offer.type === "percentage"
+            ? `${offer.value}% OFF`
+            : `₹${offer.value} OFF`
+        }${
+          offer.minCartValue ? ` on orders above ₹${offer.minCartValue}` : ""
+        }`,
+      code: offer.couponCode,
+      bgColor: "bg-orange-100",
+      textColor: "text-orange-800",
+    }));
+  } catch (error) {
+    console.error("Error fetching offers:", error);
+    return [];
   }
 }
 
@@ -212,6 +246,8 @@ export default async function ProductPage({ params }: ProductPageProps) {
     (img): img is string => Boolean(img)
   );
 
+  const offers = await getProductOffers(String(dbProduct._id));
+
   const product: ProductData = {
     id: String(dbProduct._id),
     slug: resolvedParams.slug,
@@ -225,20 +261,7 @@ export default async function ProductPage({ params }: ProductPageProps) {
         : ["/placeholder.svg?height=600&width=600&text=No+Image"],
     packs,
     variantsByType,
-    offers: [
-      {
-        title: "Extra 3% OFF on orders above ₹999",
-        code: "SAVE3",
-        bgColor: "bg-orange-100",
-        textColor: "text-orange-800",
-      },
-      {
-        title: "Extra ₹150 OFF on orders above ₹2999",
-        code: "EXT150",
-        bgColor: "bg-blue-100",
-        textColor: "text-blue-800",
-      },
-    ],
+    offers, // Use fetched offers instead of hardcoded ones
     features: [
       { icon: "truck", text: "Enjoy Free Delivery above ₹699" },
       { icon: "rotate-ccw", text: "No Exchange & Returns" },

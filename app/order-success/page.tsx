@@ -142,7 +142,7 @@ export default function OrderSuccessPage() {
           {/* Action Buttons */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 animate-in slide-in-from-bottom duration-700 delay-500">
             <Button
-              onClick={() => router.push("/orders")}
+              onClick={() => router.push("/account")}
               className="h-12 bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white font-semibold"
             >
               <Package className="w-5 h-5 mr-2" />

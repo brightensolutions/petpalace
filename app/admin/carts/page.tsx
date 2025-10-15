@@ -23,7 +23,27 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 
-interface CartItem {
+interface CartItemProduct {
+  productId: string;
+  quantity: number;
+  price: number;
+  name: string;
+  image?: string;
+  brand?: string;
+  variantLabel?: string;
+  _id: string;
+}
+
+interface CartResponse {
+  id?: string;
+  _id?: string;
+  userId: string | { _id: string; name?: string; email?: string };
+  items: CartItemProduct[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface FlattenedCartItem {
   cartId: string;
   userId: string;
   userName: string;
@@ -39,7 +59,7 @@ interface CartItem {
 
 export default function AdminCartsPage() {
   const router = useRouter();
-  const [carts, setCarts] = useState<CartItem[]>([]);
+  const [carts, setCarts] = useState<FlattenedCartItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
@@ -58,16 +78,39 @@ export default function AdminCartsPage() {
       );
       const data = await response.json();
 
-      // ✅ Always handle array safely
-      const items = Array.isArray(data.items)
-        ? data.items
-        : Array.isArray(data)
-        ? data
-        : [];
+      console.log("[v0] Raw Cart API Response:", JSON.stringify(data, null, 2));
+      console.log("[v0] Is data an array?", Array.isArray(data));
+      console.log("[v0] Does data have items?", data.items);
+      console.log("[v0] Data keys:", Object.keys(data));
 
-      setCarts(items);
+      let cartItems: any[] = [];
+
+      if (Array.isArray(data)) {
+        cartItems = data;
+      } else if (data.items && Array.isArray(data.items)) {
+        cartItems = data.items;
+      }
+
+      // Map to ensure all required fields and calculate totalPrice
+      const processedItems: FlattenedCartItem[] = cartItems.map(
+        (item: any) => ({
+          cartId: item.cartId || item._id || "",
+          userId: item.userId || "",
+          userName: item.userName || "Unknown User",
+          userEmail: item.userEmail || "",
+          productId: item.productId || "",
+          productName: item.productName || "Unknown Product",
+          productImage: item.productImage || item.image,
+          productPrice: item.price || 0,
+          quantity: item.quantity || 0,
+          totalPrice: (item.price || 0) * (item.quantity || 0),
+          createdAt: item.addedAt || item.createdAt || new Date().toISOString(),
+        })
+      );
+
+      setCarts(processedItems);
       setTotalPages(data.pagination?.totalPages || 1);
-      setTotal(data.pagination?.total || items.length);
+      setTotal(data.pagination?.total || processedItems.length);
     } catch (error) {
       console.error("Error fetching carts:", error);
       toast.error("Error loading cart data.");
@@ -140,12 +183,12 @@ export default function AdminCartsPage() {
                 </TableRow>
               ) : (
                 carts.map((item, index) => (
-                  <TableRow key={`${item.cartId}-${index}`}>
+                  <TableRow key={`${item.cartId}-${item.productId}-${index}`}>
                     <TableCell>
                       <div className="flex items-center gap-3">
                         {item.productImage ? (
                           <Image
-                            src={item.productImage}
+                            src={item.productImage || "/placeholder.svg"}
                             alt={item.productName}
                             width={48}
                             height={48}
@@ -160,6 +203,9 @@ export default function AdminCartsPage() {
                           <p className="font-medium text-gray-900">
                             {item.productName}
                           </p>
+                          <p className="text-xs text-gray-500">
+                            ID: {item.productId.slice(0, 8)}...
+                          </p>
                         </div>
                       </div>
                     </TableCell>
@@ -170,8 +216,13 @@ export default function AdminCartsPage() {
                           <p className="font-medium text-gray-900">
                             {item.userName}
                           </p>
-                          <p className="text-sm text-gray-500">
-                            {item.userEmail}
+                          {item.userEmail && (
+                            <p className="text-sm text-gray-500">
+                              {item.userEmail}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-400">
+                            ID: {item.userId.slice(0, 8)}...
                           </p>
                         </div>
                       </div>

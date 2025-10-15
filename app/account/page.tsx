@@ -9,6 +9,15 @@ import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { AddressModal } from "@/components/address-modal";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { addToCart as addToCartService } from "@/lib/services/cart-service";
+import {
   UserCog,
   MapPin,
   PackageCheck,
@@ -19,7 +28,6 @@ import {
   Edit,
   Plus,
   Eye,
-  Download,
   Star,
   Truck,
   Clock,
@@ -30,14 +38,39 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 
+interface OrderItem {
+  productId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+  variantLabel?: string;
+  foodType?: string;
+}
+
 interface Order {
-  id: string;
   _id: string;
-  date: string;
-  status: "delivered" | "shipped" | "processing" | "cancelled";
+  orderNumber: string;
+  items: OrderItem[];
+  pets?: any[];
+  address: any;
+  subtotal: number;
+  deliveryFee: number;
+  discount: number;
   total: number;
-  items: number;
-  image: string;
+  paymentMethod: string;
+  paymentStatus: string;
+  orderStatus:
+    | "pending"
+    | "confirmed"
+    | "processing"
+    | "shipped"
+    | "delivered"
+    | "cancelled";
+  couponCode?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
   trackingId?: string;
 }
 
@@ -76,6 +109,42 @@ interface UserData {
   addresses: Address[];
 }
 
+function isJsonResponse(res: Response) {
+  const contentType = res.headers.get("content-type") || "";
+  return contentType.includes("application/json");
+}
+
+async function safeFetchJSON<T>(
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<T> {
+  const res = await fetch(input, {
+    credentials: "include",
+    headers: {
+      Accept: "application/json",
+      ...(init?.headers || {}),
+    },
+    ...init,
+  });
+  if (!isJsonResponse(res)) {
+    const snippet = await res
+      .text()
+      .then((t) => t.slice(0, 160))
+      .catch(() => "");
+    throw new Error(
+      `[${res.status}] Non-JSON response from ${
+        typeof input === "string" ? input : "request"
+      }: ${snippet}`
+    );
+  }
+  const data = await res.json();
+  if (!res.ok) {
+    const message = (data as any)?.error || res.statusText;
+    throw new Error(`[${res.status}] ${message}`);
+  }
+  return data as T;
+}
+
 export default function UserDashboard() {
   const [user, setUser] = useState<UserData | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -84,22 +153,28 @@ export default function UserDashboard() {
   const [editingAddress, setEditingAddress] = useState<Address | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("orders");
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [isCanceling, setIsCanceling] = useState(false);
 
   useEffect(() => {
     const fetchUser = async () => {
       setLoading(true);
       try {
-        const res = await fetch("/api/users/me", {
-          credentials: "include",
-        });
-        const data = await res.json();
+        const data = await safeFetchJSON<{
+          authenticated: boolean;
+          user: UserData;
+        }>("/api/users/me");
         if (data.authenticated) {
           setUser({ ...data.user, addresses: data.user.addresses || [] });
         } else {
           console.warn("User not authenticated. Redirecting to sign-in.");
         }
       } catch (error) {
-        console.error("Failed to fetch user:", error);
+        console.error(
+          "Failed to fetch user (safe):",
+          (error as Error)?.message
+        );
       } finally {
         setLoading(false);
       }
@@ -107,42 +182,112 @@ export default function UserDashboard() {
 
     const fetchOrders = async () => {
       try {
-        const res = await fetch("/api/users/orders", {
-          credentials: "include",
-        });
-        const data = await res.json();
-
-        if (res.ok && data.orders) {
-          const mappedOrders = data.orders.map((order: any) => ({
-            _id: order._id,
-            id: order.orderNumber,
-            date: new Date(order.createdAt).toLocaleDateString(),
-            status: order.orderStatus,
-            total: order.total,
-            items: order.items.length,
-            image:
-              order.items[0]?.image ||
-              "/placeholder.svg?height=100&width=100&text=Order",
-            trackingId: order.orderNumber,
-          }));
-          setOrders(mappedOrders);
+        const data = await safeFetchJSON<{ orders: Order[] }>(
+          "/api/users/orders"
+        );
+        if (data.orders) {
+          // Keep full order data for details view
+          setOrders(data.orders as Order[]);
         }
       } catch (error) {
-        console.error("Failed to fetch orders:", error);
+        console.error(
+          "Failed to fetch orders (safe):",
+          (error as Error)?.message
+        );
       }
     };
 
     const fetchWishlist = async () => {
       try {
-        const res = await fetch("/api/users/wishlist", {
-          credentials: "include",
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setWishlistItems(data.wishlist || []);
+        console.log("[v0][dashboard] fetching /api/users/wishlist");
+        const raw = await safeFetchJSON<any>("/api/users/wishlist");
+        const arr: any[] = raw?.wishlist ?? raw?.items ?? raw ?? [];
+        console.log(
+          "[v0][dashboard] wishlist raw keys:",
+          Object.keys(raw || {})
+        );
+        console.log(
+          "[v0][dashboard] wishlist array length:",
+          Array.isArray(arr) ? arr.length : -1
+        );
+        if (arr[0]) {
+          console.log(
+            "[v0][dashboard] wishlist sample item keys:",
+            Object.keys(arr[0] || {})
+          );
+          console.log("[v0][dashboard] wishlist sample item preview:", {
+            productId: arr[0]?.productId,
+            name: arr[0]?.name,
+            price: arr[0]?.price,
+            image: String(arr[0]?.image || "").slice(0, 120),
+          });
         }
+
+        const normalized: WishlistItem[] = arr.map((item: any, idx: number) => {
+          const productObj =
+            item?.product ||
+            (item?.productId && typeof item.productId === "object"
+              ? item.productId
+              : null) ||
+            item?.productRef ||
+            null;
+
+          const pid =
+            (productObj &&
+              (productObj._id || productObj.id || productObj.productId)) ||
+            item?.productId ||
+            item?._id;
+
+          const name =
+            productObj?.name ||
+            item?.name ||
+            `Product ${String(pid ?? "")
+              .toString()
+              .slice(-6)}`;
+          const image =
+            productObj?.image ||
+            (Array.isArray(productObj?.images)
+              ? productObj.images[0]
+              : undefined) ||
+            item?.image ||
+            "/wishlist-product.jpg";
+          const priceRaw = productObj?.price ?? item?.price ?? 0;
+          const price = Number.isFinite(Number(priceRaw))
+            ? Number(priceRaw)
+            : 0;
+          const category =
+            productObj?.category?.name ||
+            productObj?.category ||
+            item?.category ||
+            "Product";
+
+          if (idx === 0) {
+            console.log("[v0][dashboard] normalized sample:", {
+              _id: String(pid ?? item?._id ?? ""),
+              name,
+              price,
+              image: String(image || "").slice(0, 120),
+              category,
+            });
+          }
+
+          return {
+            _id: String(pid ?? item?._id ?? Date.now()),
+            name,
+            category,
+            price,
+            image,
+          };
+        });
+
+        console.log("[v0][dashboard] normalized length:", normalized.length);
+        setWishlistItems(normalized);
       } catch (err) {
-        console.error("Failed to fetch wishlist:", err);
+        console.error(
+          "[v0][dashboard] Failed to fetch wishlist (safe):",
+          (err as Error)?.message
+        );
+        setWishlistItems([]);
       }
     };
 
@@ -289,6 +434,10 @@ export default function UserDashboard() {
         return "bg-blue-100 text-blue-800";
       case "processing":
         return "bg-yellow-100 text-yellow-800";
+      case "confirmed":
+        return "bg-purple-100 text-purple-800";
+      case "pending":
+        return "bg-orange-100 text-orange-800";
       case "cancelled":
         return "bg-red-100 text-red-800";
       default:
@@ -304,6 +453,10 @@ export default function UserDashboard() {
         return <Truck className="w-4 h-4" />;
       case "processing":
         return <Clock className="w-4 h-4" />;
+      case "confirmed":
+        return <CheckCircle className="w-4 h-4" />;
+      case "pending":
+        return <Clock className="w-4 h-4" />;
       case "cancelled":
         return <XCircle className="w-4 h-4" />;
       default:
@@ -318,46 +471,43 @@ export default function UserDashboard() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">My Orders</h2>
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm">
-                  Filter
-                </Button>
-                <Button variant="outline" size="sm">
-                  <Download className="w-4 h-4 mr-1" />
-                  Export
-                </Button>
-              </div>
             </div>
             {orders.length > 0 ? (
               <div className="space-y-4">
                 {orders.map((order) => (
                   <Card key={order._id}>
                     <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                         <Image
-                          src={order.image || "/placeholder.svg"}
+                          src={
+                            order.items?.[0]?.image ||
+                            "/placeholder.svg?height=80&width=80&query=order+thumbnail"
+                          }
                           alt="Order"
                           width={80}
                           height={80}
                           className="rounded-lg"
                         />
                         <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-2">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
                             <span className="font-bold text-lg">
-                              #{order.id}
+                              #{order.orderNumber}
                             </span>
-                            <Badge className={getStatusColor(order.status)}>
-                              {getStatusIcon(order.status)}
+                            <Badge
+                              className={getStatusColor(order.orderStatus)}
+                            >
+                              {getStatusIcon(order.orderStatus)}
                               <span className="ml-1 capitalize">
-                                {order.status}
+                                {order.orderStatus}
                               </span>
                             </Badge>
                           </div>
                           <p className="text-gray-600 mb-1">
-                            Order Date: {order.date}
+                            Order Date:{" "}
+                            {new Date(order.createdAt).toLocaleDateString()}
                           </p>
                           <p className="text-gray-600 mb-2">
-                            {order.items} items
+                            {order.items?.length || 0} items
                           </p>
                           {order.trackingId && (
                             <p className="text-sm text-blue-600">
@@ -365,7 +515,7 @@ export default function UserDashboard() {
                             </p>
                           )}
                         </div>
-                        <div className="text-right">
+                        <div className="text-left sm:text-right">
                           <p className="text-2xl font-bold mb-2">
                             ₹{order.total}
                           </p>
@@ -374,11 +524,15 @@ export default function UserDashboard() {
                               variant="outline"
                               size="sm"
                               className="w-full bg-transparent"
+                              onClick={() => {
+                                setSelectedOrder(order);
+                                setIsDetailsOpen(true);
+                              }}
                             >
                               <Eye className="w-4 h-4 mr-1" />
                               View Details
                             </Button>
-                            {order.status === "delivered" && (
+                            {order.orderStatus === "delivered" && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -388,7 +542,7 @@ export default function UserDashboard() {
                                 Rate & Review
                               </Button>
                             )}
-                            {order.status === "shipped" && (
+                            {order.orderStatus === "shipped" && (
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -425,10 +579,6 @@ export default function UserDashboard() {
           <div className="space-y-6">
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">My Wishlist</h2>
-              <Button variant="outline" size="sm">
-                <Download className="w-4 h-4 mr-1" />
-                Export Wishlist
-              </Button>
             </div>
 
             {wishlistItems?.length > 0 ? (
@@ -438,7 +588,10 @@ export default function UserDashboard() {
                     <CardContent className="p-4">
                       <div className="flex gap-4">
                         <img
-                          src={item.image || "/placeholder.svg"}
+                          src={
+                            item.image ||
+                            "/placeholder.svg?height=96&width=96&query=wishlist+product"
+                          }
                           alt={item.name}
                           className="w-24 h-24 object-cover rounded-lg"
                         />
@@ -455,7 +608,12 @@ export default function UserDashboard() {
                             <p className="font-bold text-orange-600">
                               ₹{item.price}
                             </p>
-                            <Button size="sm" variant="outline">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleAddWishlistToCart(item)}
+                              className="bg-transparent"
+                            >
                               Add to Cart
                             </Button>
                           </div>
@@ -740,6 +898,77 @@ export default function UserDashboard() {
     }
   };
 
+  async function handleCancelOrder(orderId: string) {
+    if (!orderId) return;
+    if (!confirm("Are you sure you want to cancel this order?")) return;
+
+    try {
+      setIsCanceling(true);
+      const res = await fetch("/api/users/orders/cancel", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({ orderId }),
+      });
+
+      let data: any = null;
+      const ct = res.headers.get("content-type") || "";
+      if (ct.includes("application/json")) {
+        data = await res.json().catch(() => null);
+      }
+
+      if (!res.ok) {
+        throw new Error(data?.error || `Cancel failed (${res.status})`);
+      }
+
+      // optimistic update
+      setOrders((prev) =>
+        prev.map((o) =>
+          o._id === orderId ? { ...o, orderStatus: "cancelled" } : o
+        )
+      );
+      setSelectedOrder((prev) =>
+        prev ? { ...prev, orderStatus: "cancelled" } : prev
+      );
+      alert("Order cancelled successfully.");
+    } catch (e) {
+      console.error("Cancel order error:", e);
+      alert((e as Error).message || "Failed to cancel order.");
+    } finally {
+      setIsCanceling(false);
+    }
+  }
+
+  const handleAddWishlistToCart = async (item: WishlistItem) => {
+    try {
+      await addToCartService({
+        productId: item._id,
+        variantId: undefined,
+        packId: undefined,
+        quantity: 1,
+        price: item.price,
+        name: item.name,
+        image: item.image,
+        brand: "",
+        variantLabel: "",
+        sku: undefined,
+        foodType: undefined,
+      });
+
+      toast.success("Added to Cart", {
+        description: `${item.name} has been added to your cart`,
+      });
+    } catch (error) {
+      console.error("Error adding to cart:", error);
+      toast.error("Error", {
+        description: "Failed to add item to cart. Please try again.",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
@@ -812,6 +1041,162 @@ export default function UserDashboard() {
         onSave={handleAddressSave}
         initialAddress={editingAddress}
       />
+      <Dialog open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedOrder
+                ? `Order #${selectedOrder.orderNumber}`
+                : "Order Details"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedOrder
+                ? `Placed on ${new Date(
+                    selectedOrder.createdAt
+                  ).toLocaleString()}`
+                : ""}
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedOrder && (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+              <div className="inline-flex items-center gap-2">
+                <div
+                  className={`inline-flex items-center gap-1 px-2 py-1 rounded ${getStatusColor(
+                    selectedOrder.orderStatus
+                  )}`}
+                >
+                  {getStatusIcon(selectedOrder.orderStatus)}
+                  <span className="capitalize">
+                    {selectedOrder.orderStatus}
+                  </span>
+                </div>
+              </div>
+              <div className="flex flex-col xs:flex-row items-stretch xs:items-center gap-2 w-full sm:w-auto">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const msg = encodeURIComponent(
+                      `Hi, I need help with order #${selectedOrder.orderNumber}.`
+                    );
+                    window.open(
+                      `https://wa.me/?text=${msg}`,
+                      "_blank",
+                      "noopener"
+                    );
+                  }}
+                  className="w-full sm:w-auto bg-transparent"
+                >
+                  <Phone className="w-4 h-4 mr-1" />
+                  WhatsApp Support
+                </Button>
+
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => handleCancelOrder(selectedOrder._id)}
+                  disabled={
+                    isCanceling ||
+                    selectedOrder.orderStatus === "cancelled" ||
+                    selectedOrder.orderStatus === "delivered" ||
+                    selectedOrder.orderStatus === "shipped"
+                  }
+                  className="w-full sm:w-auto"
+                >
+                  {isCanceling ? "Cancelling..." : "Cancel Order"}
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {selectedOrder && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <p className="text-sm text-gray-500">Payment</p>
+                  <p className="font-medium capitalize">
+                    {selectedOrder.paymentMethod} •{" "}
+                    {selectedOrder.paymentStatus}
+                  </p>
+                </div>
+                {selectedOrder.trackingId && (
+                  <div className="md:text-right">
+                    <p className="text-sm text-gray-500">Tracking</p>
+                    <p className="font-medium">{selectedOrder.trackingId}</p>
+                  </div>
+                )}
+              </div>
+
+              <div className="rounded-md border">
+                {selectedOrder.items.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center gap-4 p-4 border-b last:border-b-0"
+                  >
+                    <img
+                      src={
+                        item.image ||
+                        "/placeholder.svg?height=64&width=64&query=order+item"
+                      }
+                      alt={item.name}
+                      className="w-16 h-16 rounded object-cover"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium">{item.name}</p>
+                      <p className="text-sm text-gray-500">
+                        Qty: {item.quantity}
+                        {item.variantLabel ? ` • ${item.variantLabel}` : ""}
+                        {item.foodType ? ` • ${item.foodType}` : ""}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold">₹{item.price}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Shipping Address</p>
+                  <div className="text-sm text-gray-700">
+                    <p className="font-medium">{selectedOrder.address?.name}</p>
+                    <p>{selectedOrder.address?.address}</p>
+                    <p>
+                      {selectedOrder.address?.city},{" "}
+                      {selectedOrder.address?.state} -{" "}
+                      {selectedOrder.address?.pincode}
+                    </p>
+                    <p>{selectedOrder.address?.phone}</p>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500 mb-1">Summary</p>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Subtotal</span>
+                      <span>₹{selectedOrder.subtotal}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Delivery Fee</span>
+                      <span>₹{selectedOrder.deliveryFee}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Discount</span>
+                      <span>-₹{selectedOrder.discount}</span>
+                    </div>
+                    <div className="flex justify-between font-semibold pt-2 border-t">
+                      <span>Total</span>
+                      <span>₹{selectedOrder.total}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
       <Footer />
     </div>
   );
